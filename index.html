@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AutoQuest</title>
+<meta name="description" content="Личный квест-курс Python: теория маленькими шагами, практика и мгновенная проверка.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Karla:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-inner">
+    <div class="brand"><span class="mark">&gt;_</span><h1>AutoQuest</h1></div>
+    <div class="stat">Уровень <b id="stat-level">1</b></div>
+    <div class="xpbar"><i id="xpbar-fill" style="width:0%"></i></div>
+    <div class="stat"><b id="stat-xp">0</b>&nbsp;XP</div>
+    <div class="streak">🔥 <span id="stat-streak">0</span> дней подряд</div>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <section id="view-path" class="view">
+    <div class="hero">
+      <div class="kicker">Личный курс · для Михаила</div>
+      <h2>Крепкая база Python, шаг за шагом</h2>
+      <p>Маленькие уровни, мгновенная проверка, никакой теории «на будущее». Открывай тропу — практика опирается только на то, что уже объяснено рядом с ней.</p>
+    </div>
+
+    <div class="path" id="path-list"></div>
+  </section>
+
+  <section id="view-module" class="view" hidden>
+    <button class="backbtn" id="btn-back">← Вся тропа</button>
+    <div id="module-room"></div>
+  </section>
+
+</div>
+
+
+<script src="js/interpreter.js"></script>
+<script src="js/modules-data.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
