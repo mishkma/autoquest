@@ -1,10 +1,10 @@
-/* AutoQuest — встроенный Python-движок (подмножество, без Pyodide). */
+/* AutoQuest — the built-in Python engine (a subset, no Pyodide). */
 
-/* Минимальный учебный интерпретатор подмножества Python — работает целиком в
-   браузере, без установки и без сетевых запросов. Поддерживает: переменные,
-   числа (int/float), строки и f-строки, арифметику, сравнения, and/or/not,
-   if/elif/else, while, for..in range()/list, списки, словари (базово),
-   функции def/return, print(), len(), range(), базовые методы списков. */
+/* A minimal educational interpreter for a subset of Python — runs entirely in
+   the browser, no install and no network requests. Supports: variables,
+   numbers (int/float), strings and f-strings, arithmetic, comparisons, and/or/not,
+   if/elif/else, while, for..in range()/list, lists, dicts (basic),
+   def/return functions, print(), len(), range(), basic list methods. */
 
 function runPython(src, opts) {
   opts = opts || {};
@@ -18,7 +18,7 @@ function runPython(src, opts) {
     function tick() {
       steps++;
       if (steps > maxSteps) {
-        const e = new Error('Похоже на бесконечный цикл — выполнение остановлено.');
+        const e = new Error('Looks like an infinite loop — execution was stopped.');
         e.pyName = 'RuntimeError';
         throw e;
       }
@@ -27,12 +27,12 @@ function runPython(src, opts) {
     return { ok: true, output: out.join('\n') };
   } catch (e) {
     if (e && e.__control) {
-      return { ok: false, output: out.join('\n'), error: 'return/break/continue вне цикла или функции', pyName:'SyntaxError' };
+      return { ok: false, output: out.join('\n'), error: 'return/break/continue outside a loop or function', pyName:'SyntaxError' };
     }
     const msg = (e && e.message) || String(e);
     let pyLine = e && e.pyLine;
     if (pyLine === undefined) {
-      const lm = /строка (\d+)/.exec(msg);
+      const lm = /line (\d+)/.exec(msg);
       if (lm) pyLine = parseInt(lm[1], 10);
     }
     return { ok: false, output: out.join('\n'), error: msg, pyName: (e && e.pyName) || 'Error', pyLine };
@@ -107,7 +107,7 @@ function tokenizeLine(text, lineNo) {
     const two = text.slice(i, i+2);
     if (OPS2.includes(two)) { toks.push({ t: 'OP', v: two, line: lineNo }); i += 2; continue; }
     if ('+-*/%=<>()[]{},:.'.includes(c)) { toks.push({ t: 'OP', v: c, line: lineNo }); i++; continue; }
-    const e = new Error(`Не понимаю символ "${c}" в строке ${lineNo}.`);
+    const e = new Error(`Unrecognized character "${c}" on line ${lineNo}.`);
     e.pyName = 'SyntaxError';
     throw e;
   }
@@ -133,7 +133,7 @@ function tokenize(src) {
         tokens.push({ t: 'DEDENT', line: ln + 1 });
       }
       if (indentStack[indentStack.length - 1] !== indent) {
-        const e = new Error(`Неровный отступ в строке ${ln + 1}.`);
+        const e = new Error(`Inconsistent indentation on line ${ln + 1}.`);
         e.pyName = 'IndentationError';
         throw e;
       }
@@ -161,7 +161,7 @@ function check(p, t, v) { const tok = peek(p); return tok.t === t && (v === unde
 function expect(p, t, v) {
   const tok = peek(p);
   if (!check(p, t, v)) {
-    const e = new Error(`Ожидалось "${v || t}", а встретилось "${tok.v || tok.t}" (строка ${tok.line}).`);
+    const e = new Error(`Expected "${v || t}", but found "${tok.v || tok.t}" (line ${tok.line}).`);
     e.pyName = 'SyntaxError';
     throw e;
   }
@@ -403,7 +403,7 @@ function parsePrimary(p) {
     expect(p, 'OP', '}');
     return { type:'DictLit', pairs };
   }
-  const e = new Error(`Не понимаю выражение возле "${tok.v || tok.t}" (строка ${tok.line}).`);
+  const e = new Error(`Unrecognized expression near "${tok.v || tok.t}" (line ${tok.line}).`);
   e.pyName = 'SyntaxError';
   throw e;
 }
@@ -484,7 +484,7 @@ function newEnv(parent) { return { vars: Object.create(null), parent }; }
 function envGet(env, name) {
   let e = env;
   while (e) { if (name in e.vars) return e.vars[name]; e = e.parent; }
-  const err = new Error(`Переменная или имя "${name}" не определены (NameError).`);
+  const err = new Error(`The variable or name "${name}" is not defined (NameError).`);
   err.pyName = 'NameError';
   throw err;
 }
@@ -551,7 +551,7 @@ function execStmtInner(s, env, out, tick) {
     case 'Return': throw new ReturnSignal(s.value ? evalExpr(s.value, env, out, tick) : null);
     case 'Break': throw new BreakSignal();
     case 'Continue': throw new ContinueSignal();
-    default: { const e = new Error(`Неизвестная конструкция: ${s.type}`); e.pyName='SyntaxError'; throw e; }
+    default: { const e = new Error(`Unknown construct: ${s.type}`); e.pyName='SyntaxError'; throw e; }
   }
 }
 
@@ -560,7 +560,7 @@ function iterToArray(v) {
   if (v instanceof PyList) return v.items;
   if (typeof v === 'string') return v.split('');
   if (v instanceof PyDict) return Array.from(v.map.keys());
-  const e = new Error('Это значение нельзя перебрать в цикле for (TypeError).');
+  const e = new Error('This value cannot be iterated in a for loop (TypeError).');
   e.pyName = 'TypeError';
   throw e;
 }
@@ -573,7 +573,7 @@ function assignTo(target, val, env, out, tick) {
     if (obj instanceof PyList) { obj.items[numOf(idx)] = val; return; }
     if (obj instanceof PyDict) { obj.map.set(keyOf(idx), val); return; }
   }
-  const e = new Error('В это выражение нельзя присвоить значение (SyntaxError).');
+  const e = new Error('Cannot assign a value to this expression (SyntaxError).');
   e.pyName = 'SyntaxError';
   throw e;
 }
@@ -625,7 +625,7 @@ function evalExpr(node, env, out, tick) {
       const obj = evalExpr(node.obj, env, out, tick);
       return { __bound: true, obj, name: node.name };
     }
-    default: { const e = new Error(`Не умею вычислять: ${node.type}`); e.pyName='SyntaxError'; throw e; }
+    default: { const e = new Error(`Cannot evaluate: ${node.type}`); e.pyName='SyntaxError'; throw e; }
   }
 }
 
@@ -633,21 +633,21 @@ function doIndex(obj, idx) {
   if (obj instanceof PyList) {
     let i = numOf(idx);
     if (i < 0) i += obj.items.length;
-    if (i < 0 || i >= obj.items.length) { const e = new Error('Индекс списка выходит за границы (IndexError).'); e.pyName='IndexError'; throw e; }
+    if (i < 0 || i >= obj.items.length) { const e = new Error('List index out of range (IndexError).'); e.pyName='IndexError'; throw e; }
     return obj.items[i];
   }
   if (typeof obj === 'string') {
     let i = numOf(idx);
     if (i < 0) i += obj.length;
-    if (i < 0 || i >= obj.length) { const e = new Error('Индекс строки выходит за границы (IndexError).'); e.pyName='IndexError'; throw e; }
+    if (i < 0 || i >= obj.length) { const e = new Error('String index out of range (IndexError).'); e.pyName='IndexError'; throw e; }
     return obj[i];
   }
   if (obj instanceof PyDict) {
     const k = keyOf(idx);
-    if (!obj.map.has(k)) { const e = new Error(`Такого ключа нет в словаре (KeyError: ${pyRepr(idx)}).`); e.pyName='KeyError'; throw e; }
+    if (!obj.map.has(k)) { const e = new Error(`No such key in the dictionary (KeyError: ${pyRepr(idx)}).`); e.pyName='KeyError'; throw e; }
     return obj.map.get(k);
   }
-  const e = new Error('К этому значению нельзя обратиться по индексу (TypeError).'); e.pyName='TypeError'; throw e;
+  const e = new Error('This value cannot be indexed (TypeError).'); e.pyName='TypeError'; throw e;
 }
 
 function compareVals(op, l, r) {
@@ -665,13 +665,13 @@ function compareVals(op, l, r) {
 
 function binOp(op, l, r) {
   if (typeof l === 'string' && op === '+') {
-    if (typeof r !== 'string') { const e = new Error('Нельзя сложить строку и не-строку напрямую (TypeError). Попробуй f-строку.'); e.pyName='TypeError'; throw e; }
+    if (typeof r !== 'string') { const e = new Error('Cannot add a string and a non-string directly (TypeError). Try an f-string.'); e.pyName='TypeError'; throw e; }
     return l + r;
   }
   if (typeof l === 'string' && op === '*' && typeof numOf(r) === 'number') return l.repeat(numOf(r));
   const lf = isFloatVal(l), rf = isFloatVal(r);
   if ((typeof l !== 'number' && !lf) || (typeof r !== 'number' && !rf)) {
-    const e = new Error(`Операция "${op}" не поддерживается для этих типов значений (TypeError).`);
+    const e = new Error(`The operation "${op}" is not supported for these value types (TypeError).`);
     e.pyName = 'TypeError';
     throw e;
   }
@@ -683,10 +683,10 @@ function binOp(op, l, r) {
     case '-': res = a - b; break;
     case '*': res = a * b; break;
     case '**': res = Math.pow(a, b); break;
-    case '/': if (b === 0) { const e = new Error('Деление на ноль (ZeroDivisionError).'); e.pyName='ZeroDivisionError'; throw e; } res = a / b; break;
-    case '//': if (b === 0) { const e = new Error('Деление на ноль (ZeroDivisionError).'); e.pyName='ZeroDivisionError'; throw e; } res = Math.floor(a / b); break;
-    case '%': if (b === 0) { const e = new Error('Деление на ноль (ZeroDivisionError).'); e.pyName='ZeroDivisionError'; throw e; } res = ((a % b) + b) % b; break;
-    default: { const e = new Error(`Неизвестный оператор "${op}".`); e.pyName='SyntaxError'; throw e; }
+    case '/': if (b === 0) { const e = new Error('Division by zero (ZeroDivisionError).'); e.pyName='ZeroDivisionError'; throw e; } res = a / b; break;
+    case '//': if (b === 0) { const e = new Error('Division by zero (ZeroDivisionError).'); e.pyName='ZeroDivisionError'; throw e; } res = Math.floor(a / b); break;
+    case '%': if (b === 0) { const e = new Error('Division by zero (ZeroDivisionError).'); e.pyName='ZeroDivisionError'; throw e; } res = ((a % b) + b) % b; break;
+    default: { const e = new Error(`Unknown operator "${op}".`); e.pyName='SyntaxError'; throw e; }
   }
   return resultFloat ? mkFloat(res) : res;
 }
@@ -703,11 +703,11 @@ function doCall(node, env, out, tick) {
     if (BUILTINS[name]) return BUILTINS[name](args, out);
     const fn = envGet(env, name);
     if (fn instanceof PyFunc) return callFunc(fn, args, out, tick);
-    const e = new Error(`"${name}" не является функцией (TypeError).`);
+    const e = new Error(`"${name}" is not a function (TypeError).`);
     e.pyName = 'TypeError';
     throw e;
   }
-  const e = new Error('Это выражение нельзя вызвать как функцию (TypeError).');
+  const e = new Error('This expression cannot be called as a function (TypeError).');
   e.pyName = 'TypeError';
   throw e;
 }
@@ -739,14 +739,14 @@ function callMethod(target, name, args) {
     if (name === 'split') return new PyList(target.split(args.length ? args[0] : /\s+/).filter(x=>x.length));
     if (name === 'replace') return target.split(args[0]).join(args[1]);
   }
-  const e = new Error(`Метод "${name}" не поддерживается в этой песочнице (AttributeError).`);
+  const e = new Error(`The method "${name}" is not supported in this sandbox (AttributeError).`);
   e.pyName = 'AttributeError';
   throw e;
 }
 
 const BUILTINS = {
   print: (args, out) => { out.push(args.map(pyStr).join(' ')); return null; },
-  len: (args) => { const v = args[0]; if (v instanceof PyList) return v.items.length; if (typeof v === 'string') return v.length; if (v instanceof PyDict) return v.map.size; const e=new Error('У этого значения нет длины (TypeError).'); e.pyName='TypeError'; throw e; },
+  len: (args) => { const v = args[0]; if (v instanceof PyList) return v.items.length; if (typeof v === 'string') return v.length; if (v instanceof PyDict) return v.map.size; const e=new Error('This value has no length (TypeError).'); e.pyName='TypeError'; throw e; },
   range: (args) => {
     let start = 0, stop, step = 1;
     const nums = args.map(numOf);
@@ -758,8 +758,8 @@ const BUILTINS = {
     else for (let i = start; i > stop; i += step) res.push(i);
     return res;
   },
-  int: (args) => { const v = args[0]; if (typeof v === 'string') { const n = parseInt(v,10); if (Number.isNaN(n)) { const e=new Error(`Не могу превратить "${v}" в число (ValueError).`); e.pyName='ValueError'; throw e;} return n;} return Math.trunc(numOf(v)); },
-  float: (args) => { const v = args[0]; if (typeof v === 'string') { const n = parseFloat(v); if (Number.isNaN(n)) { const e=new Error(`Не могу превратить "${v}" в число (ValueError).`); e.pyName='ValueError'; throw e;} return mkFloat(n);} return mkFloat(numOf(v)); },
+  int: (args) => { const v = args[0]; if (typeof v === 'string') { const n = parseInt(v,10); if (Number.isNaN(n)) { const e=new Error(`Cannot convert "${v}" to a number (ValueError).`); e.pyName='ValueError'; throw e;} return n;} return Math.trunc(numOf(v)); },
+  float: (args) => { const v = args[0]; if (typeof v === 'string') { const n = parseFloat(v); if (Number.isNaN(n)) { const e=new Error(`Cannot convert "${v}" to a number (ValueError).`); e.pyName='ValueError'; throw e;} return mkFloat(n);} return mkFloat(numOf(v)); },
   str: (args) => pyStr(args[0]),
   abs: (args) => { const v = args[0]; const r = Math.abs(numOf(v)); return isFloatVal(v) ? mkFloat(r) : r; },
   round: (args) => Math.round(numOf(args[0])),

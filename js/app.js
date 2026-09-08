@@ -8,22 +8,22 @@
   /* ---------------- error dictionary ---------------- */
 
   const ERROR_HINTS = {
-    SyntaxError: 'Синтаксическая ошибка — Python не смог разобрать структуру кода. Частые причины: не закрыта кавычка или скобка, забыто двоеточие после <code>if</code>/<code>while</code>/<code>for</code>.',
-    IndentationError: 'Проблема с отступами. В Python отступ в начале строки — часть кода, а не оформление. Все строки одного блока должны начинаться одинаково (обычно 4 пробела).',
-    NameError: 'Python не знает такое имя — скорее всего, опечатка в названии переменной, либо она используется раньше, чем создана.',
-    TypeError: 'Несовместимые типы данных — например, попытка сложить число со строкой напрямую. Проверь, все ли значения нужного типа (или попробуй f-строку).',
-    ZeroDivisionError: 'Деление на ноль — Python это не разрешает. Проверь, не равен ли нулю делитель.',
-    ValueError: 'Значение не подходит для операции — например, в число пытаются превратить то, что числом не является.',
-    IndexError: 'Обращение к элементу по индексу, которого не существует. Индексы в Python начинаются с 0.',
-    KeyError: 'В словаре нет такого ключа — проверь название ключа и что он вообще был добавлен.',
-    AttributeError: 'Такого метода здесь нет — либо опечатка, либо он пока не поддерживается в этой песочнице.',
-    RuntimeError: 'Похоже, цикл никогда не заканчивается — проверь, что условие цикла рано или поздно станет False (например, счётчик действительно меняется внутри цикла).'
+    SyntaxError: 'Syntax error — Python could not parse the structure of the code. Common causes: an unclosed quote or bracket, or a missing colon after <code>if</code>/<code>while</code>/<code>for</code>.',
+    IndentationError: 'An indentation problem. In Python, the indent at the start of a line is part of the code, not formatting. All lines of the same block must start with the same indent (usually 4 spaces).',
+    NameError: 'Python does not know that name — most likely a typo in the variable name, or it is used before it was created.',
+    TypeError: 'Incompatible data types — for example, trying to add a number and a string directly. Check that every value is the right type (or try an f-string).',
+    ZeroDivisionError: 'Division by zero — Python does not allow this. Check whether the divisor could be zero.',
+    ValueError: 'The value does not fit the operation — for example, trying to turn something that is not a number into a number.',
+    IndexError: 'Accessing a list index that does not exist. Indices in Python start at 0.',
+    KeyError: 'The dictionary has no such key — check the key name and whether it was actually added.',
+    AttributeError: 'No such method here — either a typo, or it is not supported yet in this sandbox.',
+    RuntimeError: 'Looks like the loop never ends — check that its condition eventually becomes False (for example, that the counter actually changes inside the loop).'
   };
 
   function errorHint(pyName, text){
     if(pyName && ERROR_HINTS[pyName]) return ERROR_HINTS[pyName];
     for(const key in ERROR_HINTS){ if(text && text.includes(key)) return ERROR_HINTS[key]; }
-    return 'Код не выполнился. Прочитай сообщение об ошибке в консоли ниже — оно почти всегда указывает, в какой строке искать проблему.';
+    return 'The code did not run. Read the error message in the console below — it almost always points to which line to look at.';
   }
 
   /* ---------------- state ---------------- */
@@ -163,9 +163,9 @@
         const head = document.createElement('div');
         head.className = 'phase-head';
         head.innerHTML = `
-          <div class="kicker">Этап ${phaseNum}</div>
+          <div class="kicker">Phase ${phaseNum}</div>
           <div class="phase-title">${m.phase}</div>
-          <div class="phase-sub">пройдено ${phaseDone[m.phase] || 0} из ${phaseTotals[m.phase]} модулей в этапе</div>`;
+          <div class="phase-sub">${phaseDone[m.phase] || 0} of ${phaseTotals[m.phase]} modules done in this phase</div>`;
         el.appendChild(head);
       }
 
@@ -185,21 +185,21 @@
       const totalCount = m.tasks ? m.tasks.length : null;
 
       const chips = [];
-      if(isCurrent) chips.push('<span class="chip current">▶ ты здесь</span>');
+      if(isCurrent) chips.push('<span class="chip current">▶ you are here</span>');
       if(status === 'done'){
-        chips.push('<span class="chip good">✓ пройдено</span>');
+        chips.push('<span class="chip good">✓ done</span>');
       } else if(m.tasks){
-        chips.push(`<span class="chip">${doneCount}/${totalCount} задач</span>`);
+        chips.push(`<span class="chip">${doneCount}/${totalCount} tasks</span>`);
       } else if(unlocked){
-        chips.push('<span class="chip">открыто · контент скоро</span>');
+        chips.push('<span class="chip">unlocked · content coming soon</span>');
       } else {
-        chips.push('<span class="chip">🔒 закрыто</span>');
+        chips.push('<span class="chip">🔒 locked</span>');
       }
 
       node.innerHTML = `
         <div class="badge">${status==='done' ? '✓' : m.num}</div>
         <div class="node-body">
-          <div class="node-kicker">Модуль ${m.num}</div>
+          <div class="node-kicker">Module ${m.num}</div>
           <div class="node-title">${m.title}</div>
           <div class="node-desc">${m.desc}</div>
           <div class="node-meta">${chips.join('')}</div>
@@ -224,12 +224,12 @@
     if(!m.tasks){
       room.innerHTML = `
         <div class="room-head">
-          <div class="kicker">Модуль ${m.num}</div>
+          <div class="kicker">Module ${m.num}</div>
           <h2>${m.title}</h2>
         </div>
         <div class="soon">
-          <div class="display">Этот уровень откроется на следующей сессии</div>
-          <p>Контент добавляется постепенно, чтобы каждая практика опиралась только на объяснённую теорию.</p>
+          <div class="display">This level unlocks in a future session</div>
+          <p>Content is added gradually, so every practice task relies only on theory that has already been explained.</p>
         </div>`;
       window.scrollTo({top:0, behavior:'smooth'});
       return;
@@ -237,28 +237,28 @@
 
     let html = `
       <div class="room-head">
-        <div class="kicker">Модуль ${m.num}</div>
+        <div class="kicker">Module ${m.num}</div>
         <h2>${m.title}</h2>
         <div class="room-progress" id="room-progress"></div>
       </div>
       <div class="card theory">
-        <h3>Коротко о теме</h3>
+        <h3>The short version</h3>
         ${m.theory.map(p=>`<p>${p}</p>`).join('')}
       </div>`;
 
     m.tasks.forEach((t, i) => {
-      html += renderTaskCard(t, i, m.tasks.length, 'Задача');
+      html += renderTaskCard(t, i, m.tasks.length, 'Task');
     });
 
     if(m.homework && m.homework.length){
       html += `
       <div class="card hw-head">
-        <h3>📚 Домашка</h3>
-        <p>Это задачи посложнее — реши их между сессиями. На переход к следующему модулю они не влияют, но дают XP и хорошую практику.</p>
+        <h3>📚 Homework</h3>
+        <p>Harder tasks for between sessions. They do not gate the next module, but they give XP and good practice.</p>
         <div class="room-progress" id="hw-progress"></div>
       </div>`;
       m.homework.forEach((t, i) => {
-        html += renderTaskCard(t, i, m.homework.length, 'Домашка');
+        html += renderTaskCard(t, i, m.homework.length, 'Homework');
       });
     }
 
@@ -275,32 +275,32 @@
 
   function renderTaskCard(t, i, total, label){
     const done = !!state.completed[t.id];
-    const badge = t.boss ? '<span class="chip boss">🏆 Финал модуля</span>' : '';
+    const badge = t.boss ? '<span class="chip boss">🏆 Module finale</span>' : '';
     if(t.kind === 'predict'){
       return `
       <div class="card task predict ${done?'done':''}" id="task-${t.id}">
         <div class="task-head">
-          <span class="task-num">${label} ${i+1} из ${total}</span>
+          <span class="task-num">${label} ${i+1} of ${total}</span>
           ${badge}
         </div>
         <div class="task-title">${t.title}</div>
         <div class="task-goal">${t.goal}</div>
         <pre class="code-preview">${escapeHtml(t.code)}</pre>
-        <label class="field-label">Что выведет этот код?</label>
-        <textarea class="editor" id="guess-${t.id}" spellcheck="false" placeholder="Впиши ответ построчно, как он появится в выводе"></textarea>
+        <label class="field-label">What will this code print?</label>
+        <textarea class="editor" id="guess-${t.id}" spellcheck="false" placeholder="Type your answer line by line, as it will appear in the output"></textarea>
         <div class="rowbtns" style="margin-top:12px;">
-          <button class="btn primary" data-check="${t.id}">🔍 Показать ответ и проверить</button>
-          <button class="btn" data-hint="${t.id}">💡 Подсказка</button>
+          <button class="btn primary" data-check="${t.id}">🔍 Reveal answer and check</button>
+          <button class="btn" data-hint="${t.id}">💡 Hint</button>
         </div>
         <div class="console" id="console-${t.id}"></div>
-        <div class="hint-box" id="hint-${t.id}"><b>Подсказка:</b> ${t.hint || ''}</div>
+        <div class="hint-box" id="hint-${t.id}"><b>Hint:</b> ${t.hint || ''}</div>
         <div class="result" id="res-${t.id}"></div>
       </div>`;
     }
     return `
       <div class="card task ${done?'done':''}" id="task-${t.id}">
         <div class="task-head">
-          <span class="task-num">${label} ${i+1} из ${total}</span>
+          <span class="task-num">${label} ${i+1} of ${total}</span>
           ${badge}
         </div>
         <div class="task-title">${t.title}</div>
@@ -313,13 +313,13 @@
           </div>
         </div>
         <div class="rowbtns" style="margin-top:12px;">
-          <button class="btn" data-run="${t.id}">▶ Запустить</button>
-          <button class="btn primary" data-check="${t.id}">✓ Проверить</button>
-          <button class="btn" data-hint="${t.id}">💡 Подсказка</button>
-          <button class="btn" data-reset="${t.id}">↺ Сбросить код</button>
+          <button class="btn" data-run="${t.id}">▶ Run</button>
+          <button class="btn primary" data-check="${t.id}">✓ Check</button>
+          <button class="btn" data-hint="${t.id}">💡 Hint</button>
+          <button class="btn" data-reset="${t.id}">↺ Reset code</button>
         </div>
         <div class="console" id="console-${t.id}"></div>
-        <div class="hint-box" id="hint-${t.id}"><b>Подсказка:</b> ${t.hint || ''}</div>
+        <div class="hint-box" id="hint-${t.id}"><b>Hint:</b> ${t.hint || ''}</div>
         <div class="result" id="res-${t.id}"></div>
       </div>`;
   }
@@ -432,7 +432,7 @@
     const prog = document.getElementById('room-progress');
     if(prog){
       const allDone = doneCount === totalCount;
-      prog.innerHTML = `<span class="chip${allDone ? ' good' : ''}">${allDone ? '✓ ' : ''}${doneCount}/${totalCount} задач выполнено</span>`;
+      prog.innerHTML = `<span class="chip${allDone ? ' good' : ''}">${allDone ? '✓ ' : ''}${doneCount}/${totalCount} tasks done</span>`;
     }
 
     if(m.homework){
@@ -441,7 +441,7 @@
       const hwEl = document.getElementById('hw-progress');
       if(hwEl){
         const allHw = hwDone === hwTotal;
-        hwEl.innerHTML = `<span class="chip${allHw ? ' good' : ''}">${allHw ? '✓ ' : ''}${hwDone}/${hwTotal} домашних выполнено</span>`;
+        hwEl.innerHTML = `<span class="chip${allHw ? ' good' : ''}">${allHw ? '✓ ' : ''}${hwDone}/${hwTotal} homework done</span>`;
       }
     }
 
@@ -450,11 +450,11 @@
     if(doneCount === totalCount){
       const next = MODULES[idx+1];
       if(next){
-        nextEl.innerHTML = `<button class="btn primary" id="btn-next-module">Следующий модуль → ${next.title}</button>`;
+        nextEl.innerHTML = `<button class="btn primary" id="btn-next-module">Next module → ${next.title}</button>`;
         const btn = document.getElementById('btn-next-module');
         if(btn) btn.addEventListener('click', () => openModule(next.id));
       } else {
-        nextEl.innerHTML = `<div class="chip good">🏁 Это последний из открытых модулей — можно вернуться на тропу</div>`;
+        nextEl.innerHTML = `<div class="chip good">🏁 This is the last unlocked module — head back to the path</div>`;
       }
     } else {
       nextEl.innerHTML = '';
@@ -560,7 +560,7 @@
     return out.slice(0, 8);
   }
 
-  const AC_KIND_LABEL = { keyword:'ключевое', builtin:'встроенная', name:'из кода' };
+  const AC_KIND_LABEL = { keyword:'keyword', builtin:'builtin', name:'from code' };
 
   function acOpen(editor){
     const cw = currentWordAtCaret(editor);
@@ -633,8 +633,8 @@
   function showConsole(id, r){
     const c = document.getElementById(`console-${id}`);
     c.className = 'console show' + (r.ok ? '' : ' err');
-    const label = r.ok ? 'Вывод' : 'Ошибка';
-    const body = r.ok ? (r.output || '(пусто — код ничего не напечатал)') : (r.output ? r.output + '\n' + r.error : r.error);
+    const label = r.ok ? 'Output' : 'Error';
+    const body = r.ok ? (r.output || '(empty — the code printed nothing)') : (r.output ? r.output + '\n' + r.error : r.error);
     c.innerHTML = `<span class="label">${label}</span>` + body.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   }
 
@@ -658,15 +658,15 @@
 
     if(!r.ok){
       resEl.className = 'result show err';
-      resEl.innerHTML = `<b>Код не запустился</b>${errorHint(r.pyName, r.error)}`;
+      resEl.innerHTML = `<b>The code did not run</b>${errorHint(r.pyName, r.error)}`;
       return;
     }
 
     const result = t.check(r.output);
     resEl.className = 'result show ' + (result.ok ? 'ok' : 'err');
     resEl.innerHTML = result.ok
-      ? '<b>Верно! 🎉</b>Ровно то, что нужно — задача засчитана.'
-      : `<b>Пока не то</b>${result.msg}`;
+      ? '<b>Correct! 🎉</b>Exactly what was needed — task complete.'
+      : `<b>Not quite</b>${result.msg}`;
 
     if(result.ok){
       markDone(t.id);
@@ -688,7 +688,7 @@
 
     if(!r.ok){
       resEl.className = 'result show err';
-      resEl.innerHTML = `<b>Что-то пошло не так</b>Не получилось выполнить пример — это баг задания, а не твоя ошибка.`;
+      resEl.innerHTML = `<b>Something went wrong</b>The example failed to run — this is a bug in the task, not your mistake.`;
       return;
     }
 
@@ -696,13 +696,13 @@
     const isMatch = guess === actual;
     resEl.className = 'result show ' + (isMatch ? 'ok' : 'err');
     if(isMatch){
-      resEl.innerHTML = '<b>Точно! 🎯</b>Ты правильно прочитал(а) код — именно так он и выполнится.';
+      resEl.innerHTML = '<b>Exactly! 🎯</b>You read the code correctly — that is exactly how it runs.';
       markDone(t.id);
       document.getElementById(`task-${t.id}`).classList.add('done');
       renderStats();
       if(m) updateRoomProgress(m);
     } else {
-      resEl.innerHTML = `<b>Не совпало</b>На самом деле код выведет:<br><code>${escapeHtml(actual).replace(/\n/g,'<br>')}</code><br>Попробуй понять, почему, и впиши другой вариант в поле выше — потом снова нажми на кнопку.`;
+      resEl.innerHTML = `<b>Not a match</b>The code actually prints:<br><code>${escapeHtml(actual).replace(/\n/g,'<br>')}</code><br>Try to understand why, type a different answer in the field above, then hit the button again.`;
     }
   }
 

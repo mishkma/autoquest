@@ -1,28 +1,28 @@
-/* AutoQuest — данные модулей курса (теория + задачи + домашние задания). */
+/* AutoQuest — course module data (theory + tasks + homework). */
 
-// Точное совпадение с ожидаемым ASCII-выводом; если совпало бы после замены
-// кириллических букв-двойников на латинские — подсказываем про раскладку.
-// (Общая для всех check() ниже — поэтому объявлена здесь, а не в app.js.)
+// Exact match against the expected ASCII output; if it would match after
+// swapping look-alike Cyrillic letters for Latin ones, hint about the keyboard layout.
+// (Shared by every check() below — that is why it is declared here, not in app.js.)
 const CYR2LAT = {'А':'A','В':'B','Е':'E','К':'K','М':'M','Н':'H','О':'O','Р':'P','С':'C','Т':'T','Х':'X','а':'a','е':'e','о':'o','р':'p','с':'c','у':'y','х':'x'};
 function deCyr(s){ return String(s).replace(/[А-Яа-яЁё]/g, c => CYR2LAT[c] || c); }
 function matchEn(out, expected){
   const t = String(out).trim();
   if(t === expected) return {ok:true};
-  if(deCyr(t) === expected) return {ok:false, msg:'Похоже, часть букв набрана в русской раскладке — они выглядят как английские, но Python видит другие символы. Переключи раскладку на английскую и набери заново.'};
+  if(deCyr(t) === expected) return {ok:false, msg:'Looks like some letters were typed in the Cyrillic layout — they look like English letters, but Python sees different characters. Switch to the English keyboard layout and retype.'};
   return null;
 }
 
 const MODULES = [
     {
-      id:'m1', num:1, phase:'База Python', title:'Первый код и переменные',
-      desc:'print, переменные, типы данных, простые вычисления',
+      id:'m1', num:1, phase:'Python basics', title:'First code and variables',
+      desc:'print, variables, data types, simple calculations',
       theory: [
-        '<code>print(...)</code> печатает в консоль то, что внутри скобок. Пример: <code>print("Hello")</code> → напечатает <code>Hello</code>, а <code>print(2 + 2)</code> → <code>4</code>. Это твой способ «увидеть» результат.',
-        'Переменная — это подписанная коробка для значения: <code>name = "Anna"</code> кладёт строку в переменную <code>name</code>; дальше <code>print(name)</code> напечатает <code>Anna</code>. Значение можно перезаписать: <code>name = "Bob"</code>.',
-        'Тип значения важен: <code>"5"</code> — это строка (текст), а <code>5</code> — число. Их нельзя напрямую складывать оператором <code>+</code>. Само число бывает целым — <code>5</code> (<code>int</code>) — и дробным — <code>5.0</code> (<code>float</code>).',
-        'f-строка подставляет значения прямо в текст: <code>age = 30</code>; <code>print(f"Age: {age}")</code> → <code>Age: 30</code>. Внутри фигурных скобок можно даже вычислять: <code>f"{a + b}"</code> подставит сумму.',
-        'Арифметика: <code>+ - * /</code> — как в математике, но <code>/</code> ВСЕГДА даёт дробное число: <code>10 / 2</code> → <code>5.0</code>. Ещё есть <code>//</code> — целочисленное деление (<code>7 // 2</code> → <code>3</code>), <code>%</code> — остаток (<code>7 % 2</code> → <code>1</code>) и <code>**</code> — степень. Остаток и целочисленное деление удобны, когда раскладываешь что-то по группам или страницам.',
-        'Задания ниже — на английском (заодно тренируем язык). Они разного типа: написать код с нуля, дополнить, найти и починить ошибку, предсказать вывод и финальная задача-босс. Если английское условие непонятно — жми «Подсказка».'
+        '<code>print(...)</code> prints to the console whatever is inside the parentheses. Example: <code>print("Hello")</code> → prints <code>Hello</code>, and <code>print(2 + 2)</code> → <code>4</code>. This is how you "see" a result.',
+        'A variable is a labeled box for a value: <code>name = "Anna"</code> puts a string into the variable <code>name</code>; then <code>print(name)</code> prints <code>Anna</code>. The value can be overwritten: <code>name = "Bob"</code>.',
+        'The type of a value matters: <code>"5"</code> is a string (text), while <code>5</code> is a number. They cannot be added directly with <code>+</code>. A number itself can be a whole number — <code>5</code> (<code>int</code>) — or a fractional one — <code>5.0</code> (<code>float</code>).',
+        'An f-string inserts values right into text: <code>age = 30</code>; <code>print(f"Age: {age}")</code> → <code>Age: 30</code>. Inside the curly braces you can even compute: <code>f"{a + b}"</code> inserts the sum.',
+        'Arithmetic: <code>+ - * /</code> work as in math, but <code>/</code> ALWAYS gives a fractional number: <code>10 / 2</code> → <code>5.0</code>. There is also <code>//</code> — integer division (<code>7 // 2</code> → <code>3</code>), <code>%</code> — remainder (<code>7 % 2</code> → <code>1</code>) and <code>**</code> — power. The remainder and integer division are handy when splitting something into groups or pages.',
+        'The tasks below are of different kinds: write code from scratch, complete it, find and fix a bug, predict the output, and a final boss task. If a task condition is unclear, hit "Hint".'
       ],
       tasks:[
         {
@@ -53,7 +53,7 @@ const MODULES = [
             if(t.includes('???')) return {ok:false, msg:'Looks like you did not replace <code>???</code> with your name in the <code>name</code> variable.'};
             const re = /^I am .+, a QA engineer\.$/;
             if(re.test(t)) return {ok:true};
-            if(re.test(deCyr(t))) return {ok:false, msg:'Похоже, часть букв набрана в русской раскладке — они выглядят как английские, но Python видит другие символы. Переключи раскладку на английскую и набери заново.'};
+            if(re.test(deCyr(t))) return {ok:false, msg:'Looks like some letters were typed in the Cyrillic layout — they look like English letters, but Python sees different characters. Switch to the English keyboard layout and retype.'};
             return {ok:false, msg:'The format must be exactly: <code>I am NAME, a QA engineer.</code> — check the comma, the spaces and the period at the end.'};
           }
         },
@@ -165,13 +165,13 @@ total = 8
       ]
     },
     {
-      id:'m2', num:2, phase:'База Python', title:'Условия', desc:'if / elif / else, сравнения, and / or / not',
+      id:'m2', num:2, phase:'Python basics', title:'Conditions', desc:'if / elif / else, comparisons, and / or / not',
       theory:[
-        '<code>if условие:</code> выполняет блок с отступом, только если условие истинно. Обязательны двоеточие в конце строки и отступ в 4 пробела у блока. Пример: <code>if x &gt; 0:</code>, а на следующей строке с отступом — <code>print("positive")</code>.',
-        'Сравнения возвращают <code>True</code> или <code>False</code>: <code>==</code> равно, <code>!=</code> не равно, а также <code>&gt;</code>, <code>&lt;</code>, <code>&gt;=</code>, <code>&lt;=</code>. Пример: <code>5 == 5</code> → <code>True</code>, а <code>3 &gt; 10</code> → <code>False</code>.',
-        '<code>else</code> — «иначе», <code>elif</code> — «иначе если». В цепочке <code>if / elif / elif / else</code> выполняется только ПЕРВАЯ подошедшая ветка. Пример: при <code>score = 72</code> проверка <code>score &gt;= 90</code> не сработает, а <code>score &gt;= 70</code> сработает — остальные ветки Python даже не смотрит.',
-        '<code>and</code> / <code>or</code> / <code>not</code> объединяют условия: <code>and</code> — оба сразу, <code>or</code> — хотя бы одно, <code>not</code> — переворот. Пример: «число больше 0 и меньше 10» — это <code>x &gt; 0 and x &lt; 10</code> (два отдельных сравнения, соединённых через <code>and</code>).',
-        'Задания ниже — на английском (заодно тренируем язык), разных типов: написать с нуля, дополнить, найти и починить ошибку, предсказать вывод и финальная задача-босс. Плюс блок «Домашка» — задачи посложнее на потом; на переход к следующему модулю они не влияют. Непонятно английское условие — жми «Подсказка».'
+        '<code>if condition:</code> runs the indented block only when the condition is true. A colon at the end of the line and a 4-space indent for the block are both required. Example: <code>if x &gt; 0:</code>, then on the next indented line — <code>print("positive")</code>.',
+        'Comparisons return <code>True</code> or <code>False</code>: <code>==</code> equal, <code>!=</code> not equal, plus <code>&gt;</code>, <code>&lt;</code>, <code>&gt;=</code>, <code>&lt;=</code>. Example: <code>5 == 5</code> → <code>True</code>, and <code>3 &gt; 10</code> → <code>False</code>.',
+        '<code>else</code> means "otherwise", <code>elif</code> means "else if". In an <code>if / elif / elif / else</code> chain, only the FIRST matching branch runs. Example: with <code>score = 72</code>, the check <code>score &gt;= 90</code> fails, but <code>score &gt;= 70</code> succeeds — Python never even looks at the remaining branches.',
+        '<code>and</code> / <code>or</code> / <code>not</code> combine conditions: <code>and</code> — both at once, <code>or</code> — at least one, <code>not</code> — flips it. Example: "the number is greater than 0 and less than 10" is <code>x &gt; 0 and x &lt; 10</code> (two separate comparisons joined with <code>and</code>).',
+        'The tasks below are of different kinds: write from scratch, complete, find and fix a bug, predict the output, and a final boss task. Plus a "Homework" block — harder tasks for later; they do not gate the next module. If an English condition is unclear, hit "Hint".'
       ],
       tasks:[
         {
@@ -376,14 +376,14 @@ b = 95
       ]
     },
     {
-      id:'m3', num:3, phase:'База Python', title:'Циклы', desc:'for, while, range — повторяем действия',
+      id:'m3', num:3, phase:'Python basics', title:'Loops', desc:'for, while, range — repeating actions',
       theory:[
-        '<code>for i in range(5):</code> повторяет блок 5 раз, причём <code>i</code> по очереди принимает 0, 1, 2, 3, 4 — Python считает с нуля. Пример посложнее: <code>range(2, 10, 2)</code> идёт от 2 до 8 с шагом 2 (2, 4, 6, 8) — второе число не включается, третье — это шаг.',
-        '<code>while условие:</code> повторяет блок, пока условие остаётся True. Пример: <code>while count &lt; 3:</code> с <code>count += 1</code> внутри выполнится 3 раза. Если забыть менять то, от чего зависит условие, цикл станет бесконечным — частая ошибка новичков.',
-        '<code>+=</code> — сокращение для «прибавить и сохранить»: <code>total += x</code> то же самое, что <code>total = total + x</code>. Так удобно копить сумму или считать количество: заведи переменную-счётчик ДО цикла (например, <code>count = 0</code>), а внутри цикла увеличивай её при нужном условии.',
-        '<code>break</code> немедленно останавливает цикл целиком — полезно, когда нужное уже найдено. Пример: ищем элемент в списке и, как только нашли, <code>break</code> — незачем проверять остальное.',
-        '<code>continue</code> пропускает оставшуюся часть ТЕКУЩЕЙ итерации и сразу переходит к следующей — код после <code>continue</code> в этом проходе цикла не выполнится, но сам цикл продолжится дальше.',
-        '<code>for x in список:</code> перебирает элементы списка по одному — ровно так автотесты проходят по списку кейсов, статусов или времён ответа. Задания ниже — на английском, разных типов, плюс «Домашка» в конце (не влияет на переход дальше, но даёт XP и практику).'
+        '<code>for i in range(5):</code> repeats the block 5 times, and <code>i</code> takes on 0, 1, 2, 3, 4 in turn — Python counts from zero. A trickier example: <code>range(2, 10, 2)</code> goes from 2 up to 8 with a step of 2 (2, 4, 6, 8) — the second number is not included, the third is the step.',
+        '<code>while condition:</code> repeats the block while the condition stays True. Example: <code>while count &lt; 3:</code> with <code>count += 1</code> inside runs 3 times. Forgetting to change whatever the condition depends on turns the loop infinite — a common beginner mistake.',
+        '<code>+=</code> is shorthand for "add and store": <code>total += x</code> is the same as <code>total = total + x</code>. This is how you accumulate a sum or count: create a counter variable BEFORE the loop (e.g. <code>count = 0</code>), then increase it inside the loop when the condition is met.',
+        '<code>break</code> immediately stops the whole loop — useful once what you were looking for has been found. Example: search a list for an item, and as soon as it is found, <code>break</code> — no need to check the rest.',
+        '<code>continue</code> skips the rest of the CURRENT iteration and jumps straight to the next one — code after <code>continue</code> does not run for that pass, but the loop itself keeps going.',
+        '<code>for x in list:</code> walks through a list one item at a time — exactly how autotests iterate over a list of test cases, statuses or response times. The tasks below are of different kinds, plus "Homework" at the end (does not gate progress, but gives XP and practice).'
       ],
       tasks:[
         {
@@ -574,15 +574,15 @@ failed = 0
       ]
     },
     {
-      id:'m4', num:4, phase:'База Python', title:'Функции',
-      desc:'зачем нужны, def, параметры, return',
+      id:'m4', num:4, phase:'Python basics', title:'Functions',
+      desc:'why they matter, def, parameters, return',
       theory:[
-        '<code>def</code> объявляет функцию — кусок кода с именем, который можно вызывать сколько угодно раз вместо того, чтобы копировать его заново. Простой пример: <code>def square(x): return x * x</code>, потом <code>square(5)</code> вернёт 25. Пример посложнее — функция с двумя параметрами: <code>def calc_total(price, qty): return price * qty</code>.',
-        'Параметры — это имена-заглушки внутри функции, которые получают значения (аргументы) при вызове. <code>calc_total(price, qty)</code> объявляет два параметра; <code>calc_total(10, 3)</code> вызывает функцию с аргументами 10 и 3 — внутри <code>price</code> станет 10, а <code>qty</code> станет 3.',
-        '<code>return</code> — это не то же самое, что <code>print</code>. <code>print</code> просто показывает значение на экране, а <code>return</code> отдаёт значение обратно туда, откуда функцию вызвали, чтобы использовать его дальше: сохранить в переменную, передать в другую функцию, использовать в вычислении. Если в функции нет <code>return</code>, она возвращает <code>None</code>.',
-        'Внутри функции можно использовать <code>if</code>, циклы — всё, что уже знакомо. Пример: функция со скидкой — <code>def apply_discount(price, is_member): if is_member: return price * 0.9; return price</code> — считает по-разному в зависимости от условия.',
-        'Переменная, созданная ВНУТРИ функции (например, через присваивание), существует только внутри неё — это называется локальная переменная. Даже если снаружи есть переменная с таким же именем, присваивание внутри функции создаёт отдельную, новую переменную и не трогает то, что снаружи. Читать значения снаружи функция может, а вот менять их присваиванием — нет.',
-        'В автоматизации функции — это способ не повторять один и тот же код проверки много раз: написал один раз <code>is_valid_status(...)</code> или <code>calc_total(...)</code> — и переиспользуешь в десятках тестов вместо копипасты. Задания ниже — на английском, разных типов, плюс «Домашка» в конце.'
+        '<code>def</code> declares a function — a named chunk of code you can call as many times as you like instead of copying it over and over. Simple example: <code>def square(x): return x * x</code>, then <code>square(5)</code> returns 25. A trickier example — a function with two parameters: <code>def calc_total(price, qty): return price * qty</code>.',
+        'Parameters are placeholder names inside a function that receive values (arguments) at call time. <code>calc_total(price, qty)</code> declares two parameters; <code>calc_total(10, 3)</code> calls the function with the arguments 10 and 3 — inside, <code>price</code> becomes 10 and <code>qty</code> becomes 3.',
+        '<code>return</code> is not the same as <code>print</code>. <code>print</code> just displays a value on screen, while <code>return</code> hands the value back to wherever the function was called from, so it can be used further: stored in a variable, passed into another function, used in a calculation. A function with no <code>return</code> returns <code>None</code>.',
+        'Inside a function you can use <code>if</code>, loops — everything you already know. Example: a discount function — <code>def apply_discount(price, is_member): if is_member: return price * 0.9; return price</code> — computes differently depending on the condition.',
+        'A variable created INSIDE a function (e.g. by assignment) exists only inside it — this is called a local variable. Even if there is a variable with the same name outside, assigning inside the function creates a separate, new variable and does not touch the outer one. A function can read outer values, but it cannot change them by assignment.',
+        'In automation, functions are a way to avoid repeating the same check code many times: write <code>is_valid_status(...)</code> or <code>calc_total(...)</code> once — and reuse it across dozens of tests instead of copy-pasting. The tasks below are of different kinds, plus "Homework" at the end.'
       ],
       tasks:[
         {
@@ -787,15 +787,15 @@ print(count_fails(results))
       ]
     },
     {
-      id:'m5', num:5, phase:'База Python', title:'Списки и словари',
-      desc:'коллекции данных и перебор циклом',
+      id:'m5', num:5, phase:'Python basics', title:'Lists and dictionaries',
+      desc:'data collections and looping over them',
       theory:[
-        'Списки уже знакомы по циклам — теперь разберём работу с элементами по отдельности. <code>products[0]</code> — первый элемент (индексы с нуля), а <code>products[-1]</code> — последний элемент: отрицательный индекс считает с конца. Пример: <code>products = ["mouse", "keyboard", "monitor"]</code>; <code>products[0]</code> → <code>"mouse"</code>, <code>products[-1]</code> → <code>"monitor"</code>.',
-        '<code>.append(x)</code> добавляет элемент в конец списка, <code>.pop()</code> удаляет ПОСЛЕДНИЙ элемент и возвращает его. Пример: <code>cart = ["mouse"]</code>; <code>cart.append("keyboard")</code> → список <code>["mouse", "keyboard"]</code>; <code>cart.pop()</code> уберёт <code>"keyboard"</code> и вернёт его.',
-        'Словарь (<code>dict</code>) хранит пары ключ-значение — удобно для одного структурированного объекта вместо кучи отдельных переменных. Простой пример: <code>product = {"name": "Mouse", "price": 25}</code>; доступ по ключу — <code>product["name"]</code> → <code>"Mouse"</code>. Пример посложнее: словарь с несколькими типами значений сразу — строка, число, булево.',
-        '<code>.get(key, default)</code> — безопасное чтение из словаря: если ключа нет, вернёт значение по умолчанию вместо ошибки <code>KeyError</code>. Пример: <code>settings.get("discount", 0)</code> вернёт 0, если <code>"discount"</code> не задан — полезно для необязательных настроек теста.',
-        '<code>.keys()</code> и <code>.values()</code> дают отдельно ключи или отдельно значения для перебора циклом. В этой песочнице метода <code>.items()</code> нет — чтобы получить и ключ, и значение сразу, перебирай <code>.keys()</code>, а значение доставай по ключу: <code>for key in settings.keys(): print(key, settings[key])</code>.',
-        'Список словарей — способ представить набор однотипных объектов, например каталог товаров: <code>catalog = [{"name": "Mouse", "price": 25}, {"name": "Keyboard", "price": 45}]</code>. Перебор такой же, как у обычного списка: <code>for product in catalog:</code>, а внутри — <code>product["name"]</code>.'
+        'Lists are already familiar from loops — now let\'s look at working with individual items. <code>products[0]</code> is the first item (indices start at zero), and <code>products[-1]</code> is the last item — a negative index counts from the end. Example: <code>products = ["mouse", "keyboard", "monitor"]</code>; <code>products[0]</code> → <code>"mouse"</code>, <code>products[-1]</code> → <code>"monitor"</code>.',
+        '<code>.append(x)</code> adds an item to the end of a list, <code>.pop()</code> removes the LAST item and returns it. Example: <code>cart = ["mouse"]</code>; <code>cart.append("keyboard")</code> → list becomes <code>["mouse", "keyboard"]</code>; <code>cart.pop()</code> removes <code>"keyboard"</code> and returns it.',
+        'A dictionary (<code>dict</code>) stores key-value pairs — handy for one structured object instead of a pile of separate variables. Simple example: <code>product = {"name": "Mouse", "price": 25}</code>; access by key — <code>product["name"]</code> → <code>"Mouse"</code>. A trickier example: a dict with several value types at once — string, number, boolean.',
+        '<code>.get(key, default)</code> is a safe way to read from a dict: if the key is missing, it returns the default value instead of a <code>KeyError</code>. Example: <code>settings.get("discount", 0)</code> returns 0 if <code>"discount"</code> is not set — useful for optional test settings.',
+        '<code>.keys()</code> and <code>.values()</code> give just the keys or just the values to loop over. This sandbox has no <code>.items()</code> — to get both the key and the value at once, loop over <code>.keys()</code> and look up the value by key: <code>for key in settings.keys(): print(key, settings[key])</code>.',
+        'A list of dictionaries is a way to represent a set of same-shaped objects, for example a product catalog: <code>catalog = [{"name": "Mouse", "price": 25}, {"name": "Keyboard", "price": 45}]</code>. Looping works the same as with a plain list: <code>for product in catalog:</code>, and inside — <code>product["name"]</code>.'
       ],
       tasks:[
         {
@@ -982,14 +982,14 @@ print(prices)
         }
       ]
     },
-    {id:'m6', num:6, phase:'База Python', title:'Установка окружения', desc:'ставим Python по-настоящему — VS Code, запуск файлов'},
-    {id:'m7', num:7, phase:'База Python', title:'ООП: классы и объекты', desc:'классы, объекты, атрибуты и методы — фундамент Page Object и фикстур'},
-    {id:'m8', num:8, phase:'База Python', title:'Стандартная библиотека и генераторы', desc:'полезные встроенные модули, итераторы и генераторы'},
-    {id:'m9', num:9, phase:'Автотесты на Python', title:'Pytest', desc:'запуск тестов, assert, фикстуры, параметризация'},
-    {id:'m10', num:10, phase:'Автотесты на Python', title:'Моки и стабы', desc:'подмена зависимостей: mock, stub — когда и зачем'},
-    {id:'m11', num:11, phase:'Инструменты автоматизации', title:'API-тестирование', desc:'проверка запросов и ответов через requests'},
-    {id:'m12', num:12, phase:'Инструменты автоматизации', title:'Базы данных', desc:'проверка данных в БД прямо из тестов'},
-    {id:'m13', num:13, phase:'Инструменты автоматизации', title:'Локаторы и Selenium', desc:'поиск элементов и автоматизация браузера'},
-    {id:'m14', num:14, phase:'Инструменты автоматизации', title:'Playwright', desc:'современная автоматизация браузера'},
-    {id:'m15', num:15, phase:'Инструменты автоматизации', title:'Архитектура фреймворка автотестов', desc:'как собрать поддерживаемый проект автотестов'}
+    {id:'m6', num:6, phase:'Python basics', title:'Environment setup', desc:'installing Python for real — VS Code, running files'},
+    {id:'m7', num:7, phase:'Python basics', title:'OOP: classes and objects', desc:'classes, objects, attributes and methods — the foundation of Page Object and fixtures'},
+    {id:'m8', num:8, phase:'Python basics', title:'Standard library and generators', desc:'useful built-in modules, iterators and generators'},
+    {id:'m9', num:9, phase:'Automated tests in Python', title:'Pytest', desc:'running tests, assert, fixtures, parametrization'},
+    {id:'m10', num:10, phase:'Automated tests in Python', title:'Mocks and stubs', desc:'faking dependencies: mock, stub — when and why'},
+    {id:'m11', num:11, phase:'Automation tooling', title:'API testing', desc:'checking requests and responses with requests'},
+    {id:'m12', num:12, phase:'Automation tooling', title:'Databases', desc:'checking data in a DB straight from tests'},
+    {id:'m13', num:13, phase:'Automation tooling', title:'Locators and Selenium', desc:'finding elements and automating the browser'},
+    {id:'m14', num:14, phase:'Automation tooling', title:'Playwright', desc:'modern browser automation'},
+    {id:'m15', num:15, phase:'Automation tooling', title:'Test framework architecture', desc:'building a maintainable autotest project'}
   ];

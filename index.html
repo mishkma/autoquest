@@ -1,10 +1,10 @@
 <!doctype html>
-<html lang="ru">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>AutoQuest</title>
-<meta name="description" content="Личный квест-курс Python: теория маленькими шагами, практика и мгновенная проверка.">
+<meta name="description" content="A personal Python quest course: theory in small steps, practice and instant feedback.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Karla:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -15,10 +15,10 @@
 <div class="topbar">
   <div class="topbar-inner">
     <div class="brand"><span class="mark">&gt;_</span><h1>AutoQuest</h1></div>
-    <div class="stat">Уровень <b id="stat-level">1</b></div>
+    <div class="stat">Level <b id="stat-level">1</b></div>
     <div class="xpbar"><i id="xpbar-fill" style="width:0%"></i></div>
     <div class="stat"><b id="stat-xp">0</b>&nbsp;XP</div>
-    <div class="streak">🔥 <span id="stat-streak">0</span> дней подряд</div>
+    <div class="streak">🔥 <span id="stat-streak">0</span>-day streak</div>
   </div>
 </div>
 
@@ -26,16 +26,16 @@
 
   <section id="view-path" class="view">
     <div class="hero">
-      <div class="kicker">Личный курс · для Михаила</div>
-      <h2>Крепкая база Python, шаг за шагом</h2>
-      <p>Маленькие уровни, мгновенная проверка, никакой теории «на будущее». Открывай тропу — практика опирается только на то, что уже объяснено рядом с ней.</p>
+      <div class="kicker">Personal course · for Mikhail</div>
+      <h2>A solid Python foundation, step by step</h2>
+      <p>Small levels, instant feedback, no theory "for later". Open the path — every practice task relies only on what has already been explained next to it.</p>
     </div>
 
     <div class="path" id="path-list"></div>
   </section>
 
   <section id="view-module" class="view" hidden>
-    <button class="backbtn" id="btn-back">← Вся тропа</button>
+    <button class="backbtn" id="btn-back">← Whole path</button>
     <div id="module-room"></div>
   </section>
 
