@@ -1,5 +1,17 @@
 /* AutoQuest — данные модулей курса (теория + задачи + домашние задания). */
 
+// Точное совпадение с ожидаемым ASCII-выводом; если совпало бы после замены
+// кириллических букв-двойников на латинские — подсказываем про раскладку.
+// (Общая для всех check() ниже — поэтому объявлена здесь, а не в app.js.)
+const CYR2LAT = {'А':'A','В':'B','Е':'E','К':'K','М':'M','Н':'H','О':'O','Р':'P','С':'C','Т':'T','Х':'X','а':'a','е':'e','о':'o','р':'p','с':'c','у':'y','х':'x'};
+function deCyr(s){ return String(s).replace(/[А-Яа-яЁё]/g, c => CYR2LAT[c] || c); }
+function matchEn(out, expected){
+  const t = String(out).trim();
+  if(t === expected) return {ok:true};
+  if(deCyr(t) === expected) return {ok:false, msg:'Похоже, часть букв набрана в русской раскладке — они выглядят как английские, но Python видит другие символы. Переключи раскладку на английскую и набери заново.'};
+  return null;
+}
+
 const MODULES = [
     {
       id:'m1', num:1, phase:'База Python', title:'Первый код и переменные',
@@ -561,8 +573,415 @@ failed = 0
         }
       ]
     },
-    {id:'m4', num:4, phase:'База Python', title:'Функции', desc:'зачем нужны, def, параметры, return'},
-    {id:'m5', num:5, phase:'База Python', title:'Списки и словари', desc:'коллекции данных и перебор циклом'},
+    {
+      id:'m4', num:4, phase:'База Python', title:'Функции',
+      desc:'зачем нужны, def, параметры, return',
+      theory:[
+        '<code>def</code> объявляет функцию — кусок кода с именем, который можно вызывать сколько угодно раз вместо того, чтобы копировать его заново. Простой пример: <code>def square(x): return x * x</code>, потом <code>square(5)</code> вернёт 25. Пример посложнее — функция с двумя параметрами: <code>def calc_total(price, qty): return price * qty</code>.',
+        'Параметры — это имена-заглушки внутри функции, которые получают значения (аргументы) при вызове. <code>calc_total(price, qty)</code> объявляет два параметра; <code>calc_total(10, 3)</code> вызывает функцию с аргументами 10 и 3 — внутри <code>price</code> станет 10, а <code>qty</code> станет 3.',
+        '<code>return</code> — это не то же самое, что <code>print</code>. <code>print</code> просто показывает значение на экране, а <code>return</code> отдаёт значение обратно туда, откуда функцию вызвали, чтобы использовать его дальше: сохранить в переменную, передать в другую функцию, использовать в вычислении. Если в функции нет <code>return</code>, она возвращает <code>None</code>.',
+        'Внутри функции можно использовать <code>if</code>, циклы — всё, что уже знакомо. Пример: функция со скидкой — <code>def apply_discount(price, is_member): if is_member: return price * 0.9; return price</code> — считает по-разному в зависимости от условия.',
+        'Переменная, созданная ВНУТРИ функции (например, через присваивание), существует только внутри неё — это называется локальная переменная. Даже если снаружи есть переменная с таким же именем, присваивание внутри функции создаёт отдельную, новую переменную и не трогает то, что снаружи. Читать значения снаружи функция может, а вот менять их присваиванием — нет.',
+        'В автоматизации функции — это способ не повторять один и тот же код проверки много раз: написал один раз <code>is_valid_status(...)</code> или <code>calc_total(...)</code> — и переиспользуешь в десятках тестов вместо копипасты. Задания ниже — на английском, разных типов, плюс «Домашка» в конце.'
+      ],
+      tasks:[
+        {
+          id:'m4-t1', title:'Greet the tester',
+          goal:'Write a function named <code>greet_tester</code> that takes one parameter <code>name</code> and returns the string <b>"Hello, NAME, ready to test?"</b> (using an f-string). Then call <code>greet_tester("Alex")</code> and print the result.',
+          hint:'<code>def greet_tester(name): return f"Hello, {name}, ready to test?"</code> — then <code>print(greet_tester("Alex"))</code>.',
+          starter:
+`# Task: define greet_tester(name) that returns an f-string greeting
+# Then call greet_tester("Alex") and print the result
+
+`,
+          check(out){
+            const m = matchEn(out, 'Hello, Alex, ready to test?'); if(m) return m;
+            return {ok:false, msg:'Expected <code>Hello, Alex, ready to test?</code>. Make sure the function RETURNS the string (not prints it), and that you print the result of the call.'};
+          }
+        },
+        {
+          id:'m4-t2', title:'Cart total',
+          goal:'Write a function <code>calc_total(price, qty)</code> that returns <code>price * qty</code>. Then print <code>calc_total(25, 4)</code>.',
+          hint:'<code>def calc_total(price, qty): return price * qty</code> — call it inside <code>print(...)</code>.',
+          starter:
+`# Task: define calc_total(price, qty) that returns price * qty
+# Then print calc_total(25, 4)
+
+`,
+          check(out){
+            const m = matchEn(out, '100'); if(m) return m;
+            return {ok:false, msg:'Expected <code>100</code> — 25 multiplied by 4. Check that the function returns <code>price * qty</code>.'};
+          }
+        },
+        {
+          id:'m4-t3', title:'Predict: parameters are local copies', kind:'predict',
+          goal:'Do not run it yet. Read the code and type what it will print, then check yourself.',
+          hint:'<code>x</code> inside <code>double</code> is a separate local variable — changing it does not change <code>n</code> outside the function.',
+          code:
+`def double(x):
+    x = x * 2
+    return x
+
+n = 5
+result = double(n)
+print(n)
+print(result)
+`
+        },
+        {
+          id:'m4-t4', title:'Fix: prints instead of returns',
+          goal:'Calling <code>print(triple(5))</code> should print only <b>15</b>. Right now it prints two lines (<code>15</code> and then <code>None</code>) because the function prints internally instead of returning. Fix the function.',
+          hint:'Remove the <code>print(result)</code> line inside the function and replace it with <code>return result</code> — then the outer <code>print(triple(5))</code> will show the value.',
+          starter:
+`def triple(x):
+    result = x * 3
+    print(result)
+
+print(triple(5))
+`,
+          check(out){
+            const m = matchEn(out, '15'); if(m) return m;
+            return {ok:false, msg:'Expected exactly one line: <code>15</code>. The function should RETURN the value instead of printing it itself.'};
+          }
+        },
+        {
+          id:'m4-t5', title:'Apply discount',
+          goal:'Write a function <code>apply_discount(price, is_member)</code> that returns <code>price * 0.9</code> if <code>is_member</code> is <code>True</code>, otherwise returns <code>price</code> unchanged. Print <code>apply_discount(100, True)</code>, then <code>apply_discount(100, False)</code>.',
+          hint:'<code>if is_member: return price * 0.9</code>, then (outside the if) <code>return price</code>. Note that <code>100 * 0.9</code> becomes a float, so it prints as <code>90.0</code>.',
+          starter:
+`def apply_discount(price, is_member):
+    # Task: return price * 0.9 if is_member is True, otherwise return price
+
+print(apply_discount(100, True))
+print(apply_discount(100, False))
+`,
+          check(out){
+            const m = matchEn(out, '90.0\n100'); if(m) return m;
+            return {ok:false, msg:'Expected <code>90.0</code> then <code>100</code>. Check both branches of your <code>if</code>.'};
+          }
+        },
+        {
+          id:'m4-t6', title:'One function inside another',
+          goal:'Write two functions: <code>calc_subtotal(price, qty)</code> returning <code>price * qty</code>, and <code>add_tax(amount)</code> returning <code>amount * 1.2</code> (20% tax). Then print <code>add_tax(calc_subtotal(50, 2))</code> — call one function inside the other.',
+          hint:'Define both functions first. The result of <code>calc_subtotal(50, 2)</code> becomes the argument passed into <code>add_tax(...)</code>.',
+          starter:
+`# Task: define calc_subtotal(price, qty) -> price * qty
+# Task: define add_tax(amount) -> amount * 1.2
+# Then print add_tax(calc_subtotal(50, 2))
+
+`,
+          check(out){
+            const m = matchEn(out, '120.0'); if(m) return m;
+            return {ok:false, msg:'Expected <code>120.0</code> — subtotal 100, then +20% tax. Check both functions and the order you call them in.'};
+          }
+        },
+        {
+          id:'m4-t7', title:'Fix: swapped arguments',
+          goal:'This should apply a discount of 5 to a price of 100 (expected result: <b>95</b>). It prints the wrong number because the arguments are passed in the wrong order. Fix the function call.',
+          hint:'The function is defined as <code>apply_discount(price, discount)</code> — check the order of the two numbers in the call below.',
+          starter:
+`def apply_discount(price, discount):
+    return price - discount
+
+print(apply_discount(5, 100))
+`,
+          check(out){
+            const m = matchEn(out, '95'); if(m) return m;
+            return {ok:false, msg:'Expected <code>95</code>. Swap the order of the two arguments in the call to match <code>apply_discount(price, discount)</code>.'};
+          }
+        },
+        {
+          id:'m4-t8', title:'Predict: local variable shadows the outer one', kind:'predict',
+          goal:'Read the code and type what it will print, then check yourself.',
+          hint:'Assigning to <code>count</code> inside <code>increment</code> creates a NEW local variable — it does not change the <code>count</code> defined outside the function.',
+          code:
+`count = 0
+
+def increment():
+    count = 1
+    return count
+
+increment()
+print(count)
+`
+        },
+        {
+          id:'m4-t9', title:'Is the response fast?',
+          goal:'Write a function <code>is_fast(response_time)</code> that returns <code>True</code> if <code>response_time</code> is less than 200, otherwise <code>False</code>. Then write <code>if is_fast(150): print("OK") else: print("SLOW")</code>.',
+          hint:'<code>def is_fast(response_time): return response_time &lt; 200</code> — a comparison is already a value, you can return it directly without an <code>if</code> inside the function.',
+          starter:
+`# Task: define is_fast(response_time) that returns response_time < 200
+
+if is_fast(150):
+    print("OK")
+else:
+    print("SLOW")
+`,
+          check(out){
+            const m = matchEn(out, 'OK'); if(m) return m;
+            return {ok:false, msg:'Expected <code>OK</code> — 150 is less than 200. Check that <code>is_fast</code> returns the comparison result.'};
+          }
+        },
+        {
+          id:'m4-t10', title:'Order summary report', boss:true,
+          goal:'Write a function <code>calc_total(price, qty)</code> that returns <code>price * qty</code>. Use it to compute totals for three orders — <code>calc_total(20, 2)</code>, <code>calc_total(45, 1)</code>, <code>calc_total(15, 3)</code> — add all three totals into one number called <code>grand_total</code>, and print EXACTLY:<br><code>Order total: 130</code>',
+          hint:'Store each call in its own variable (or add them directly), then print with an f-string: <code>print(f"Order total: {grand_total}")</code>.',
+          starter:
+`def calc_total(price, qty):
+    # Task: return price * qty
+
+# Task: compute totals for (20,2), (45,1), (15,3), add them into grand_total
+# Then print: Order total: <grand_total>
+`,
+          check(out){
+            const m = matchEn(out, 'Order total: 130'); if(m) return m;
+            return {ok:false, msg:'Expected exactly <code>Order total: 130</code>. Check <code>calc_total</code> and that you added up all three results correctly.'};
+          }
+        }
+      ],
+      homework:[
+        {
+          id:'m4-hw1', title:'Format test result',
+          goal:'Write a function <code>format_result(name, passed)</code> that returns <b>"NAME: PASS"</b> if <code>passed</code> is <code>True</code>, otherwise <b>"NAME: FAIL"</b> (f-strings). Call it with <code>("test_login", True)</code> and <code>("test_logout", False)</code>, printing each result on its own line.',
+          hint:'<code>if passed: return f"{name}: PASS"</code>, else <code>return f"{name}: FAIL"</code>. Call the function twice, once per <code>print</code>.',
+          starter:
+`# Task: define format_result(name, passed) -> f"{name}: PASS" or f"{name}: FAIL"
+
+print(format_result("test_login", True))
+print(format_result("test_logout", False))
+`,
+          check(out){
+            const m = matchEn(out, 'test_login: PASS\ntest_logout: FAIL'); if(m) return m;
+            return {ok:false, msg:'Expected <code>test_login: PASS</code> then <code>test_logout: FAIL</code>. Check both branches of the function.'};
+          }
+        },
+        {
+          id:'m4-hw2', title:'Predict: bonus does not change the original', kind:'predict',
+          goal:'Read the code and type what it will print, then check yourself.',
+          hint:'<code>score</code> inside <code>add_bonus</code> is a local copy of <code>s</code> — changing it does not affect <code>s</code> outside.',
+          code:
+`def add_bonus(score):
+    score = score + 10
+    return score
+
+s = 50
+print(add_bonus(s))
+print(s)
+`
+        },
+        {
+          id:'m4-hw3', title:'Count using a function',
+          goal:'Write a function <code>count_fails(results)</code> that takes a list, loops over it with a counter, and returns how many items equal <b>"fail"</b>. Call it with <code>results = ["pass", "fail", "fail", "pass", "fail"]</code> and print the returned count.',
+          hint:'Inside the function: <code>count = 0</code>, then <code>for r in results:</code> with <code>if r == "fail": count += 1</code>. Return <code>count</code> after the loop.',
+          starter:
+`# Task: define count_fails(results) — loop, count "fail" items, return the count
+
+results = ["pass", "fail", "fail", "pass", "fail"]
+print(count_fails(results))
+`,
+          check(out){
+            const m = matchEn(out, '3'); if(m) return m;
+            return {ok:false, msg:'Expected <code>3</code> — the number of <code>"fail"</code> items. Make sure the counter is returned, not printed inside the function.'};
+          }
+        }
+      ]
+    },
+    {
+      id:'m5', num:5, phase:'База Python', title:'Списки и словари',
+      desc:'коллекции данных и перебор циклом',
+      theory:[
+        'Списки уже знакомы по циклам — теперь разберём работу с элементами по отдельности. <code>products[0]</code> — первый элемент (индексы с нуля), а <code>products[-1]</code> — последний элемент: отрицательный индекс считает с конца. Пример: <code>products = ["mouse", "keyboard", "monitor"]</code>; <code>products[0]</code> → <code>"mouse"</code>, <code>products[-1]</code> → <code>"monitor"</code>.',
+        '<code>.append(x)</code> добавляет элемент в конец списка, <code>.pop()</code> удаляет ПОСЛЕДНИЙ элемент и возвращает его. Пример: <code>cart = ["mouse"]</code>; <code>cart.append("keyboard")</code> → список <code>["mouse", "keyboard"]</code>; <code>cart.pop()</code> уберёт <code>"keyboard"</code> и вернёт его.',
+        'Словарь (<code>dict</code>) хранит пары ключ-значение — удобно для одного структурированного объекта вместо кучи отдельных переменных. Простой пример: <code>product = {"name": "Mouse", "price": 25}</code>; доступ по ключу — <code>product["name"]</code> → <code>"Mouse"</code>. Пример посложнее: словарь с несколькими типами значений сразу — строка, число, булево.',
+        '<code>.get(key, default)</code> — безопасное чтение из словаря: если ключа нет, вернёт значение по умолчанию вместо ошибки <code>KeyError</code>. Пример: <code>settings.get("discount", 0)</code> вернёт 0, если <code>"discount"</code> не задан — полезно для необязательных настроек теста.',
+        '<code>.keys()</code> и <code>.values()</code> дают отдельно ключи или отдельно значения для перебора циклом. В этой песочнице метода <code>.items()</code> нет — чтобы получить и ключ, и значение сразу, перебирай <code>.keys()</code>, а значение доставай по ключу: <code>for key in settings.keys(): print(key, settings[key])</code>.',
+        'Список словарей — способ представить набор однотипных объектов, например каталог товаров: <code>catalog = [{"name": "Mouse", "price": 25}, {"name": "Keyboard", "price": 45}]</code>. Перебор такой же, как у обычного списка: <code>for product in catalog:</code>, а внутри — <code>product["name"]</code>.'
+      ],
+      tasks:[
+        {
+          id:'m5-t1', title:'First and last product',
+          goal:'Given <code>products = ["mouse", "keyboard", "monitor", "webcam"]</code>, print the first product and the last product, each on its own line — use indexing, do not type the words.',
+          hint:'<code>products[0]</code> is the first item. <code>products[-1]</code> is the last item — a negative index counts from the end.',
+          starter:
+`products = ["mouse", "keyboard", "monitor", "webcam"]
+
+# Task: print products[0], then print the last item using a negative index
+`,
+          check(out){
+            const m = matchEn(out, 'mouse\nwebcam'); if(m) return m;
+            return {ok:false, msg:'Expected <code>mouse</code> then <code>webcam</code>. Use <code>products[0]</code> and <code>products[-1]</code>, not the literal words.'};
+          }
+        },
+        {
+          id:'m5-t2', title:'Add to cart',
+          goal:'Start with <code>cart = ["mouse"]</code>. Add <b>"keyboard"</b> to the cart with <code>.append(...)</code>, then print the whole cart.',
+          hint:'<code>cart.append("keyboard")</code> adds an item to the end. Then <code>print(cart)</code> shows the whole list, Python-style, in square brackets.',
+          starter:
+`cart = ["mouse"]
+
+# Task: append "keyboard" to cart, then print cart
+`,
+          check(out){
+            const m = matchEn(out, "['mouse', 'keyboard']"); if(m) return m;
+            return {ok:false, msg:"Expected <code>['mouse', 'keyboard']</code> — print the whole list after appending, not the items separately."};
+          }
+        },
+        {
+          id:'m5-t3', title:'Predict: pop removes the last item', kind:'predict',
+          goal:'Read the code and type what it will print, then check yourself.',
+          hint:'<code>.pop()</code> removes and returns the LAST item of the list — the list itself gets shorter.',
+          code:
+`cart = ["mouse", "keyboard", "monitor"]
+removed = cart.pop()
+print(removed)
+print(cart)
+`
+        },
+        {
+          id:'m5-t4', title:'Product details',
+          goal:'Create a dict <code>product</code> with keys <b>"name"</b> (value <b>"Mouse"</b>), <b>"price"</b> (value <b>25</b>), and <b>"in_stock"</b> (value <b>True</b>). Then print <code>product["name"]</code> and <code>product["price"]</code>, each on its own line.',
+          hint:'A dict literal looks like <code>{"key": value, "key2": value2}</code>. Access a value with square brackets and the key: <code>product["name"]</code>.',
+          starter:
+`# Task: create product = {"name": "Mouse", "price": 25, "in_stock": True}
+# Then print product["name"] and product["price"]
+`,
+          check(out){
+            const m = matchEn(out, 'Mouse\n25'); if(m) return m;
+            return {ok:false, msg:'Expected <code>Mouse</code> then <code>25</code>. Check the dict literal and the keys you access.'};
+          }
+        },
+        {
+          id:'m5-t5', title:'Fix: missing key crashes',
+          goal:'This code crashes with a <b>KeyError</b> because <code>"discount"</code> is not in <code>settings</code>. Fix it to safely read <code>"discount"</code> with a default value of <b>0</b>, and print the result.',
+          hint:'Use <code>settings.get("discount", 0)</code> instead of <code>settings["discount"]</code> — <code>.get</code> lets you provide a default instead of crashing when the key is missing.',
+          starter:
+`settings = {"currency": "USD", "tax_rate": 20}
+
+print(settings["discount"])
+`,
+          check(out){
+            const m = matchEn(out, '0'); if(m) return m;
+            return {ok:false, msg:'Expected <code>0</code>. Use <code>.get("discount", 0)</code> instead of square-bracket access.'};
+          }
+        },
+        {
+          id:'m5-t6', title:'Print all settings',
+          goal:'Given <code>settings = {"currency": "USD", "tax_rate": 20, "free_shipping": True}</code>, loop over the keys and print each one together with its value, one per line, like this: <code>currency: USD</code>.',
+          hint:'<code>for key in settings.keys():</code> loops over just the keys. Inside: <code>print(f"{key}: {settings[key]}")</code>.',
+          starter:
+`settings = {"currency": "USD", "tax_rate": 20, "free_shipping": True}
+
+# Task: loop over settings.keys(), print "KEY: VALUE" for each (use settings[key])
+`,
+          check(out){
+            const m = matchEn(out, 'currency: USD\ntax_rate: 20\nfree_shipping: True'); if(m) return m;
+            return {ok:false, msg:'Expected three lines: <code>currency: USD</code>, <code>tax_rate: 20</code>, <code>free_shipping: True</code>, in that order. Check your f-string and loop variable.'};
+          }
+        },
+        {
+          id:'m5-t7', title:'Product catalog',
+          goal:'Given <code>catalog</code> — a list of three product dicts (name + price) — loop over it and print each product name, one per line.',
+          hint:'<code>for product in catalog:</code> — each <code>product</code> is a dict, so use <code>product["name"]</code> inside the loop.',
+          starter:
+`catalog = [{"name": "Mouse", "price": 25}, {"name": "Keyboard", "price": 45}, {"name": "Monitor", "price": 150}]
+
+# Task: loop over catalog, print product["name"] for each product
+`,
+          check(out){
+            const m = matchEn(out, 'Mouse\nKeyboard\nMonitor'); if(m) return m;
+            return {ok:false, msg:'Expected <code>Mouse</code>, <code>Keyboard</code>, <code>Monitor</code> on separate lines, in catalog order.'};
+          }
+        },
+        {
+          id:'m5-t8', title:'Predict: summing a list of dicts', kind:'predict',
+          goal:'Read the code and type what it will print, then check yourself.',
+          hint:'The loop adds up <code>product["price"]</code> for every product in the list — 25 + 45.',
+          code:
+`catalog = [{"name": "Mouse", "price": 25}, {"name": "Keyboard", "price": 45}]
+
+total = 0
+for product in catalog:
+    total += product["price"]
+
+print(total)
+`
+        },
+        {
+          id:'m5-t9', title:'Fix: wrong key name',
+          goal:'This code crashes with a <b>KeyError</b>. Fix the key name so it correctly prints the price of the first product.',
+          hint:'The dict uses the key <code>"price"</code>, not <code>"cost"</code> — check the dict literal above for the exact key name.',
+          starter:
+`catalog = [{"name": "Mouse", "price": 25}, {"name": "Keyboard", "price": 45}]
+
+print(catalog[0]["cost"])
+`,
+          check(out){
+            const m = matchEn(out, '25'); if(m) return m;
+            return {ok:false, msg:'Expected <code>25</code>. Fix the key name used to look up the price.'};
+          }
+        },
+        {
+          id:'m5-t10', title:'Catalog value report', boss:true,
+          goal:'Given a <code>catalog</code> of four products, compute how many cost <b>50 or more</b>, and the total value of the whole catalog. Print EXACTLY two lines:<br><code>Expensive: 2 of 4</code><br><code>Total value: 280</code>',
+          hint:'Loop once over <code>catalog</code>. Inside: add <code>product["price"]</code> to <code>total</code>, and if <code>product["price"] &gt;= 50</code>, add 1 to <code>expensive</code>. Print both lines after the loop.',
+          starter:
+`catalog = [{"name": "Mouse", "price": 25}, {"name": "Keyboard", "price": 45}, {"name": "Monitor", "price": 150}, {"name": "Webcam", "price": 60}]
+expensive = 0
+total = 0
+
+# Task: loop over catalog, add up total value, count products with price >= 50 into expensive
+# Then print:
+# 1) Expensive: <expensive> of <len(catalog)>
+# 2) Total value: <total>
+`,
+          check(out){
+            const m = matchEn(out, 'Expensive: 2 of 4\nTotal value: 280'); if(m) return m;
+            return {ok:false, msg:'Expected exactly <code>Expensive: 2 of 4</code> then <code>Total value: 280</code>. Check the comparison and that both counters use the same loop.'};
+          }
+        }
+      ],
+      homework:[
+        {
+          id:'m5-hw1', title:'Safe config read',
+          goal:'Given <code>config = {"env": "staging", "retries": 3}</code>, safely print the value for key <b>"timeout"</b> using <code>.get</code> with a default of <b>30</b> (since <code>"timeout"</code> is not in <code>config</code>).',
+          hint:'<code>config.get("timeout", 30)</code> returns <code>30</code> because <code>"timeout"</code> is missing — no crash.',
+          starter:
+`config = {"env": "staging", "retries": 3}
+
+# Task: print config.get("timeout", 30)
+`,
+          check(out){
+            const m = matchEn(out, '30'); if(m) return m;
+            return {ok:false, msg:'Expected <code>30</code>. Use <code>.get("timeout", 30)</code>.'};
+          }
+        },
+        {
+          id:'m5-hw2', title:'Predict: sort then reverse', kind:'predict',
+          goal:'Read the code and type what it will print, then check yourself.',
+          hint:'<code>.sort()</code> arranges the numbers from smallest to largest, then <code>.reverse()</code> flips the whole list — the result goes from largest to smallest.',
+          code:
+`prices = [10, 25, 15, 40]
+prices.sort()
+prices.reverse()
+print(prices)
+`
+        },
+        {
+          id:'m5-hw3', title:'Find product by name',
+          goal:'Given a <code>catalog</code> of three product dicts, loop over it and find the product with name <b>"Keyboard"</b> — print its price, then stop looking with <code>break</code>.',
+          hint:'<code>for product in catalog:</code> check <code>if product["name"] == "Keyboard":</code>, then <code>print(product["price"])</code> and <code>break</code>.',
+          starter:
+`catalog = [{"name": "Mouse", "price": 25}, {"name": "Keyboard", "price": 45}, {"name": "Monitor", "price": 150}]
+
+# Task: loop over catalog, find the product named "Keyboard", print its price, then break
+`,
+          check(out){
+            const m = matchEn(out, '45'); if(m) return m;
+            return {ok:false, msg:'Expected <code>45</code> — the price of the Keyboard product. Check the comparison and that you print product["price"], not something else.'};
+          }
+        }
+      ]
+    },
     {id:'m6', num:6, phase:'База Python', title:'Установка окружения', desc:'ставим Python по-настоящему — VS Code, запуск файлов'},
     {id:'m7', num:7, phase:'База Python', title:'ООП: классы и объекты', desc:'классы, объекты, атрибуты и методы — фундамент Page Object и фикстур'},
     {id:'m8', num:8, phase:'База Python', title:'Стандартная библиотека и генераторы', desc:'полезные встроенные модули, итераторы и генераторы'},

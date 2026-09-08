@@ -649,17 +649,6 @@
     if(resEl){ resEl.className = 'result'; resEl.innerHTML = ''; }
   }
 
-  const CYR2LAT = {'А':'A','В':'B','Е':'E','К':'K','М':'M','Н':'H','О':'O','Р':'P','С':'C','Т':'T','Х':'X','а':'a','е':'e','о':'o','р':'p','с':'c','у':'y','х':'x'};
-  function deCyr(s){ return String(s).replace(/[А-Яа-яЁё]/g, c => CYR2LAT[c] || c); }
-  // Точное совпадение с ожидаемым ASCII-выводом; если совпало бы после замены
-  // кириллических букв-двойников на латинские — подсказываем про раскладку.
-  function matchEn(out, expected){
-    const t = String(out).trim();
-    if(t === expected) return {ok:true};
-    if(deCyr(t) === expected) return {ok:false, msg:'Похоже, часть букв набрана в русской раскладке — они выглядят как английские, но Python видит другие символы. Переключи раскладку на английскую и набери заново.'};
-    return null;
-  }
-
   function runCheck(t, m){
     const code = document.getElementById(`code-${t.id}`).value;
     const resEl = document.getElementById(`res-${t.id}`);
