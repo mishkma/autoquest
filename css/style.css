@@ -306,7 +306,17 @@
     position:relative;width:100%;
     background:transparent;border:none;border-radius:0;
     color:transparent;caret-color:var(--ink);
-    resize:none;overflow-y:auto;
+    resize:none;overflow-y:auto;overflow-x:hidden;
+    /* overflow-x MUST stay hidden here: leaving it unset makes it compute to
+       `auto` (a CSS quirk — when one axis is a scrolling value, `visible` on
+       the other axis is forced to `auto` too), and with white-space:pre +
+       wrap="off" a long line then grows a horizontal scrollbar that eats a
+       few px of the textarea's own height. .editor-gutter/.editor-highlight
+       never get that scrollbar (they use overflow:hidden), so their
+       scrollable range ends up a few px shorter than the textarea's — right
+       at the bottom of a scrolled editor their scrollTop then clamps short
+       of the textarea's, and the last line renders visibly offset between
+       the two layers (looks like a duplicated/ghost last line). */
   }
   .tok-keyword{color:var(--tok-kw);font-weight:600;}
   .tok-string{color:var(--tok-str);}
