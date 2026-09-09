@@ -124,7 +124,13 @@
     return 'available';
   }
 
+  // ?unlock in the URL opens every module regardless of progress — for
+  // reviewing content while building the course. Never linked from the UI;
+  // the normal locked path is untouched for anyone without the param.
+  const DEV_UNLOCK = new URLSearchParams(location.search).has('unlock');
+
   function prevModuleDone(idx){
+    if(DEV_UNLOCK) return true;
     if(idx === 0) return true;
     const prev = MODULES[idx-1];
     if(!prev.tasks) return false;
