@@ -1782,10 +1782,132 @@ def test_cart_total():
         }
       ]
     },
-    {id:'m10', num:10, phase:'Automated tests in Python', title:'Mocks and stubs', desc:'faking dependencies: mock, stub — when and why'},
-    {id:'m11', num:11, phase:'Automation tooling', title:'API testing', desc:'checking requests and responses with requests'},
-    {id:'m12', num:12, phase:'Automation tooling', title:'Databases', desc:'checking data in a DB straight from tests'},
-    {id:'m13', num:13, phase:'Automation tooling', title:'Locators and Selenium', desc:'finding elements and automating the browser'},
-    {id:'m14', num:14, phase:'Automation tooling', title:'Playwright', desc:'modern browser automation'},
-    {id:'m15', num:15, phase:'Automation tooling', title:'Test framework architecture', desc:'building a maintainable autotest project'}
+    {
+      id:'m10', num:10, phase:'Automated tests in Python', title:'Exception handling',
+      desc:'try/except, raising your own errors, when to catch what',
+      theory:[
+        '<code>try: ... except SomeError: ...</code> is the real, controlled version of every traceback you have been reading since Module 6 and 7 — instead of the script dying, YOUR code decides what happens next. Code inside <code>try:</code> runs normally; if it raises the exact exception type named after <code>except</code>, the <code>except</code> block runs instead of crashing.',
+        'Always name a SPECIFIC exception type — <code>except ValueError:</code>, not a bare <code>except:</code>. A bare <code>except:</code> catches literally everything, including bugs you never meant to hide, and turns a real crash into silent wrong behavior that is much harder to debug later.',
+        '<code>else:</code> after a try/except runs only when NO exception happened; <code>finally:</code> runs no matter what — exception or not. <code>finally</code> is for cleanup that must always happen, like closing a connection, whether the test passed or blew up.',
+        'You can raise your own exception on purpose with <code>raise ValueError("a clear message")</code> — this is how you fail fast with a message that actually explains what went wrong, instead of letting broken data silently propagate deeper into your code.',
+        'In automation this is not optional politeness — it is how you tell the difference between "this specific, expected thing went wrong, handle it" (a flaky network call, a missing optional field) and "something is actually broken, let it crash loudly." Catching too much hides real bugs; catching too little makes your test helpers fragile.'
+      ],
+      tasks:[
+        {
+          id:'m10-t1', kind:'checklist', title:'Catch a real ZeroDivisionError',
+          goal:'Wrap <code>print(10 / 0)</code> in a <code>try</code>/<code>except ZeroDivisionError:</code> that prints <b>Cannot divide by zero</b> instead of crashing. Run it — confirm you see that message, not a traceback.',
+          hint:'<code>try:</code> then the risky line indented under it, then <code>except ZeroDivisionError:</code> at the same indent as <code>try</code>, with the fallback <code>print(...)</code> indented under that.'
+        },
+        {
+          id:'m10-t2', kind:'checklist', title:'Catch a real ValueError',
+          goal:'Wrap <code>age = int("abc")</code> in a <code>try</code>/<code>except ValueError:</code> that prints <b>Invalid number</b> instead of crashing. Run it — confirm you see that message.',
+          hint:'<code>int("abc")</code> raises <code>ValueError</code> in real Python for the exact same reason your sandbox tasks warned about it back in Module 1 — text that is not a valid number cannot become one.'
+        },
+        {
+          id:'m10-t3', kind:'predict', offline:true, title:'Predict: else runs only when nothing went wrong',
+          goal:'Read the code and predict the exact output, then check yourself in real Python.',
+          hint:'<code>10 / 2</code> does not raise anything, so the <code>except</code> block is skipped entirely and the <code>else</code> block runs instead — <code>else</code> is not a generic fallback, it specifically means "no exception happened."',
+          code:
+`try:
+    x = 10 / 2
+except ZeroDivisionError:
+    print("Error")
+else:
+    print("No error, result is", x)
+`,
+          expected: 'No error, result is 5.0'
+        },
+        {
+          id:'m10-t4', kind:'checklist', title:'Wrong exception type still crashes',
+          goal:'Run the exact code below — it still crashes with a real <code>ValueError</code>, even though there IS a <code>try</code>/<code>except</code>. Read the traceback, figure out why the except block did not catch it, fix the exception type, and re-run until you see <b>Handled</b>.',
+          hint:'An <code>except</code> block only catches the EXACT exception type (or a parent of it) that it names — <code>except ZeroDivisionError:</code> does nothing at all for a <code>ValueError</code>, the crash just passes straight through it.',
+          starter:
+`try:
+    age = int("abc")
+except ZeroDivisionError:
+    print("Handled")
+`
+        },
+        {
+          id:'m10-t5', kind:'predict', offline:true, title:'Predict: finally always runs',
+          goal:'Read the code and predict the exact two-line output, then check yourself in real Python.',
+          hint:'<code>finally</code> runs after the <code>try</code>/<code>except</code> is done, no matter which branch ran — think of it as "no matter what happened above, do this last."',
+          code:
+`try:
+    print(10 / 0)
+except ZeroDivisionError:
+    print("Handled")
+finally:
+    print("Cleanup done")
+`,
+          expected: 'Handled\nCleanup done'
+        },
+        {
+          id:'m10-t6', kind:'checklist', title:'A real retry loop',
+          goal:'Write a function <code>flaky_call()</code> that raises <code>ConnectionError("Network issue")</code> most of the time (e.g. <code>if random.random() &lt; 0.7: raise ConnectionError(...)</code>), otherwise returns <code>"success"</code>. Using a <code>while</code> loop and <code>try</code>/<code>except ConnectionError</code>, retry up to 5 times, printing <b>Retry N</b> on each failure and the result on success, then stopping either way. Run it a few times — confirm you sometimes see it succeed after a few retries, and sometimes exhaust all 5.',
+          hint:'This is the exact retry pattern from the Module 3 homework, with one addition: the thing that might fail is now wrapped in <code>try</code>/<code>except</code> instead of just being trusted to work.'
+        },
+        {
+          id:'m10-t7', kind:'checklist', title:'Read your own raised error',
+          goal:'Run the code below EXACTLY as given — it deliberately crashes. Read the traceback and confirm you can find your own custom message, <b>"Age cannot be negative"</b>, inside it, right next to <code>ValueError</code>.',
+          hint:'<code>raise ValueError("...")</code> creates and immediately throws a brand new exception with your message — reading it back in the traceback is exactly how you would debug a real failure that came from your own validation code.',
+          starter:
+`def check_age(age):
+    if age < 0:
+        raise ValueError("Age cannot be negative")
+    return age
+
+check_age(-5)
+`
+        },
+        {
+          id:'m10-t8', kind:'checklist', title:'Handle a real IndexError',
+          goal:'Given <code>items = ["a", "b", "c"]</code>, wrap <code>print(items[5])</code> in a <code>try</code>/<code>except IndexError:</code> that prints <b>No item at that position</b> instead of crashing. Run it — confirm you see that message.',
+          hint:'Same idea as the <code>ZeroDivisionError</code> and <code>ValueError</code> tasks — only the exception type named after <code>except</code> changes, to match whatever the risky line can actually raise.'
+        },
+        {
+          id:'m10-t9', kind:'checklist', title:'Catch two exception types at once',
+          goal:'Write a function <code>parse(value)</code> that returns <code>int(value)</code>, but returns <code>None</code> if that raises EITHER a <code>ValueError</code> OR a <code>TypeError</code> — using one <code>except (ValueError, TypeError):</code> block, not two separate ones. Test it with <code>parse("42")</code>, <code>parse("abc")</code>, and <code>parse(None)</code>. Confirm you see <b>42</b>, then <b>None</b>, then <b>None</b>.',
+          hint:'Putting several exception types in parentheses after <code>except</code> catches any one of them with a single block — <code>int(None)</code> raises a <code>TypeError</code> (wrong type entirely), while <code>int("abc")</code> raises a <code>ValueError</code> (right type, invalid content).'
+        },
+        {
+          id:'m10-t10', kind:'checklist', boss:true, title:'Safely parse a list of raw prices',
+          goal:'Write <code>safe_parse_price(raw)</code> that returns <code>int(raw)</code>, or <code>None</code> if that raises a <code>ValueError</code>. Given <code>raw_prices = ["25", "abc", "45", "", "60"]</code>, build a list of only the successfully parsed prices (skip the <code>None</code> ones), and print their sum. Confirm you see <b>130</b>.',
+          hint:'<code>price is not None</code> checks identity against the special value <code>None</code> — the conventional way to test for it in real Python, instead of <code>price != None</code>. An empty string <code>""</code> also fails <code>int(...)</code>, exactly like <code>"abc"</code> does.'
+        }
+      ],
+      homework:[
+        {
+          id:'m10-hw1', kind:'checklist', title:'Your own exception type',
+          goal:'Define <code>class InvalidPriceError(Exception): pass</code> — a custom exception. Write <code>validate_price(price)</code> that raises it with the message <code>"Price must be positive"</code> if <code>price &lt;= 0</code>. Catch it with <code>except InvalidPriceError as e:</code> and print <code>f"Rejected: {e}"</code>. Test with <code>validate_price(-10)</code> — confirm you see <b>Rejected: Price must be positive</b>.',
+          hint:'<code>class InvalidPriceError(Exception): pass</code> creates a new exception TYPE by building on the real <code>Exception</code> class from Module 7\'s class syntax — <code>as e</code> then lets you read its message back with <code>str(e)</code> or, as here, directly inside an f-string.'
+        },
+        {
+          id:'m10-hw2', kind:'predict', offline:true, title:'Predict: nested try/except',
+          goal:'Read the code and predict the exact output, then check yourself in real Python.',
+          hint:'The INNER <code>except</code> only catches <code>ValueError</code> — a <code>ZeroDivisionError</code> is not that, so it skips the inner except entirely and keeps propagating outward until the OUTER <code>except ZeroDivisionError</code> catches it instead.',
+          code:
+`try:
+    try:
+        print(10 / 0)
+    except ValueError:
+        print("Inner catch")
+except ZeroDivisionError:
+    print("Outer catch")
+`,
+          expected: 'Outer catch'
+        },
+        {
+          id:'m10-hw3', kind:'checklist', title:'try/except vs .get() for the same problem',
+          goal:'Given <code>settings = {"env": "staging"}</code>, wrap <code>print(settings["timeout"])</code> in a <code>try</code>/<code>except KeyError:</code> that prints <b>Using default timeout: 30</b> instead of crashing. Confirm you see that message — then think about how this compares to <code>settings.get("timeout", 30)</code> from Module 5.',
+          hint:'Both solve the exact same problem here. <code>.get(key, default)</code> is shorter and reads better for a single dict lookup; <code>try</code>/<code>except</code> is the more general tool that also works for things <code>.get</code> cannot help with at all, like the earlier <code>int(...)</code> or <code>items[5]</code> tasks.'
+        }
+      ]
+    },
+    {id:'m11', num:11, phase:'Automated tests in Python', title:'Mocks and stubs', desc:'faking dependencies: mock, stub — when and why'},
+    {id:'m12', num:12, phase:'Automation tooling', title:'API testing', desc:'checking requests and responses with requests'},
+    {id:'m13', num:13, phase:'Automation tooling', title:'Databases', desc:'checking data in a DB straight from tests'},
+    {id:'m14', num:14, phase:'Automation tooling', title:'Locators and Selenium', desc:'finding elements and automating the browser'},
+    {id:'m15', num:15, phase:'Automation tooling', title:'Playwright', desc:'modern browser automation'},
+    {id:'m16', num:16, phase:'Automation tooling', title:'Test framework architecture', desc:'building a maintainable autotest project'}
   ];
