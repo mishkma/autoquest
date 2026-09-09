@@ -17,11 +17,41 @@ const MODULES = [
       id:'m1', num:1, phase:'Python basics', title:'First code and variables',
       desc:'print, variables, data types, simple calculations',
       theory: [
-        '<code>print(...)</code> prints to the console whatever is inside the parentheses. Example: <code>print("Hello")</code> → prints <code>Hello</code>, and <code>print(2 + 2)</code> → <code>4</code>. This is how you "see" a result.',
-        'A variable is a labeled box for a value: <code>name = "Anna"</code> puts a string into the variable <code>name</code>; then <code>print(name)</code> prints <code>Anna</code>. The value can be overwritten: <code>name = "Bob"</code>.',
-        'The type of a value matters: <code>"5"</code> is a string (text), while <code>5</code> is a number. They cannot be added directly with <code>+</code>. A number itself can be a whole number — <code>5</code> (<code>int</code>) — or a fractional one — <code>5.0</code> (<code>float</code>).',
-        'An f-string inserts values right into text: <code>age = 30</code>; <code>print(f"Age: {age}")</code> → <code>Age: 30</code>. Inside the curly braces you can even compute: <code>f"{a + b}"</code> inserts the sum.',
-        'Arithmetic: <code>+ - * /</code> work as in math, but <code>/</code> ALWAYS gives a fractional number: <code>10 / 2</code> → <code>5.0</code>. There is also <code>//</code> — integer division (<code>7 // 2</code> → <code>3</code>), <code>%</code> — remainder (<code>7 % 2</code> → <code>1</code>) and <code>**</code> — power. The remainder and integer division are handy when splitting something into groups or pages.',
+        {
+          text:'<code>print(...)</code> prints to the console whatever is inside the parentheses. This is how you "see" a result — and in a real project, it is the simplest way to log what a test is doing.',
+          examples:[
+            {label:'Simple', code:'print("Hello")', result:'Hello'},
+            {label:'In practice', kind:'real', code:'print("Login test:", "PASSED")', result:'Login test: PASSED'}
+          ]
+        },
+        {
+          text:'A variable is a labeled box for a value: <code>name = "Anna"</code> puts a string into the variable <code>name</code>. The value can be overwritten later — <code>name = "Bob"</code> — and whatever is inside it right now is what <code>print(name)</code> shows.',
+          examples:[
+            {label:'Simple', code:'name = "Anna"\nprint(name)', result:'Anna'},
+            {label:'In practice', kind:'real', code:'test_name = "test_login"\nprint(test_name)', result:'test_login'}
+          ]
+        },
+        {
+          text:'The type of a value matters: <code>"5"</code> is a string (text), while <code>5</code> is a number — they cannot be added directly with <code>+</code>, and they are never equal to each other. A number itself can be a whole number — <code>5</code> (<code>int</code>) — or a fractional one — <code>5.0</code> (<code>float</code>); those two ARE considered equal.',
+          examples:[
+            {label:'Simple', code:'print(5 == 5.0)', result:'True'},
+            {label:'In practice', kind:'real', code:'print(200 == "200")', result:'False'}
+          ]
+        },
+        {
+          text:'An f-string inserts values right into text: put an <code>f</code> right before the opening quote, then any variable name inside <code>{curly braces}</code> gets replaced by its value. You can even compute inside the braces, like <code>{a + b}</code>.',
+          examples:[
+            {label:'Simple', code:'age = 30\nprint(f"Age: {age}")', result:'Age: 30'},
+            {label:'In practice', kind:'real', code:'passed = 8\ntotal = 10\nprint(f"Pass rate: {passed}/{total}")', result:'Pass rate: 8/10'}
+          ]
+        },
+        {
+          text:'Arithmetic: <code>+ - * /</code> work as in math, but <code>/</code> ALWAYS gives a fractional number, even when it divides evenly. <code>//</code> is integer division (drops the fraction), <code>%</code> is the remainder — both handy when splitting something into equal groups.',
+          examples:[
+            {label:'Simple', code:'print(10 / 2)', result:'5.0'},
+            {label:'In practice', kind:'real', code:'items = 23\nper_page = 10\nprint(items % per_page)', result:'3'}
+          ]
+        },
         'This sandbox is a teaching subset of Python — it runs entirely in the browser, with no install. Real Python is bigger: it has slices, <code>.items()</code>, tuple unpacking, <code>*args</code>/<code>**kwargs</code> and more, none of which exist here yet. All of that arrives once you install real Python in Module 6 — this sandbox is not the whole language, just enough of it to build real habits fast.',
         'The tasks below are of different kinds: write code from scratch, complete it, find and fix a bug, predict the output, and a final boss task. If a task condition is unclear, hit "Hint".'
       ],
@@ -169,10 +199,34 @@ total = 8
     {
       id:'m2', num:2, phase:'Python basics', title:'Conditions', desc:'if / elif / else, comparisons, and / or / not',
       theory:[
-        '<code>if condition:</code> runs the indented block only when the condition is true. A colon at the end of the line and a 4-space indent for the block are both required. Example: <code>if x &gt; 0:</code>, then on the next indented line — <code>print("positive")</code>.',
-        'Comparisons return <code>True</code> or <code>False</code>: <code>==</code> equal, <code>!=</code> not equal, plus <code>&gt;</code>, <code>&lt;</code>, <code>&gt;=</code>, <code>&lt;=</code>. Example: <code>5 == 5</code> → <code>True</code>, and <code>3 &gt; 10</code> → <code>False</code>.',
-        '<code>else</code> means "otherwise", <code>elif</code> means "else if". In an <code>if / elif / elif / else</code> chain, only the FIRST matching branch runs. Example: with <code>score = 72</code>, the check <code>score &gt;= 90</code> fails, but <code>score &gt;= 70</code> succeeds — Python never even looks at the remaining branches.',
-        '<code>and</code> / <code>or</code> / <code>not</code> combine conditions: <code>and</code> — both at once, <code>or</code> — at least one, <code>not</code> — flips it. Example: "the number is greater than 0 and less than 10" is <code>x &gt; 0 and x &lt; 10</code> (two separate comparisons joined with <code>and</code>).',
+        {
+          text:'<code>if condition:</code> runs the indented block only when the condition is true. A colon at the end of the line and a 4-space indent for the block are both required.',
+          examples:[
+            {label:'Simple', code:'x = 5\nif x > 0:\n    print("positive")', result:'positive'},
+            {label:'In practice', kind:'real', code:'status = 500\nif status >= 500:\n    print("Server error")', result:'Server error'}
+          ]
+        },
+        {
+          text:'Comparisons return <code>True</code> or <code>False</code>: <code>==</code> equal, <code>!=</code> not equal, plus <code>&gt;</code>, <code>&lt;</code>, <code>&gt;=</code>, <code>&lt;=</code>. This is the exact mechanism behind every "expected vs actual" check an automated test makes.',
+          examples:[
+            {label:'Simple', code:'print(5 == 5)', result:'True'},
+            {label:'In practice', kind:'real', code:'expected = "PASS"\nactual = "FAIL"\nprint(expected == actual)', result:'False'}
+          ]
+        },
+        {
+          text:'<code>else</code> means "otherwise", <code>elif</code> means "else if". In an <code>if / elif / elif / else</code> chain, only the FIRST matching branch runs — Python never even looks at the rest once one has matched.',
+          examples:[
+            {label:'Simple', code:'if 5 > 3:\n    print("yes")\nelse:\n    print("no")', result:'yes'},
+            {label:'In practice', kind:'real', code:'score = 72\nif score >= 90:\n    print("A")\nelif score >= 70:\n    print("B")\nelse:\n    print("F")', result:'B'}
+          ]
+        },
+        {
+          text:'<code>and</code> / <code>or</code> / <code>not</code> combine conditions: <code>and</code> — both at once, <code>or</code> — at least one, <code>not</code> — flips it.',
+          examples:[
+            {label:'Simple', code:'print(3 > 0 and 3 < 10)', result:'True'},
+            {label:'In practice', kind:'real', code:'is_ci = True\nis_flaky = False\nprint(is_ci and not is_flaky)', result:'True'}
+          ]
+        },
         'The tasks below are of different kinds: write from scratch, complete, find and fix a bug, predict the output, and a final boss task. Plus a "Homework" block — harder tasks for later; they do not gate the next module. If an English condition is unclear, hit "Hint".'
       ],
       tasks:[
@@ -380,12 +434,42 @@ b = 95
     {
       id:'m3', num:3, phase:'Python basics', title:'Loops', desc:'for, while, range — repeating actions',
       theory:[
-        '<code>for i in range(5):</code> repeats the block 5 times, and <code>i</code> takes on 0, 1, 2, 3, 4 in turn — Python counts from zero. A trickier example: <code>range(2, 10, 2)</code> goes from 2 up to 8 with a step of 2 (2, 4, 6, 8) — the second number is not included, the third is the step.',
-        '<code>while condition:</code> repeats the block while the condition stays True. Example: <code>while count &lt; 3:</code> with <code>count += 1</code> inside runs 3 times. Forgetting to change whatever the condition depends on turns the loop infinite — a common beginner mistake.',
-        '<code>+=</code> is shorthand for "add and store": <code>total += x</code> is the same as <code>total = total + x</code>. This is how you accumulate a sum or count: create a counter variable BEFORE the loop (e.g. <code>count = 0</code>), then increase it inside the loop when the condition is met.',
-        '<code>break</code> immediately stops the whole loop — useful once what you were looking for has been found. Example: search a list for an item, and as soon as it is found, <code>break</code> — no need to check the rest.',
-        '<code>continue</code> skips the rest of the CURRENT iteration and jumps straight to the next one — code after <code>continue</code> does not run for that pass, but the loop itself keeps going.',
-        '<code>for x in list:</code> walks through a list one item at a time — exactly how autotests iterate over a list of test cases, statuses or response times. The tasks below are of different kinds, plus "Homework" at the end (does not gate progress, but gives XP and practice).'
+        {
+          text:'<code>for i in range(5):</code> repeats the block 5 times, and <code>i</code> takes on 0, 1, 2, 3, 4 in turn — Python counts from zero. <code>range(start, stop, step)</code> lets you control all three; the <code>stop</code> value is never included.',
+          examples:[
+            {label:'Simple', code:'for i in range(3):\n    print(i)', result:'0\n1\n2'},
+            {label:'In practice', kind:'real', code:'for i in range(2, 10, 2):\n    print(i)', result:'2\n4\n6\n8'}
+          ]
+        },
+        {
+          text:'<code>while condition:</code> repeats the block while the condition stays True. Forgetting to change whatever the condition depends on turns the loop infinite — a common beginner mistake.',
+          examples:[
+            {label:'Simple', code:'count = 0\nwhile count < 3:\n    print(count)\n    count += 1', result:'0\n1\n2'},
+            {label:'In practice', kind:'real', code:'attempt = 1\nwhile attempt <= 3:\n    print(f"Attempt {attempt}")\n    attempt += 1', result:'Attempt 1\nAttempt 2\nAttempt 3'}
+          ]
+        },
+        {
+          text:'<code>+=</code> is shorthand for "add and store": <code>total += x</code> is the same as <code>total = total + x</code>. Create the counter BEFORE the loop (e.g. <code>total = 0</code>), then increase it inside the loop.',
+          examples:[
+            {label:'Simple', code:'total = 0\ntotal += 5\nprint(total)', result:'5'},
+            {label:'In practice', kind:'real', code:'durations = [4, 7, 3]\ntotal = 0\nfor d in durations:\n    total += d\nprint(total)', result:'14'}
+          ]
+        },
+        {
+          text:'<code>break</code> immediately stops the whole loop — useful once what you were looking for has been found, so there is no need to check the rest.',
+          examples:[
+            {label:'Simple', code:'for i in range(5):\n    if i == 3:\n        break\n    print(i)', result:'0\n1\n2'},
+            {label:'In practice', kind:'real', code:'tests = ["login", "search", "checkout"]\nfor t in tests:\n    if t == "checkout":\n        print("Found:", t)\n        break', result:'Found: checkout'}
+          ]
+        },
+        {
+          text:'<code>continue</code> skips the rest of the CURRENT iteration and jumps straight to the next one — code after <code>continue</code> does not run for that pass, but the loop itself keeps going.',
+          examples:[
+            {label:'Simple', code:'for i in range(5):\n    if i == 2:\n        continue\n    print(i)', result:'0\n1\n3\n4'},
+            {label:'In practice', kind:'real', code:'results = ["pass", "fail", "pass"]\nfor r in results:\n    if r == "pass":\n        continue\n    print("Failed test found")', result:'Failed test found'}
+          ]
+        },
+        'The tasks below are of different kinds, plus "Homework" at the end (does not gate progress, but gives XP and practice).'
       ],
       tasks:[
         {
@@ -654,12 +738,48 @@ skipped = 0
       id:'m4', num:4, phase:'Python basics', title:'Functions',
       desc:'why they matter, def, parameters, return',
       theory:[
-        '<code>def</code> declares a function — a named chunk of code you can call as many times as you like instead of copying it over and over. Simple example: <code>def square(x): return x * x</code>, then <code>square(5)</code> returns 25. A trickier example — a function with two parameters: <code>def calc_total(price, qty): return price * qty</code>.',
-        'Parameters are placeholder names inside a function that receive values (arguments) at call time. <code>calc_total(price, qty)</code> declares two parameters; <code>calc_total(10, 3)</code> calls the function with the arguments 10 and 3 — inside, <code>price</code> becomes 10 and <code>qty</code> becomes 3.',
-        '<code>return</code> is not the same as <code>print</code>. <code>print</code> just displays a value on screen, while <code>return</code> hands the value back to wherever the function was called from, so it can be used further: stored in a variable, passed into another function, used in a calculation. A function with no <code>return</code> returns <code>None</code>.',
-        'Inside a function you can use <code>if</code>, loops — everything you already know. Example: a discount function — <code>def apply_discount(price, is_member): if is_member: return price * 0.9; return price</code> — computes differently depending on the condition.',
-        'A variable created INSIDE a function (e.g. by assignment) exists only inside it — this is called a local variable. Even if there is a variable with the same name outside, assigning inside the function creates a separate, new variable and does not touch the outer one. A function can read outer values, but it cannot change them by assignment.',
-        'In automation, functions are a way to avoid repeating the same check code many times: write <code>is_valid_status(...)</code> or <code>calc_total(...)</code> once — and reuse it across dozens of tests instead of copy-pasting. The tasks below are of different kinds, plus "Homework" at the end.'
+        {
+          text:'<code>def</code> declares a function — a named chunk of code you can call as many times as you like instead of copying it over and over.',
+          examples:[
+            {label:'Simple', code:'def square(x):\n    return x * x\nprint(square(5))', result:'25'},
+            {label:'In practice', kind:'real', code:'def calc_total(price, qty):\n    return price * qty\nprint(calc_total(10, 3))', result:'30'}
+          ]
+        },
+        {
+          text:'Parameters are placeholder names inside a function that receive values (arguments) at call time — <code>calc_total(10, 3)</code> makes <code>price</code> become 10 and <code>qty</code> become 3 inside the function, for that one call only.',
+          examples:[
+            {label:'Simple', code:'def greet(name):\n    return f"Hi, {name}"\nprint(greet("Sam"))', result:'Hi, Sam'},
+            {label:'In practice', kind:'real', code:'def is_valid_status(code):\n    return code == 200\nprint(is_valid_status(200))', result:'True'}
+          ]
+        },
+        {
+          text:'<code>return</code> is not the same as <code>print</code>. <code>print</code> just displays a value on screen, while <code>return</code> hands the value back to wherever the function was called from, so it can be used further. A function with no <code>return</code> returns <code>None</code> — printing that result shows it plainly.',
+          examples:[
+            {label:'Simple', code:'def add(a, b):\n    return a + b\nprint(add(2, 3))', result:'5'},
+            {label:'In practice', kind:'real', code:'def broken(a, b):\n    print(a + b)\n\nresult = broken(2, 3)\nprint(result)', result:'5\nNone'}
+          ]
+        },
+        {
+          text:'Inside a function you can use <code>if</code>, loops — everything you already know. A function can compute differently depending on a condition, exactly like a script can.',
+          examples:[
+            {label:'Simple', code:'def abs_val(x):\n    if x < 0:\n        return -x\n    return x\nprint(abs_val(-5))', result:'5'},
+            {label:'In practice', kind:'real', code:'def apply_discount(price, is_member):\n    if is_member:\n        return price * 0.9\n    return price\nprint(apply_discount(100, True))', result:'90.0'}
+          ]
+        },
+        {
+          text:'A variable created INSIDE a function (e.g. by assignment) exists only inside it — this is called a local variable. Even if there is a variable with the same name outside, assigning inside the function creates a separate, new variable and never touches the outer one.',
+          examples:[
+            {label:'Simple', code:'def f():\n    x = 1\n    return x\nprint(f())', result:'1'},
+            {label:'In practice', kind:'real', code:'count = 0\n\ndef increment():\n    count = 1\n    return count\n\nincrement()\nprint(count)', result:'0'}
+          ]
+        },
+        {
+          text:'In automation, functions are a way to avoid repeating the same check code many times — write it once, reuse it across dozens of tests instead of copy-pasting.',
+          examples:[
+            {label:'In practice', kind:'real', code:'def is_valid_status(code):\n    return code == 200\nprint(is_valid_status(404))', result:'False'}
+          ]
+        },
+        'The tasks below are of different kinds, plus "Homework" at the end.'
       ],
       tasks:[
         {
@@ -865,12 +985,48 @@ print(count_fails(results))
       id:'m5', num:5, phase:'Python basics', title:'Lists and dictionaries',
       desc:'data collections and looping over them',
       theory:[
-        'Lists are already familiar from loops — now let\'s look at working with individual items. <code>products[0]</code> is the first item (indices start at zero), and <code>products[-1]</code> is the last item — a negative index counts from the end. Example: <code>products = ["mouse", "keyboard", "monitor"]</code>; <code>products[0]</code> → <code>"mouse"</code>, <code>products[-1]</code> → <code>"monitor"</code>.',
-        '<code>.append(x)</code> adds an item to the end of a list, <code>.pop()</code> removes the LAST item and returns it. Example: <code>cart = ["mouse"]</code>; <code>cart.append("keyboard")</code> → list becomes <code>["mouse", "keyboard"]</code>; <code>cart.pop()</code> removes <code>"keyboard"</code> and returns it.',
-        'A dictionary (<code>dict</code>) stores key-value pairs — handy for one structured object instead of a pile of separate variables. Simple example: <code>product = {"name": "Mouse", "price": 25}</code>; access by key — <code>product["name"]</code> → <code>"Mouse"</code>. A trickier example: a dict with several value types at once — string, number, boolean.',
-        '<code>.get(key, default)</code> is a safe way to read from a dict: if the key is missing, it returns the default value instead of a <code>KeyError</code>. Example: <code>settings.get("discount", 0)</code> returns 0 if <code>"discount"</code> is not set — useful for optional test settings.',
-        '<code>.keys()</code> and <code>.values()</code> give just the keys or just the values to loop over. This sandbox has no <code>.items()</code> — to get both the key and the value at once, loop over <code>.keys()</code> and look up the value by key: <code>for key in settings.keys(): print(key, settings[key])</code>.',
-        'A list of dictionaries is a way to represent a set of same-shaped objects, for example a product catalog: <code>catalog = [{"name": "Mouse", "price": 25}, {"name": "Keyboard", "price": 45}]</code>. Looping works the same as with a plain list: <code>for product in catalog:</code>, and inside — <code>product["name"]</code>. This is not just a coincidence: a JSON response from a real API — the exact thing you will parse in Module 11 (API testing) — looks and behaves exactly like this in Python: a list of dicts, or a dict of dicts.'
+        {
+          text:'Lists are already familiar from loops — now let\'s look at working with individual items. <code>products[0]</code> is the first item (indices start at zero), and <code>products[-1]</code> is the last item — a negative index counts from the end.',
+          examples:[
+            {label:'Simple', code:'nums = [10, 20, 30]\nprint(nums[0])', result:'10'},
+            {label:'In practice', kind:'real', code:'products = ["mouse", "keyboard", "monitor"]\nprint(products[-1])', result:'monitor'}
+          ]
+        },
+        {
+          text:'<code>.append(x)</code> adds an item to the end of a list, <code>.pop()</code> removes the LAST item and returns it.',
+          examples:[
+            {label:'Simple', code:'cart = []\ncart.append("mouse")\nprint(cart)', result:"['mouse']"},
+            {label:'In practice', kind:'real', code:'cart = ["mouse", "keyboard"]\nremoved = cart.pop()\nprint(removed)', result:'keyboard'}
+          ]
+        },
+        {
+          text:'A dictionary (<code>dict</code>) stores key-value pairs — handy for one structured object instead of a pile of separate variables. Access a value with square brackets and the key.',
+          examples:[
+            {label:'Simple', code:'product = {"name": "Mouse"}\nprint(product["name"])', result:'Mouse'},
+            {label:'In practice', kind:'real', code:'product = {"name": "Mouse", "price": 25, "in_stock": True}\nprint(product["price"])', result:'25'}
+          ]
+        },
+        {
+          text:'<code>.get(key, default)</code> is a safe way to read from a dict: if the key is missing, it returns the default value instead of a <code>KeyError</code>.',
+          examples:[
+            {label:'Simple', code:'settings = {"env": "staging"}\nprint(settings.get("env"))', result:'staging'},
+            {label:'In practice', kind:'real', code:'settings = {"env": "staging"}\nprint(settings.get("timeout", 30))', result:'30'}
+          ]
+        },
+        {
+          text:'<code>.keys()</code> and <code>.values()</code> give just the keys or just the values to loop over. This sandbox has no <code>.items()</code> — to get both at once, loop over <code>.keys()</code> and look up the value by key.',
+          examples:[
+            {label:'Simple', code:'d = {"a": 1}\nfor key in d.keys():\n    print(key)', result:'a'},
+            {label:'In practice', kind:'real', code:'settings = {"currency": "USD", "tax_rate": 20}\nfor key in settings.keys():\n    print(f"{key}: {settings[key]}")', result:'currency: USD\ntax_rate: 20'}
+          ]
+        },
+        {
+          text:'A list of dictionaries represents a set of same-shaped objects, like a product catalog — loop over it just like a plain list. This is not a coincidence: a JSON response from a real API (the exact thing you will parse in Module 11) looks and behaves exactly like this in Python — a list of dicts, or a dict of dicts.',
+          examples:[
+            {label:'Simple', code:'catalog = [{"name": "Mouse"}]\nfor p in catalog:\n    print(p["name"])', result:'Mouse'},
+            {label:'In practice', kind:'real', code:'catalog = [{"name": "Mouse", "price": 25}, {"name": "Keyboard", "price": 45}]\nfor p in catalog:\n    print(p["name"])', result:'Mouse\nKeyboard'}
+          ]
+        }
       ],
       tasks:[
         {

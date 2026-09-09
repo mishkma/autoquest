@@ -249,7 +249,7 @@
       </div>
       <div class="card theory">
         <h3>The short version</h3>
-        ${m.theory.map(p=>`<p>${p}</p>`).join('')}
+        ${m.theory.map(renderTheoryItem).join('')}
       </div>`;
 
     m.tasks.forEach((t, i) => {
@@ -277,6 +277,24 @@
 
     updateRoomProgress(m);
     window.scrollTo({top:0, behavior:'smooth'});
+  }
+
+  // Theory items are either a plain string (rendered as-is, old format) or
+  // {text, examples:[{label, kind, code, result}]} for a concept with one or
+  // more separated, visually distinct example cards (simple + real-world).
+  function renderTheoryItem(item){
+    if(typeof item === 'string') return `<p>${item}</p>`;
+    const examples = (item.examples || []).map(ex => `
+      <div class="theory-ex ${ex.kind || ''}">
+        <div class="theory-ex-label"><span class="dot"></span>${ex.label}</div>
+        <pre>${escapeHtml(ex.code)}</pre>
+        ${ex.result !== undefined ? `<div class="theory-ex-result"><span class="arrow">&rarr;</span><code>${escapeHtml(ex.result)}</code></div>` : ''}
+      </div>`).join('');
+    return `
+      <div class="theory-item">
+        <p class="theory-text">${item.text}</p>
+        ${examples ? `<div class="theory-examples">${examples}</div>` : ''}
+      </div>`;
   }
 
   function renderTaskCard(t, i, total, label){
