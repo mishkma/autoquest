@@ -143,7 +143,7 @@
     background:repeating-linear-gradient(var(--path-line),var(--path-line) 6px,transparent 6px,transparent 12px);
   }
   .node{
-    position:relative;display:grid;grid-template-columns:56px 1fr;gap:18px;
+    position:relative;display:grid;grid-template-columns:56px 1fr 64px;align-items:center;gap:18px;
     padding:14px 6px;border-radius:16px;cursor:pointer;
     transition:background .15s ease;
   }
@@ -151,6 +151,17 @@
   .node:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
   .node[data-locked="true"]{cursor:default;}
   .node[data-locked="true"]:hover{background:transparent;}
+  /* Small preview of the module's own boss (renderBossVisual, reused from
+     the boss-encounter header) — the title/desc column left real empty
+     width to its right on wide screens, so "which boss is in this module"
+     (already real data — every module's own m.tasks) fills it instead of
+     a made-up decoration. Locked modules get it faded, matching the rest
+     of a locked node's dimmed treatment. Checkpoints have no boss task,
+     so bossPreview is simply omitted for them — the grid track just sits
+     empty, not stretched or reflowed. */
+  .node-boss{ width:56px; height:56px; align-self:center; opacity:.85; }
+  .node-boss svg{ width:100%; height:100%; filter: drop-shadow(0 0 6px rgba(255,80,110,.3)); }
+  .node[data-locked="true"] .node-boss{ opacity:.25; filter:grayscale(1); }
   .badge{
     position:relative;z-index:1;
     width:56px;height:56px;border-radius:16px;
@@ -392,6 +403,11 @@
     .badge{width:46px;height:46px;font-size:16px;border-radius:13px;}
     .node{grid-template-columns:46px 1fr;gap:14px;}
     .path-line{left:22px;}
+    /* .node-boss has no explicit track here (only 2 columns above) — left
+       unhidden, it would auto-place into an implicit 3rd column and cramp
+       a 375px-wide card. No real width to preview a boss in anyway at
+       this size, same call as hiding .hero-decor below 900px. */
+    .node-boss{display:none;}
   }
 
   /* =====================================================================
@@ -489,28 +505,38 @@
 
   /* boss encounter header — sits above the real task card, purely decorative */
   .boss-header{ margin-bottom:14px; }
-  /* Was max-width:none (fill the room's own column exactly) back when that
-     column was 920px — at 1180px that left a large flat empty area to the
-     right of the icons/track, since nothing inside this flex-column
-     content stretches to fill width (capping it at 900px first, then
-     narrower, still left the same gap — the box was simply wider than its
-     own content). Sized to what the content (icons + the 340px-capped
-     health track) actually needs instead of an arbitrary fraction of the
-     room width. Left padding dropped from 54px to match the right side:
-     that 54px was reserved for an .arcade-gutter line-number column like
-     the title/victory screens have, but renderBossHeader() never renders
-     one here — with nothing drawn in it, it just read as a bare black
-     strip down the left edge. */
+  /* Sized to what the text content (boss name + the 340px-capped health
+     track) needs, not an arbitrary fraction of the room width. Left
+     padding dropped from 54px to match the right side: that 54px was
+     reserved for an .arcade-gutter line-number column like the title/
+     victory screens have, but renderBossHeader() never renders one here —
+     with nothing drawn in it, it just read as a bare black strip down the
+     left edge. */
   .boss-header .arcade-screen{ max-width:560px; }
   .boss-header .arcade-content{ padding: 18px 20px; gap:16px; }
   .boss-name{ font-family:'Press Start 2P',monospace; font-size:12px; color:var(--a-danger); letter-spacing:.03em; }
   .boss-track{ margin-top:8px; height:9px; background:#1a0d0d; border:2px solid #3a1414; max-width:340px; }
   .boss-track i{ display:block; height:100%; width:68%; background: linear-gradient(90deg,var(--a-danger),var(--a-danger2)); }
-  .boss-arena{ display:flex; align-items:center; gap:22px; flex-wrap:wrap; }
-  .boss-hero{ width:76px; flex:0 0 auto; filter: drop-shadow(0 0 10px var(--a-glow)); }
+  /* The empty space the user kept screenshotting was NEVER the outer
+     .arcade-screen being too wide for the room (that was fixed above and
+     verified correct — 560px, centered, symmetric down to the pixel) —
+     it's this row's own two icons sitting flush-left inside it while
+     .boss-arena itself spans the card's full content width. Confirmed by
+     measuring live: the icon group only occupied ~200px of a 510px-wide
+     arena, leaving ~320px of dead space to their right, inside the same
+     bordered card — a completely different gap than the one already
+     fixed, which is why re-shrinking the outer card kept not fixing what
+     the screenshots actually showed. Centering the row (rather than
+     shrinking the card further, which would start cramping the boss
+     name text above it) redistributes that space evenly instead of
+     leaving it all on one side. Icons enlarged too, now that each boss
+     has its own distinct silhouette (renderBossVisual) worth showing at
+     a size where the shape actually reads. */
+  .boss-arena{ display:flex; align-items:center; justify-content:center; gap:28px; flex-wrap:wrap; }
+  .boss-hero{ width:96px; flex:0 0 auto; filter: drop-shadow(0 0 10px var(--a-glow)); }
   .boss-hero .outline{ stroke:var(--a-accent); }
   .boss-hero .eye{ fill:var(--a-accent); }
-  .boss-ring{ width:96px; height:96px; flex:0 0 auto; }
+  .boss-ring{ width:130px; height:130px; flex:0 0 auto; }
   .boss-ring svg{ width:100%; height:100%; filter: drop-shadow(0 0 10px rgba(255,80,110,.3)); }
   .boss-tag{ font-family:'Press Start 2P',monospace; font-size:8px; color:var(--a-dim); letter-spacing:.04em; }
 
@@ -570,6 +596,24 @@
     #view-module.arcade::before, #view-module.arcade::after{ display:none; }
   }
   #view-path.arcade .hero{ position:relative; }
+  /* The path intro's own text is capped at 56ch/26ch for readability
+     (.hero p/.hero h2 above), which is correct for reading but left the
+     rest of .hero's width (it stretches to the full 1180px column) empty
+     next to the text on wide screens. Same Debugger silhouette as the
+     title screen's hero (.arcade-hero) and the boss encounter's
+     (.boss-hero) — not a new character, just reused here — large, faint,
+     and purely decorative behind/beside the copy. Hidden below 900px:
+     that's roughly where the text block itself starts filling the
+     available width, so there's no real gap left to decorate. */
+  .hero-decor{ display:none; }
+  @media (min-width:900px){
+    .hero-decor{
+      display:block; position:absolute; top:-10px; right:12px; width:150px; height:240px;
+      opacity:.16; pointer-events:none;
+    }
+  }
+  #view-path.arcade .hero-decor .outline{ stroke: var(--a-accent); }
+  #view-path.arcade .hero-decor .eye{ fill: var(--a-accent); }
   #view-path.arcade .hero .kicker{ font-family:'Press Start 2P',monospace; font-size:9px; color:var(--a-accent); letter-spacing:.06em; }
   #view-path.arcade .hero h2{
     font-family:'Press Start 2P',monospace; font-weight:400; font-size:clamp(17px,3vw,24px); line-height:1.6;

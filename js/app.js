@@ -475,6 +475,17 @@
         chips.push(`<span class="chip">${tr('chipLocked')}</span>`);
       }
 
+      // Small preview of the module's own boss creature (renderBossVisual,
+      // the per-module generator added 9 September 2026) — the node's own
+      // grid column for title/desc/chips left a lot of unused width to its
+      // right on wide screens (found in the same feedback round), and "what
+      // boss is waiting in this module" is real course content already
+      // sitting right there in m.tasks, not a made-up decoration.
+      const bossTask = m.tasks && m.tasks.find(x => x.boss);
+      const bossPreview = bossTask
+        ? `<div class="node-boss">${renderBossVisual(m.id)}</div>`
+        : '';
+
       node.innerHTML = `
         <div class="badge">${status==='done' ? '✓' : (m.checkpoint ? '🎯' : m.num)}</div>
         <div class="node-body">
@@ -482,7 +493,8 @@
           <div class="node-title">${mField(m, 'title')}</div>
           <div class="node-desc">${mField(m, 'desc')}</div>
           <div class="node-meta">${chips.join('')}</div>
-        </div>`;
+        </div>
+        ${bossPreview}`;
 
       if(unlocked){
         node.addEventListener('click', () => openModule(m.id));
