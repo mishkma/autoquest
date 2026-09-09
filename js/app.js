@@ -62,25 +62,35 @@
       <ellipse cx="50" cy="44" rx="24" ry="20" fill="#0b1210"/>
       <circle class="eye" cx="41" cy="44" r="3.6"/>
       <circle class="eye" cx="59" cy="44" r="3.6"/>`,
-    // Trace (amber) — same hood, a single horizontal visor slit instead of
-    // two eyes — "tracing" a line across the screen.
+    // Trace (amber) — a flat-topped cap with a wide brim bar spanning past
+    // both edges of the head, instead of mint's rounded hood. Silhouette is
+    // rectangular where mint's is a soft curved cowl, so the two stay
+    // distinct even in a 1-color icon at small sizes (the 9 Sept 2026
+    // "mint and amber look identical" report — amber previously reused
+    // mint's exact hood outline and only swapped the eyes for a visor).
     amber: `
-      <path class="outline" d="M50 8 C28 8 18 28 20 48 L18 60 L30 56 L28 70 L50 66 L72 70 L70 56 L82 60 L80 48 C82 28 72 8 50 8Z" fill="#101815" stroke-width="2"/>
-      <ellipse cx="50" cy="44" rx="24" ry="20" fill="#0b1210"/>
-      <rect class="eye" x="33" y="41" width="34" height="6" rx="3"/>`,
+      <rect class="outline" x="12" y="22" width="76" height="8" rx="4" fill="#101815" stroke-width="2"/>
+      <path class="outline" d="M28 24 Q28 8 50 8 Q72 8 72 24 L72 54 Q72 63 62 63 L38 63 Q28 63 28 54 Z" fill="#101815" stroke-width="2"/>
+      <ellipse cx="50" cy="42" rx="19" ry="15" fill="#0b1210"/>
+      <rect class="eye" x="34" y="39" width="32" height="6" rx="3"/>`,
     // Null (violet) — a faceted hexagon head instead of a rounded hood.
     violet: `
       <path class="outline" d="M50 8 L76 24 L76 56 L50 72 L24 56 L24 24 Z" fill="#101815" stroke-width="2"/>
       <circle class="eye" cx="41" cy="42" r="3.2"/>
       <circle class="eye" cx="59" cy="42" r="3.2"/>`,
-    // Ping (cyan) — the hood plus a short antenna, one blinking "signal" dot.
+    // Ping (cyan) — a full round dome/helmet with a short antenna, instead
+    // of reusing mint's hood shape (the 9 Sept 2026 report: cyan previously
+    // was mint's exact hood + antenna, so the two read as the same head at
+    // a glance — only the antenna differed). A circle silhouette is
+    // distinct from mint's curved-and-flared hood, amber's flat cap, and
+    // violet's angular hexagon.
     cyan: `
       <line x1="50" y1="8" x2="50" y2="0" stroke="#0b1210" stroke-width="3"/>
       <circle cx="50" cy="0" r="3.4" class="eye"/>
-      <path class="outline" d="M50 8 C28 8 18 28 20 48 L18 60 L30 56 L28 70 L50 66 L72 70 L70 56 L82 60 L80 48 C82 28 72 8 50 8Z" fill="#101815" stroke-width="2"/>
-      <ellipse cx="50" cy="44" rx="24" ry="20" fill="#0b1210"/>
-      <circle class="eye" cx="41" cy="44" r="3.6"/>
-      <circle class="eye" cx="59" cy="44" r="3.6"/>`,
+      <circle class="outline" cx="50" cy="40" r="32" fill="#101815" stroke-width="2"/>
+      <circle cx="50" cy="40" r="24" fill="#0b1210"/>
+      <circle class="eye" cx="41" cy="40" r="3.6"/>
+      <circle class="eye" cx="59" cy="40" r="3.6"/>`,
     // Byte (rose) — a small rounded-square head, one centered cyclops eye.
     rose: `
       <rect class="outline" x="26" y="14" width="48" height="42" rx="14" fill="#101815" stroke-width="2"/>
@@ -254,7 +264,10 @@
               <div class="boss-track"><i style="${defeated ? 'width:4%' : ''}"></i></div>
             </div>
             <div class="boss-arena">
-              <svg class="boss-hero" viewBox="0 0 100 160">${heroSvgFor(getSignal())}</svg>
+              <div class="boss-side">
+                <svg class="boss-hero" viewBox="0 0 100 160">${heroSvgFor(getSignal())}</svg>
+                <div class="boss-hero-name">${escapeHtml(tr(CHARACTER_KEYS[getSignal()] || CHARACTER_KEYS.mint))}</div>
+              </div>
               <div class="boss-ring">${renderBossVisual(m.id, defeated)}</div>
             </div>
           </div>
