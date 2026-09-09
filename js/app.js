@@ -650,7 +650,7 @@
       const statusLabel = status === 'done' ? tr('statsStatusDone') : (unlocked ? tr('statsStatusAvail') : tr('statsStatusLocked'));
       return `
         <div class="stats-row ${status === 'locked' ? 'locked' : ''}">
-          <div class="num">${String(m.num).padStart(2,'0')}</div>
+          <div class="num">${m.checkpoint ? '🎯' : String(m.num).padStart(2,'0')}</div>
           <div class="body">
             <div class="t">${escapeHtml(mField(m, 'title'))}</div>
             <div class="phase">${phaseName(m.phase)}${totalCount ? ' · ' + tr('chipTasks', {done: doneCount, total: totalCount}) : ''}</div>
