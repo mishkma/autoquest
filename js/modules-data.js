@@ -1391,7 +1391,124 @@ print("Ready")
         }
       ]
     },
-    {id:'m8', num:8, phase:'Python basics', title:'Standard library and generators', desc:'useful built-in modules, iterators and generators'},
+    {
+      id:'m8', num:8, phase:'Python basics', title:'Standard library and generators',
+      desc:'useful built-in modules, iterators and generators',
+      theory:[
+        'The standard library is a set of modules that ship with Python itself — no install needed, just <code>import</code>. This is different from a package like <code>requests</code> (Module 11), which you install separately with <code>pip</code>. Everything in this module is real Python only, same as Modules 6-7 — this sandbox does not support <code>import</code> at all.',
+        '<code>json.dumps(obj)</code> turns a Python dict/list into a JSON text string; <code>json.loads(text)</code> turns JSON text back into Python objects. This is not a coincidence with Module 5\'s "list of dicts looks like JSON" note — this IS the conversion that happens automatically every time you call <code>.json()</code> on an API response later, just done by hand for now so you see it happen. One gotcha worth knowing now: Python\'s <code>True</code> becomes JSON\'s lowercase <code>true</code>.',
+        '<code>random.randint(a, b)</code> gives a random whole number between <code>a</code> and <code>b</code> (both included); <code>random.choice(a_list)</code> picks one random item from a list. Generating test data — random IDs, random valid inputs — is one of the most common real uses of this module in an automation project.',
+        '<code>datetime.now()</code> (from the <code>datetime</code> module) gives the current date and time. Automation code uses this constantly for things like timestamping a log line or giving a test-run report a unique name.',
+        'A <b>generator</b> is a function that uses <code>yield</code> instead of <code>return</code> — calling it does not run the function body at all, it just creates a paused generator object. The body only starts running (and only runs up to the next <code>yield</code>) when you pull a value out of it, either with <code>next(gen)</code> or by looping over it with <code>for</code>. This matters for automation when you are producing a lot of test data or reading a huge file — a generator produces one item at a time instead of building the whole thing in memory first.',
+        'A generator can only be gone through ONCE — once a <code>for</code> loop (or enough <code>next()</code> calls) has pulled every value out of it, looping over it again produces nothing at all. This trips people up constantly; better to know it now than debug it in a real test suite.'
+      ],
+      tasks:[
+        {
+          id:'m8-t1', kind:'checklist', title:'A dict becomes JSON text',
+          goal:'Run <code>import json</code>, then <code>json.dumps({"name": "Mouse", "price": 25, "in_stock": True})</code>, print the result. Confirm you see <b>{"name": "Mouse", "price": 25, "in_stock": true}</b> — note the lowercase <code>true</code>, even though you wrote <code>True</code> in Python.',
+          hint:'<code>json.dumps(...)</code> returns a string — store it in a variable and <code>print()</code> that variable to see it.'
+        },
+        {
+          id:'m8-t2', kind:'checklist', title:'Parse JSON text back into Python',
+          goal:'Given the text <code>raw = \'{"status": "pass", "duration": 12}\'</code>, use <code>json.loads(raw)</code> to turn it into a real Python dict, then print <code>data["status"]</code> and <code>data["duration"]</code>. Confirm you see <b>pass</b> then <b>12</b>.',
+          hint:'Once parsed with <code>json.loads</code>, <code>data</code> behaves exactly like any dict you built by hand in Module 5 — same square-bracket access.'
+        },
+        {
+          id:'m8-t3', kind:'checklist', title:'A random test data value',
+          goal:'Run <code>import random</code>, then print <code>random.randint(1, 6)</code>. Run the whole file 3-4 times — confirm the number changes each time and always lands between 1 and 6.',
+          hint:'There is no fixed expected output here on purpose — random data is random. What you are confirming is the RANGE, not one specific number.'
+        },
+        {
+          id:'m8-t4', kind:'checklist', title:'Pick a random item',
+          goal:'Given <code>names = ["Alice", "Bob", "Charlie", "Dana"]</code>, print <code>random.choice(names)</code>. Run it a few times — confirm you get a different name from the list on different runs.',
+          hint:'<code>random.choice(a_list)</code> works on any list — same idea as <code>random.randint</code>, just picking an existing item instead of a number in a range.'
+        },
+        {
+          id:'m8-t5', kind:'checklist', title:'The current timestamp',
+          goal:'Run <code>from datetime import datetime</code>, then <code>now = datetime.now()</code>, then print <code>now.year</code>. Confirm it prints the current year.',
+          hint:'<code>datetime.now()</code> returns an object with several pieces available separately — <code>.year</code>, <code>.month</code>, <code>.day</code>, and more — not just one combined timestamp.'
+        },
+        {
+          id:'m8-t6', kind:'predict', offline:true, title:'Predict: a generator does not run until pulled',
+          goal:'Read the code and predict the exact three-line output, then check yourself in real Python.',
+          hint:'Creating <code>countdown()</code> does NOT run anything inside it yet — the body only starts once <code>next(gen)</code> actually asks for the first value. Watch where "created" lands relative to "starting".',
+          code:
+`def countdown():
+    print("starting")
+    yield 3
+    yield 2
+    yield 1
+
+gen = countdown()
+print("created")
+first = next(gen)
+print(first)
+`,
+          expected: 'created\nstarting\n3'
+        },
+        {
+          id:'m8-t7', kind:'checklist', title:'Loop over a generator',
+          goal:'Write the <code>countdown()</code> generator from the previous task (three <code>yield</code> statements: 3, 2, 1), then loop over it with <code>for n in countdown(): print(n)</code>. Confirm you see <b>3</b>, <b>2</b>, <b>1</b> on separate lines.',
+          hint:'A <code>for</code> loop over a generator pulls values out of it automatically, one at a time, exactly like it does over a list — you never call <code>next()</code> yourself when using <code>for</code>.'
+        },
+        {
+          id:'m8-t8', kind:'predict', offline:true, title:'Predict: a generator only works once',
+          goal:'Read the code and predict the exact output — pay attention to whether the second loop prints anything at all.',
+          hint:'Once the first <code>for</code> loop has pulled every value out of <code>gen</code>, there is nothing left in it — looping over the SAME generator object again finds it already empty.',
+          code:
+`def numbers():
+    yield 1
+    yield 2
+
+gen = numbers()
+for n in gen:
+    print(n)
+for n in gen:
+    print(n)
+`,
+          expected: '1\n2'
+        },
+        {
+          id:'m8-t9', kind:'checklist', title:'A random test case as JSON',
+          goal:'Build a dict <code>{"id": random.randint(1000, 9999), "name": "test_login", "status": "pass"}</code>, then print it through <code>json.dumps(...)</code>. Confirm the printed text is valid JSON containing all three keys, with a different <code>id</code> each time you run it.',
+          hint:'You need both <code>import json</code> and <code>import random</code> at the top of the file — combining two standard library modules in one script is completely normal.'
+        },
+        {
+          id:'m8-t10', kind:'checklist', boss:true, title:'Test results from a generator',
+          goal:'Write a generator <code>test_results()</code> that <code>yield</code>s three dicts, in order: <code>{"name": "test_login", "status": "pass"}</code>, <code>{"name": "test_logout", "status": "fail"}</code>, <code>{"name": "test_search", "status": "pass"}</code>. Loop over <code>test_results()</code>, count <code>"pass"</code> vs anything else, and print EXACTLY two lines: <b>Passed: 2</b> and <b>Failed: 1</b>.',
+          hint:'This is the same counting pattern as the Module 3 checkpoint and the Module 7 boss task — the only new part is that the data comes one dict at a time out of a generator instead of already sitting in a list.'
+        }
+      ],
+      homework:[
+        {
+          id:'m8-hw1', kind:'checklist', title:'A deliberate pause',
+          goal:'Run <code>import time</code>, then <code>print("Starting")</code>, then <code>time.sleep(1)</code>, then <code>print("Done")</code>. Confirm there is roughly a one-second pause between the two lines printing.',
+          hint:'<code>time.sleep(seconds)</code> is a REAL pause — nothing else runs during it. It is the blunt tool; once you reach Selenium/Playwright, you will use smarter waits that pause only as long as actually needed, not a fixed guess.'
+        },
+        {
+          id:'m8-hw2', kind:'predict', offline:true, title:'Predict: next() resumes exactly where it left off',
+          goal:'Read the code and predict the exact four-line output, then check yourself in real Python.',
+          hint:'The first <code>next(gen)</code> runs the body up to (and including) the first <code>yield</code> — printing "step A" along the way. The SECOND <code>next(gen)</code> resumes from right after that <code>yield</code>, not from the top of the function again.',
+          code:
+`def steps():
+    print("step A")
+    yield "A"
+    print("step B")
+    yield "B"
+
+gen = steps()
+print(next(gen))
+print(next(gen))
+`,
+          expected: 'step A\nA\nstep B\nB'
+        },
+        {
+          id:'m8-hw3', kind:'checklist', title:'Sum prices from a JSON API response',
+          goal:'Given <code>response = \'[{"name": "Mouse", "price": 25}, {"name": "Keyboard", "price": 45}]\'</code> (a string, exactly as it would arrive from a real API), use <code>json.loads(response)</code> to parse it, loop over the result, sum up the prices, and print the total. Confirm you see <b>70</b>.',
+          hint:'Once parsed, this is EXACTLY the "list of dicts" shape from Module 5 — the summing loop is identical to what you already know, the only new step is the <code>json.loads</code> at the start.'
+        }
+      ]
+    },
     {id:'m9', num:9, phase:'Automated tests in Python', title:'Pytest', desc:'running tests, assert, fixtures, parametrization'},
     {id:'m10', num:10, phase:'Automated tests in Python', title:'Mocks and stubs', desc:'faking dependencies: mock, stub — when and why'},
     {id:'m11', num:11, phase:'Automation tooling', title:'API testing', desc:'checking requests and responses with requests'},
