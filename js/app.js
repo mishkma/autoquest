@@ -47,6 +47,29 @@
     <rect class="outline" x="8" y="76" width="16" height="46" rx="4" fill="#0b1210" stroke-width="2"/>
     <rect class="outline" x="76" y="76" width="16" height="46" rx="4" fill="#0b1210" stroke-width="2"/>`;
 
+  // A short SYSTEM briefing on entering a module — built entirely from the
+  // module's own real data (desc, task count, the boss task's actual title
+  // if it has one), not hand-authored lore per module. Keeps the same
+  // terminal voice already used in the boss encounter, one line, no new
+  // characters introduced.
+  function renderBriefing(m){
+    const bossTask = m.tasks.find(t => t.boss);
+    const taskCount = m.tasks.length;
+    let line;
+    if(m.checkpoint){
+      line = `Checkpoint reached: ${escapeHtml(m.desc)}. ${taskCount} trials queued &mdash; no new theory, only what already cleared.`;
+    } else if(bossTask){
+      line = `Incoming: ${escapeHtml(m.desc)}. ${taskCount} trials queued &mdash; boss encounter at the end: <b>${escapeHtml(bossTask.title).toUpperCase()}</b>.`;
+    } else {
+      line = `Incoming: ${escapeHtml(m.desc)}. ${taskCount} trials queued.`;
+    }
+    return `
+      <div class="briefing">
+        <span class="briefing-who">SYSTEM&gt;</span>
+        <span class="briefing-text">${line}<span class="briefing-cursor"></span></span>
+      </div>`;
+  }
+
   function renderBossHeader(t, m){
     return `
       <div class="boss-header">
@@ -382,6 +405,7 @@
         <h2>${m.title}</h2>
         <div class="room-progress" id="room-progress"></div>
       </div>
+      ${renderBriefing(m)}
       <div class="card theory">
         <h3>The short version</h3>
         ${m.theory.map(renderTheoryItem).join('')}

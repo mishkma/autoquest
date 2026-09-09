@@ -642,6 +642,24 @@
   #view-module.arcade .editor-hudframe .corner.bl{ bottom:6px; left:6px; border-right:none; border-top:none; }
   #view-module.arcade .editor-hudframe .corner.br{ bottom:6px; right:6px; border-left:none; border-top:none; }
 
+  /* game-master / SYSTEM briefing on entering a module — same voice as the
+     boss encounter's dialogue line, built from real module data (see
+     renderBriefing in app.js), not a separate hand-authored character. */
+  #view-module.arcade .briefing{
+    display:flex; gap:10px; align-items:baseline; flex-wrap:wrap; row-gap:4px;
+    background: var(--a-bg1); border:1px solid var(--a-edge); border-radius:10px;
+    padding:14px 16px; margin-bottom:18px; font-size:13.5px; line-height:1.6; color:#cfe8d6;
+  }
+  #view-module.arcade .briefing-who{
+    font-family:'Press Start 2P',monospace; font-size:10.5px; color: var(--a-accent); flex:0 0 auto;
+  }
+  #view-module.arcade .briefing-text b{ color: var(--a-danger); }
+  #view-module.arcade .briefing-cursor{
+    display:inline-block; width:7px; height:13px; background: var(--a-accent); vertical-align:-2px; margin-left:3px;
+    animation: briefingblk 1s steps(1) infinite;
+  }
+  @keyframes briefingblk{ 50%{ opacity:0; } }
+
   @media (max-width:520px){
     #view-module.arcade{ margin: 0 -14px; padding: 0 14px 32px; }
   }
