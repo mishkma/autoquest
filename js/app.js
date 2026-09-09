@@ -88,6 +88,99 @@
       </div>`;
   }
 
+  // Per-module boss silhouette — every module's boss used the exact same
+  // hardcoded blob+eyes SVG (found during the 9 September 2026 QA/feedback
+  // round: "боссы... визуалы для каждого" — CLAUDE.md's own vision names
+  // per-module bugs like Infinite Loop / Spaghetti Hydra / KeyError Kraken
+  // but nothing distinguished them visually). Rather than hand-drawing 16
+  // bespoke creatures (expensive, and this project has already tried and
+  // rejected detailed character art — see CLAUDE.md "Визуальная
+  // концепция"), a small deterministic generator produces a distinct but
+  // consistently-styled jagged silhouette per module: spike count/jitter/
+  // rotation vary the outline, an eye arrangement gives it a "face", and a
+  // couple of modules get a small thematic accent (a blinking cursor mouth
+  // for the environment-setup module, a crosshair for locators, etc.).
+  // Seeded by the module id, so it's stable across reloads/re-renders, not
+  // random per view.
+  function hashStr(s){ let h = 0; for(let i=0;i<s.length;i++){ h = (h*31 + s.charCodeAt(i)) | 0; } return Math.abs(h); }
+  function seededRand(seed){
+    let s = seed % 2147483647; if(s <= 0) s += 2147483646;
+    return function(){ s = (s * 16807) % 2147483647; return (s - 1) / 2147483646; };
+  }
+  function bossBlobPath(spikes, jitter, rotDeg, seed){
+    const rand = seededRand(seed), cx = 100, cy = 100, baseR = 78;
+    let d = '';
+    for(let i = 0; i < spikes; i++){
+      const angle = (Math.PI * 2 * i / spikes) + (rotDeg * Math.PI / 180);
+      const r = baseR * (1 + (rand() * 2 - 1) * jitter);
+      const x = cx + Math.cos(angle) * r, y = cy + Math.sin(angle) * r;
+      d += (i === 0 ? 'M' : 'L') + x.toFixed(1) + ' ' + y.toFixed(1) + ' ';
+    }
+    return d + 'Z';
+  }
+  const BOSS_EYE_PATTERNS = {
+    single: [{cx:100,cy:96,r:3.4}],
+    pair: [{cx:91,cy:94,r:2.6},{cx:109,cy:94,r:2.6}],
+    triangle: [{cx:100,cy:86,r:2.4},{cx:89,cy:103,r:2.4},{cx:111,cy:103,r:2.4}],
+    row: [{cx:80,cy:96,r:2.1},{cx:100,cy:96,r:2.1},{cx:120,cy:96,r:2.1}],
+    none: []
+  };
+  // Config per module: spikes/jitter/rotation shape the silhouette, `eyes`
+  // picks a face pattern, `accent` adds one small thematic extra.
+  const BOSS_LOOK = {
+    m1: {spikes:6, jitter:.15, rot:0, eyes:'pair'},
+    m2: {spikes:5, jitter:.32, rot:10, eyes:'pair'},
+    m3: {spikes:10, jitter:.06, rot:0, eyes:'single', accent:'spiral'},
+    m4: {spikes:8, jitter:.2, rot:5, eyes:'triangle'},
+    m5: {spikes:12, jitter:.22, rot:0, eyes:'row'},
+    m6: {spikes:4, jitter:.05, rot:45, eyes:'none', accent:'cursor'},
+    m7: {spikes:6, jitter:.03, rot:0, eyes:'triangle'},
+    m8: {spikes:9, jitter:.1, rot:0, eyes:'single', accent:'spiral'},
+    m9: {spikes:7, jitter:.28, rot:-15, eyes:'pair'},
+    m10: {spikes:7, jitter:.42, rot:0, eyes:'single'},
+    m11: {spikes:6, jitter:.18, rot:0, eyes:'pair', accent:'twin'},
+    m12: {spikes:11, jitter:.12, rot:0, eyes:'pair'},
+    m13: {spikes:6, jitter:.05, rot:0, eyes:'single', accent:'stack'},
+    m14: {spikes:8, jitter:.15, rot:0, eyes:'single', accent:'crosshair'},
+    m15: {spikes:6, jitter:.2, rot:0, eyes:'pair', accent:'strings'},
+    m16: {spikes:13, jitter:.25, rot:0, eyes:'triangle'}
+  };
+  function renderBossVisual(moduleId){
+    const look = BOSS_LOOK[moduleId] || BOSS_LOOK.m1;
+    const seed = hashStr(moduleId);
+    const path = bossBlobPath(look.spikes, look.jitter, look.rot, seed);
+    let extra = '';
+    if(look.accent === 'twin'){
+      // Doppelganger — a faint second copy of the same silhouette, offset,
+      // standing in for the module's "mocks and stubs" theme.
+      const twinPath = bossBlobPath(look.spikes, look.jitter, look.rot + 25, seed + 1);
+      extra += `<path d="${twinPath}" fill="none" stroke="#ff6b6b" stroke-width="6" stroke-linejoin="round" opacity=".35" transform="translate(14,-10) scale(.82)" transform-origin="100 100"/>`;
+    }
+    if(look.accent === 'crosshair'){
+      extra += `<g stroke="#ff6b6b" stroke-width="2" opacity=".7"><line x1="100" y1="60" x2="100" y2="140"/><line x1="60" y1="100" x2="140" y2="100"/><circle cx="100" cy="100" r="18" fill="none"/></g>`;
+    }
+    if(look.accent === 'stack'){
+      extra += `<g fill="none" stroke="#ff6b6b" stroke-width="4"><ellipse cx="100" cy="70" rx="34" ry="10"/><ellipse cx="100" cy="100" rx="34" ry="10"/><ellipse cx="100" cy="130" rx="34" ry="10"/></g>`;
+    }
+    if(look.accent === 'strings'){
+      extra += `<g stroke="#ff6b6b" stroke-width="1.5" opacity=".6"><line x1="70" y1="30" x2="86" y2="80"/><line x1="130" y1="30" x2="114" y2="80"/></g>`;
+    }
+    if(look.accent === 'cursor'){
+      extra += `<rect class="boss-cursor" x="88" y="112" width="24" height="9" fill="#ff6b6b"/>`;
+    }
+    if(look.accent === 'spiral'){
+      extra += `<path d="M100 100 m0 -10 a10 10 0 1 1 -8 16 a5 5 0 1 1 3 -8" fill="none" stroke="#ff6b6b" stroke-width="2" opacity=".7"/>`;
+    }
+    const eyes = (BOSS_EYE_PATTERNS[look.eyes] || []).map(e => `<circle cx="${e.cx}" cy="${e.cy}" r="${e.r}" fill="#ff6b6b"/>`).join('');
+    return `
+      <svg viewBox="0 0 200 200">
+        <path d="${path}" fill="none" stroke="#ff6b6b" stroke-width="13" stroke-linejoin="round"/>
+        ${look.eyes !== 'none' && look.accent !== 'stack' && look.accent !== 'crosshair' ? `<circle cx="100" cy="100" r="7" fill="#2a0a0a"/>` : ''}
+        ${eyes}
+        ${extra}
+      </svg>`;
+  }
+
   function renderBossHeader(t, m){
     return `
       <div class="boss-header">
@@ -105,15 +198,7 @@
             </div>
             <div class="boss-arena">
               <svg class="boss-hero" viewBox="0 0 100 160">${HERO_SVG}</svg>
-              <div class="boss-ring">
-                <svg viewBox="0 0 200 200">
-                  <path d="M100 22 L138 42 L158 80 L148 118 L166 148 L138 178 L92 182 L58 164 L44 130 L58 100 L44 72 L58 38 Z"
-                        fill="none" stroke="#ff6b6b" stroke-width="13" stroke-linejoin="round"/>
-                  <circle cx="100" cy="100" r="7" fill="#2a0a0a"/>
-                  <circle cx="96" cy="97" r="2" fill="#ff6b6b"/>
-                  <circle cx="104" cy="97" r="2" fill="#ff6b6b"/>
-                </svg>
-              </div>
+              <div class="boss-ring">${renderBossVisual(m.id)}</div>
             </div>
           </div>
         </div>
