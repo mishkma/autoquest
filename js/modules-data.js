@@ -2303,6 +2303,86 @@ print(cursor.rowcount)
         }
       ]
     },
-    {id:'m15', num:15, phase:'Automation tooling', title:'Playwright', desc:'modern browser automation'},
+    {
+      id:'m15', num:15, phase:'Automation tooling', title:'Playwright',
+      desc:'modern browser automation',
+      theory:[
+        'Playwright is a newer alternative to Selenium — same core idea (drive a real browser), a different API, built more recently with automation specifically in mind. <code>pip install playwright</code>, then <code>python -m playwright install chromium</code> downloads an actual browser binary directly — no separate driver executable to match versions with, unlike Selenium\'s chromedriver.',
+        'Every action starts inside <code>with sync_playwright() as p:</code>, then <code>browser = p.chromium.launch()</code>, <code>page = browser.new_page()</code>, <code>page.goto(url)</code>. A <code>page.locator(selector)</code> represents an element (or a set of them) — <code>.click()</code>, <code>.fill("text")</code>, <code>.count()</code>, <code>.inner_text()</code>.',
+        'The biggest practical difference from Selenium: Playwright\'s actions AUTO-WAIT — <code>.click()</code> and <code>.fill()</code> already wait for the element to actually be ready (visible, not covered, not disabled) before acting, so Module 14\'s manual <code>WebDriverWait</code> is rarely needed for ordinary actions.',
+        '<code>expect(locator).to_have_text("...")</code> (needs <code>from playwright.sync_api import expect</code>) is Playwright\'s own assertion, built specifically for web pages — it keeps re-checking for a few seconds if the text is not there yet, instead of failing instantly like a plain Python <code>assert</code> would on a page that just has not finished updating.',
+        'A real, extremely common blocker: cookie-consent banners and similar overlays sitting on top of the page, physically intercepting clicks meant for something underneath. The fix is not a mystery workaround — it is dismissing the overlay first, exactly like a real user would, before continuing with the actual test.',
+        'One subtlety worth knowing: <code>.inner_text()</code> returns text as it visually RENDERS (including CSS effects like uppercase styling), while <code>expect(...).to_have_text(...)</code> compares against the actual text written in the page\'s HTML — the same heading can look different between the two.'
+      ],
+      tasks:[
+        {
+          id:'m15-t1', kind:'checklist', title:'Launch and open a real page',
+          goal:'Run <code>pip install playwright</code>, then <code>python -m playwright install chromium</code> (downloads the browser once). Inside <code>with sync_playwright() as p:</code>, launch chromium, open a new page, <code>goto("https://automationexercise.com")</code>, and print <code>page.title()</code>. Confirm you see <b>Automation Exercise</b>.',
+          hint:'The one-time <code>playwright install chromium</code> step downloads Playwright\'s own bundled browser — it is separate from any Chrome you may already have installed for Module 14.'
+        },
+        {
+          id:'m15-t2', kind:'checklist', title:'Dismiss the real cookie banner',
+          goal:'After opening the home page, use <code>page.locator(".fc-cta-consent")</code> and print its <code>.count()</code> — confirm it is <b>1</b>. Then call <code>.click()</code> on it to dismiss the real cookie-consent overlay this site shows on every fresh visit.',
+          hint:'This overlay is exactly the kind of thing described in the theory above — do this BEFORE trying to click anything else on the page, or the click will fail with the overlay in the way.'
+        },
+        {
+          id:'m15-t3', kind:'checklist', title:'Click a link and confirm navigation',
+          goal:'After dismissing the cookie banner, click the Products link with <code>page.click(\'a[href="/products"]\')</code>, then print <code>page.url</code>. Confirm the URL now ends in <b>/products</b>.',
+          hint:'Notice there is no explicit wait here — <code>page.click(...)</code> already waited for the link to be genuinely clickable on its own before acting.'
+        },
+        {
+          id:'m15-t4', kind:'checklist', title:'Search for a product',
+          goal:'On the products page, run <code>page.fill("#search_product", "Dress")</code>, then <code>page.click("#submit_search")</code>, then <code>page.wait_for_selector(".product-image-wrapper")</code>. Print <code>page.locator(".product-image-wrapper").count()</code>. Confirm you get a positive number of results.',
+          hint:'<code>.fill(...)</code> clears the field first and then types the given text — unlike Selenium\'s <code>send_keys</code>, which appends onto whatever was already there.'
+        },
+        {
+          id:'m15-t5', kind:'checklist', title:'Read the rendered heading text',
+          goal:'After searching, print <code>page.locator("h2.title.text-center").inner_text()</code>. Confirm you see <b>SEARCHED PRODUCTS</b> — in capitals, because that is how it visually renders.',
+          hint:'<code>.inner_text()</code> reflects what a person would actually SEE, capital letters included, even though the underlying HTML text is written in mixed case.'
+        },
+        {
+          id:'m15-t6', kind:'checklist', title:'Assert with expect(), not inner_text()',
+          goal:'Using <code>from playwright.sync_api import expect</code>, run <code>expect(page.locator("h2.title.text-center")).to_have_text("Searched Products")</code> — note the MIXED case this time, not capitals. Confirm it passes with no crash.',
+          hint:'<code>to_have_text</code> compares against the real underlying HTML text ("Searched Products"), not the capitalized visual rendering from the previous task — using the capitalized version here would fail.'
+        },
+        {
+          id:'m15-t7', kind:'checklist', title:'A locator that matches nothing',
+          goal:'Run <code>page.locator("#this_does_not_exist_999").count()</code> for a selector that matches nothing at all. Confirm you get <b>0</b>, with no crash.',
+          hint:'Same idea as Selenium\'s <code>find_elements</code> returning <code>[]</code> in Module 14 — checking "how many, possibly zero" should never need a <code>try</code>/<code>except</code> around it.'
+        },
+        {
+          id:'m15-t8', kind:'checklist', title:'Read a real click-intercepted error',
+          goal:'On a FRESH page (cookie banner still showing, not yet dismissed), immediately try <code>page.click(\'a[href="/products"]\', timeout=3000)</code> — it deliberately fails. Read the error and confirm you can find the phrase <b>"intercepts pointer events"</b> in it, naming the overlay that is in the way.',
+          hint:'This is the real error behind the real problem from task 2 and 3 — seeing it fail on purpose here makes it instantly recognizable if it ever happens by accident in a real test.'
+        },
+        {
+          id:'m15-t9', kind:'checklist', title:'Full search flow with an assertion',
+          goal:'Starting from a fresh page: dismiss the cookie banner, navigate to Products, search for <b>"Top"</b>, and finish with <code>expect(page.locator("h2.title.text-center")).to_have_text("Searched Products")</code>. Confirm the whole flow runs start to finish with no crash.',
+          hint:'This chains together every piece from this module in the order a real test would — dismiss the overlay once, then act on the actual page underneath it.'
+        },
+        {
+          id:'m15-t10', kind:'checklist', boss:true, title:'A Playwright Page Object',
+          goal:'Write <code>class ProductsPage:</code> with <code>__init__(self, page)</code> storing the page, an <code>open(self)</code> method navigating to the products URL, and a <code>search(self, term)</code> method doing the fill + click + wait_for_selector sequence from task 4. Dismiss the cookie banner, create a <code>ProductsPage</code> instance, call <code>.open()</code> then <code>.search("Dress")</code>, then print the result count through <code>page.locator(...)</code> directly.',
+          hint:'Same Page Object shape as Module 14\'s boss task, just wrapping Playwright\'s <code>page</code> instead of Selenium\'s <code>driver</code> — the PATTERN does not change between tools, only the calls inside each method do.'
+        }
+      ],
+      homework:[
+        {
+          id:'m15-hw1', kind:'checklist', title:'Watch the browser run',
+          goal:'Launch with <code>p.chromium.launch(headless=False)</code> instead of the default. Run any earlier task\'s code and confirm you can actually SEE the browser window open and act, instead of it running invisibly.',
+          hint:'<code>headless=False</code> is purely for a human watching — real CI pipelines run headless (the default) because there is no screen to show a window on.'
+        },
+        {
+          id:'m15-hw2', kind:'checklist', title:'A screenshot for debugging',
+          goal:'After navigating to any page, call <code>page.screenshot(path="failure.png")</code>. Confirm a real <code>failure.png</code> file appears in your folder afterward.',
+          hint:'Same practice as Module 14\'s homework, Playwright\'s own version of it — a screenshot taken right when something goes wrong is often the fastest way to understand a CI failure without re-running anything.'
+        },
+        {
+          id:'m15-hw3', kind:'checklist', title:'Always close the browser',
+          goal:'Wrap a small script in <code>try</code>/<code>finally</code>, with <code>browser.close()</code> in the <code>finally</code> block. Deliberately make the middle step fail (a bad selector with a short timeout) and confirm the browser still closes properly.',
+          hint:'The exact same discipline as Module 14\'s <code>driver.quit()</code> in <code>finally</code> — a crashed script should never leave a browser process running behind it, regardless of which tool opened it.'
+        }
+      ]
+    },
     {id:'m16', num:16, phase:'Automation tooling', title:'Test framework architecture', desc:'building a maintainable autotest project'}
   ];
