@@ -2022,7 +2022,86 @@ print(counter.call_count)
         }
       ]
     },
-    {id:'m12', num:12, phase:'Automation tooling', title:'API testing', desc:'checking requests and responses with requests'},
+    {
+      id:'m12', num:12, phase:'Automation tooling', title:'API testing',
+      desc:'checking requests and responses with requests',
+      theory:[
+        'Every task below hits the REAL public API of automationexercise.com — the same site your Module 4-11 examples have been themed around. <code>pip install requests</code>, then <code>requests.get(url, timeout=10)</code> sends a real HTTP request and returns a <code>Response</code> object — <code>.status_code</code> is the HTTP status (200 = OK), <code>.json()</code> parses the body as JSON, exactly like <code>json.loads(...)</code> did in Module 8, because that is literally what <code>.json()</code> does internally.',
+        'ALWAYS pass <code>timeout=...</code> to a real request. Without it, a request can hang forever if the server never responds — a single stuck test freezing an entire suite is a real, common automation failure, not a hypothetical one.',
+        '<code>requests.get(url)</code> reads data, <code>requests.post(url, data={...})</code> sends data — the dict passed as <code>data=</code> gets form-encoded into the request body, similar in spirit to the dicts you have been building all course, just sent over the network instead of printed.',
+        'A crucial, easy-to-miss gotcha: the HTTP status code and an API\'s OWN success/error code inside the JSON body are two DIFFERENT things. automationexercise.com\'s API always answers with HTTP 200, even on a request it considers wrong — the real error (like "wrong method") shows up as a <code>responseCode</code> field inside the JSON, not as the HTTP status. A test that only checks <code>status_code == 200</code> here would incorrectly call broken requests "fine."',
+        'Once parsed, an API response is just Python data you already know how to work with — a list of dicts (Module 5), maybe nested. Looping, counting, filtering — none of that changes just because the data arrived over a network instead of being typed by hand.'
+      ],
+      tasks:[
+        {
+          id:'m12-t1', kind:'checklist', title:'Your first real API call',
+          goal:'Run <code>pip install requests</code>, then <code>r = requests.get("https://automationexercise.com/api/productsList", timeout=10)</code> and print <code>r.status_code</code>. Confirm you see <b>200</b>.',
+          hint:'This is a real network call to a real, live site — if it fails, check your internet connection before assuming your code is wrong.'
+        },
+        {
+          id:'m12-t2', kind:'checklist', title:'Parse the JSON body',
+          goal:'Using the same GET request, call <code>data = r.json()</code>, then print <code>data["responseCode"]</code>. Confirm you also see <b>200</b> here.',
+          hint:'<code>r.json()</code> gives you a regular Python dict — <code>data["responseCode"]</code> is just square-bracket access, exactly like every dict you have used since Module 5.'
+        },
+        {
+          id:'m12-t3', kind:'checklist', title:'HTTP status vs API response code',
+          goal:'GET (not POST) <code>https://automationexercise.com/api/searchProduct</code> — this endpoint actually expects POST. Print BOTH <code>r.status_code</code> and <code>r.json()["responseCode"]</code>. Confirm the HTTP status is still <b>200</b>, while the API\'s own <code>responseCode</code> is <b>405</b> (wrong method) — two different numbers telling two different stories about the same response.',
+          hint:'If your test only checked <code>status_code == 200</code> here, it would say this broken request "passed" — this is exactly the gotcha described in the theory above, now happening for real.'
+        },
+        {
+          id:'m12-t4', kind:'checklist', title:'Search products with POST',
+          goal:'POST to <code>https://automationexercise.com/api/searchProduct</code> with <code>data={"search_product": "dress"}</code>. Parse the JSON, print <code>data["responseCode"]</code> and <code>len(data["products"])</code>. Confirm <code>responseCode</code> is <b>200</b> and you get a positive count of matching products.',
+          hint:'The count itself may not always be the exact same number — the live site\'s catalog is real data, not a fixture frozen in time. What matters is that it is a sensible positive number, not zero or an error.'
+        },
+        {
+          id:'m12-t5', kind:'checklist', title:'Count products by brand',
+          goal:'GET <code>productsList</code>, loop over <code>data["products"]</code>, and count how many have <code>product["brand"] == "Polo"</code>. Print the count.',
+          hint:'Same counting pattern as every module since M3 — a counter starting at 0, a loop, an <code>if</code> bumping it on a match. The data source is the only new part.'
+        },
+        {
+          id:'m12-t6', kind:'checklist', title:'Print the first five product names',
+          goal:'GET <code>productsList</code>, then loop over <code>data["products"][:5]</code> (real Python slicing — the first five items) and print each <code>product["name"]</code>, one per line.',
+          hint:'<code>[:5]</code> is a slice with no start (defaults to the beginning) and a stop at index 5 — real Python only, exactly like the slicing you first saw back in Module 6.'
+        },
+        {
+          id:'m12-t7', kind:'checklist', title:'A real API test with pytest',
+          goal:'Write a pytest test <code>test_products_list_ok()</code> that GETs <code>productsList</code> and asserts BOTH <code>r.status_code == 200</code> AND <code>r.json()["responseCode"] == 200</code> — checking the gotcha from task 3 on purpose. Run <code>pytest -v</code>. Confirm <b>1 passed</b>.',
+          hint:'This brings Module 9 (pytest) and this module together — an API test is still just a function starting with <code>test_</code>, full of <code>assert</code>s, run the exact same way.'
+        },
+        {
+          id:'m12-t8', kind:'checklist', title:'Catch a real Timeout',
+          goal:'Call <code>requests.get("https://automationexercise.com/api/productsList", timeout=0.001)</code> — a timeout far too short to succeed — inside a <code>try</code>/<code>except requests.exceptions.Timeout:</code> that prints <b>Timed out</b>. Run it a few times — confirm you consistently see that message, not a crash.',
+          hint:'<code>requests.exceptions.Timeout</code> is <code>requests</code>\' own exception type, but it is caught with the exact same <code>try</code>/<code>except</code> syntax from Module 10 — nothing about exception handling changes just because the risky operation is a network call.'
+        },
+        {
+          id:'m12-t9', kind:'checklist', title:'Check a login attempt',
+          goal:'POST to <code>https://automationexercise.com/api/verifyLogin</code> with <code>data={"email": "nonexistent_test_email_xyz@example.com", "password": "wrongpass"}</code>. Print <code>r.json()["responseCode"]</code> and <code>r.json()["message"]</code>. Confirm the response code is <b>404</b> with a "User not found!" message — a real API telling you, correctly, that this login should fail.',
+          hint:'This is a safe, read-only check against a fake account — it does not create or change anything on the real site.'
+        },
+        {
+          id:'m12-t10', kind:'checklist', boss:true, title:'A reusable brand-counting function',
+          goal:'Write a function <code>count_products_by_brand(brand_name)</code> that GETs <code>productsList</code>, loops through the products, counts how many have that exact brand, and RETURNS the count (does not print inside the function). Call it for <code>"Polo"</code> and print the result, matching what you found by hand in task 5.',
+          hint:'This is the exact same logic as task 5, just wrapped in a function so it can be reused for any brand name — the kind of small reusable helper a real test suite accumulates over time instead of repeating inline everywhere.'
+        }
+      ],
+      homework:[
+        {
+          id:'m12-hw1', kind:'checklist', title:'Mock the network for a fast, offline test',
+          goal:'Write <code>get_product_count()</code> that GETs <code>productsList</code> and returns <code>len(data["products"])</code>. In a pytest test, use <code>with patch("requests.get", return_value=fake_response):</code> where <code>fake_response</code> is a <code>Mock()</code> with <code>fake_response.json.return_value</code> set to a small fake products list, then assert the count matches. Run pytest — confirm it passes WITHOUT touching the real network.',
+          hint:'This is Module 11\'s <code>patch</code> applied to the exact function this module has been calling for real all along — a genuine choice a real project makes constantly: hit the real API in a few end-to-end tests, but mock it in the many fast unit tests that check your own logic.'
+        },
+        {
+          id:'m12-hw2', kind:'checklist', title:'A missing required field',
+          goal:'POST to <code>verifyLogin</code> with ONLY <code>data={"email": "test@example.com"}</code> (no password). Print <code>r.json()["responseCode"]</code> and <code>r.json()["message"]</code>. Confirm you get <b>400</b> with a message about a missing parameter.',
+          hint:'A real API validating its own inputs and telling you clearly what is missing — worth testing on purpose, since "what happens when a required field is missing" is exactly the kind of case a thin happy-path-only test suite misses.'
+        },
+        {
+          id:'m12-hw3', kind:'checklist', title:'Inspect real response headers',
+          goal:'GET <code>productsList</code>, then print <code>r.headers["Content-Type"]</code>. Confirm it mentions <b>json</b> somewhere in the value.',
+          hint:'<code>r.headers</code> behaves like a dict of metadata ABOUT the response, separate from <code>r.json()</code> which is the actual body content — <code>Content-Type</code> is the server telling you what format to expect before you even parse it.'
+        }
+      ]
+    },
     {id:'m13', num:13, phase:'Automation tooling', title:'Databases', desc:'checking data in a DB straight from tests'},
     {id:'m14', num:14, phase:'Automation tooling', title:'Locators and Selenium', desc:'finding elements and automating the browser'},
     {id:'m15', num:15, phase:'Automation tooling', title:'Playwright', desc:'modern browser automation'},
