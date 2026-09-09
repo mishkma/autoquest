@@ -1904,7 +1904,124 @@ except ZeroDivisionError:
         }
       ]
     },
-    {id:'m11', num:11, phase:'Automated tests in Python', title:'Mocks and stubs', desc:'faking dependencies: mock, stub — when and why'},
+    {
+      id:'m11', num:11, phase:'Automated tests in Python', title:'Mocks and stubs',
+      desc:'faking dependencies: mock, stub — when and why',
+      theory:[
+        'A test should not depend on a real payment API, a real email server, or the exact current time to be fast, repeatable, and pass even when the internet is down. A <b>mock</b> is a fake stand-in object you hand to your code INSTEAD of the real dependency — it behaves close enough to be useful, without doing anything real.',
+        '<code>from unittest.mock import Mock</code> — <code>Mock()</code> creates a fake object that accepts ANY attribute access or method call without complaint, auto-creating a new Mock for each one. This is what makes it useful as a stand-in for something you have not built yet, or do not want to actually call.',
+        '<code>Mock(return_value=X)</code> makes CALLING the mock return <code>X</code> instead of another Mock. You can also set it after creation on a specific method: <code>fake_db.get_user.return_value = {...}</code> — only that one method is scripted, everything else on the object still behaves like a generic Mock.',
+        'A mock also REMEMBERS how it was called — <code>mock.assert_called_with(args)</code> fails loudly (a real <code>AssertionError</code>, with both what was expected and what actually happened) if your code called it differently than expected, or not at all. This turns "did my code talk to the dependency correctly" into something a test can check automatically.',
+        '<code>side_effect</code> makes a mock do more than return one fixed value: set it to an exception INSTANCE to make every call raise it, or to a LIST to make each successive call return (or raise) the next item — perfect for simulating something that fails once and then succeeds, without touching anything real.',
+        '<code>patch("module.function", return_value=X)</code>, used with <code>with</code>, temporarily REPLACES a real function everywhere it is looked up by that name, only for the code inside the <code>with</code> block — outside it, the real function is back untouched. This is how you neutralize something unpredictable (like <code>random</code> or the network) for the length of one test only.'
+      ],
+      tasks:[
+        {
+          id:'m11-t1', kind:'checklist', title:'A mock accepts anything',
+          goal:'Run <code>from unittest.mock import Mock</code>, create <code>fake_api = Mock()</code>, then call <code>fake_api.get_status()</code> — a method that was never defined anywhere. Confirm it does NOT crash, and print <b>Called without error</b> afterward.',
+          hint:'A plain <code>Mock()</code> auto-creates whatever attribute or method you ask for, on the spot — there is no such thing as an "undefined method" error on a Mock.'
+        },
+        {
+          id:'m11-t2', kind:'checklist', title:'Control what calling it returns',
+          goal:'Create <code>fake_api = Mock(return_value="200 OK")</code>, call it with <code>fake_api()</code>, and print the result. Confirm you see <b>200 OK</b>.',
+          hint:'<code>return_value</code> is set once, at creation — every call to <code>fake_api()</code> after that returns the exact same scripted value.'
+        },
+        {
+          id:'m11-t3', kind:'predict', offline:true, title:'Predict: scripting one specific method',
+          goal:'Read the code and predict the exact output, then check yourself in real Python.',
+          hint:'Only <code>get_user</code> was scripted with a <code>return_value</code> — calling it with <code>42</code> or any other argument still returns the same fixed dict, because a plain Mock does not actually check its arguments unless you ask it to.',
+          code:
+`from unittest.mock import Mock
+
+fake_db = Mock()
+fake_db.get_user.return_value = {"name": "Alex", "active": True}
+user = fake_db.get_user(42)
+print(user["name"])
+`,
+          expected: 'Alex'
+        },
+        {
+          id:'m11-t4', kind:'checklist', title:'Assert a mock was called correctly',
+          goal:'Write a function <code>notify_user(email, message)</code> that calls <code>send_email(email, message)</code>, where <code>send_email = Mock()</code>. Call <code>notify_user("alex@example.com", "Order shipped")</code>, then <code>send_email.assert_called_with("alex@example.com", "Order shipped")</code>, then print <b>Assertion passed</b>. Confirm you see it (no crash means the assertion succeeded).',
+          hint:'<code>assert_called_with(...)</code> does not return <code>True</code>/<code>False</code> — it raises a real <code>AssertionError</code> if the call does not match, and does nothing at all (execution just continues) if it does.'
+        },
+        {
+          id:'m11-t5', kind:'checklist', title:'Read a real mock assertion failure',
+          goal:'Run the code below EXACTLY as given — it deliberately calls <code>send_email</code> with the WRONG arguments, then asserts the expected ones. Read the resulting <code>AssertionError</code> and confirm you can find both the <b>Expected</b> and <b>Actual</b> call it shows you.',
+          hint:'Mock\'s own assertion failures are unusually readable on purpose — they print exactly what was expected next to exactly what actually happened, specifically so you do not have to guess.',
+          starter:
+`from unittest.mock import Mock
+
+send_email = Mock()
+send_email("wrong@example.com", "Oops")
+send_email.assert_called_with("alex@example.com", "Order shipped")
+`
+        },
+        {
+          id:'m11-t6', kind:'predict', offline:true, title:'Predict: call_count',
+          goal:'Read the code and predict the exact output, then check yourself in real Python.',
+          hint:'Every mock automatically counts how many times it has been called, available as <code>.call_count</code> — no setup needed, it is tracked from the moment the mock is created.',
+          code:
+`from unittest.mock import Mock
+
+retry = Mock()
+retry()
+retry()
+retry()
+print(retry.call_count)
+`,
+          expected: '3'
+        },
+        {
+          id:'m11-t7', kind:'checklist', title:'Patch a real function temporarily',
+          goal:'Write <code>roll_dice()</code> that returns <code>random.randint(1, 6)</code>. Using <code>with patch("random.randint", return_value=4):</code>, call <code>roll_dice()</code> inside the <code>with</code> block and print the result. Confirm you see <b>4</b> every time you run it, not a random number.',
+          hint:'<code>patch(...)</code> replaces the real <code>random.randint</code> everywhere it is looked up by that name, for as long as the indented <code>with</code> block runs — <code>roll_dice</code> did not change at all, but what it calls did.'
+        },
+        {
+          id:'m11-t8', kind:'checklist', title:'A mock that raises instead of returning',
+          goal:'Create <code>flaky = Mock(side_effect=ConnectionError("Network down"))</code>. Call it inside a <code>try</code>/<code>except ConnectionError as e:</code> that prints <code>f"Caught: {e}"</code>. Confirm you see <b>Caught: Network down</b>.',
+          hint:'Setting <code>side_effect</code> to an exception INSTANCE (not just the class) makes every call to the mock raise that exact exception — this is the Module 10 pattern, now simulating a dependency that fails on purpose.'
+        },
+        {
+          id:'m11-t9', kind:'checklist', title:'Mock a payment gateway',
+          goal:'Write <code>checkout(cart_total, payment_gateway)</code> that calls <code>payment_gateway.charge(cart_total)</code> and returns <b>"Order placed"</b>. Call it with <code>150</code> and a <code>fake_gateway = Mock()</code>, then assert <code>fake_gateway.charge.assert_called_with(150)</code>, then print the result. Confirm you see <b>Order placed</b> with no crash.',
+          hint:'The function under test never knows <code>payment_gateway</code> is fake — it just calls <code>.charge(...)</code> on whatever object it was given, exactly like it would on a real payment client.'
+        },
+        {
+          id:'m11-t10', kind:'checklist', boss:true, title:'Checkout with a mocked email service',
+          goal:'Write <code>checkout(cart, email_service)</code> that sums <code>item["price"]</code> for every item in <code>cart</code>, calls <code>email_service.send(f"Your total is {total}")</code>, and returns <code>total</code>. Given <code>cart = [{"name": "Mouse", "price": 25}, {"name": "Keyboard", "price": 45}]</code> and <code>fake_email = Mock()</code>, call <code>checkout(cart, fake_email)</code>, then assert <code>fake_email.send.assert_called_once_with("Your total is 70")</code>, then print the returned total. Confirm you see <b>70</b> with no crash.',
+          hint:'<code>assert_called_once_with(...)</code> checks two things at once: the exact arguments AND that it was called exactly one time — stricter than plain <code>assert_called_with</code>, which allows any number of calls as long as one of them matches.'
+        }
+      ],
+      homework:[
+        {
+          id:'m11-hw1', kind:'checklist', title:'Assert something was NEVER called',
+          goal:'Write <code>maybe_notify(should_notify, email_service)</code> that calls <code>email_service.send("Hi")</code> only if <code>should_notify</code> is <code>True</code>. Call it with <code>False</code> and <code>send_email = Mock()</code>, then <code>send_email.assert_not_called()</code>, then print <b>Confirmed: email was never sent</b>. Confirm you see it with no crash.',
+          hint:'<code>assert_not_called()</code> is the mirror image of <code>assert_called_with(...)</code> — it fails if the mock was called even once, for any reason.'
+        },
+        {
+          id:'m11-hw2', kind:'predict', offline:true, title:'Predict: reset_mock() clears the call history',
+          goal:'Read the code and predict the exact two-line output, then check yourself in real Python.',
+          hint:'<code>.reset_mock()</code> wipes the recorded call history (like <code>call_count</code>) back to zero — it does not remove the mock itself, just forgets everything that happened to it so far.',
+          code:
+`from unittest.mock import Mock
+
+counter = Mock()
+counter()
+counter()
+print(counter.call_count)
+counter.reset_mock()
+print(counter.call_count)
+`,
+          expected: '2\n0'
+        },
+        {
+          id:'m11-hw3', kind:'checklist', title:'Simulate fail-once-then-succeed',
+          goal:'Create <code>flaky_call = Mock(side_effect=[ConnectionError("Network down"), "success"])</code>. Using a <code>for attempt in range(2):</code> loop with <code>try</code>/<code>except ConnectionError:</code> (print <b>Retry</b> on failure, print the result and <code>break</code> on success), confirm the output is exactly <b>Retry</b> then <b>success</b>.',
+          hint:'When <code>side_effect</code> is a LIST instead of a single exception, each call consumes the NEXT item in order — the first call raises the exception, the second call returns the plain string, exactly like a real flaky dependency that recovers on retry.'
+        }
+      ]
+    },
     {id:'m12', num:12, phase:'Automation tooling', title:'API testing', desc:'checking requests and responses with requests'},
     {id:'m13', num:13, phase:'Automation tooling', title:'Databases', desc:'checking data in a DB straight from tests'},
     {id:'m14', num:14, phase:'Automation tooling', title:'Locators and Selenium', desc:'finding elements and automating the browser'},
