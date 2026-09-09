@@ -2384,5 +2384,85 @@ print(cursor.rowcount)
         }
       ]
     },
-    {id:'m16', num:16, phase:'Automation tooling', title:'Test framework architecture', desc:'building a maintainable autotest project'}
+    {
+      id:'m16', num:16, phase:'Automation tooling', title:'Test framework architecture',
+      desc:'building a maintainable autotest project',
+      theory:[
+        'Every module so far lived in one file. That works for a handful of tests, but a real project accumulates dozens or hundreds — a flat pile of scripts becomes unmanageable fast. A framework is just an organizing SHAPE: a <code>pages/</code> folder for Page Objects (Module 7, 14, 15), a <code>tests/</code> folder for the actual <code>test_*.py</code> files, and a <code>conftest.py</code> for shared setup — nothing conceptually new, just the pieces you already know, arranged so each test file stays short.',
+        '<code>conftest.py</code> is a special pytest filename: a fixture defined there is automatically available to every test in that folder (and subfolders) just by naming it as a parameter — no <code>import</code> needed, unlike everything else in Python. This is how a real project shares one browser setup, one API base URL, one database connection across many test files without repeating the setup code in each one.',
+        'A fixture using <code>yield</code> instead of <code>return</code> splits into two halves: everything BEFORE <code>yield</code> is setup, the yielded value is what the test receives, everything AFTER <code>yield</code> is teardown — and pytest guarantees the teardown half runs once the test finishes, pass OR fail. This replaces manually opening and closing a browser (Module 14/15) or a DB connection (Module 13) in every single test.',
+        '<code>@pytest.fixture(scope="module")</code> (default scope is per-test, called "function") changes how OFTEN the setup/teardown runs — <code>scope="module"</code> runs setup ONCE for every test in that file, not once per test, which matters a lot for something as slow as launching a real browser.',
+        '<code>requirements.txt</code> lists every package the project needs (<code>pytest</code>, <code>playwright</code>, <code>requests</code>, ...), so <code>pip install -r requirements.txt</code> reproduces the exact same setup on any machine — this is how the AutoQuest repository itself would hand its dependencies to someone else picking it up.',
+        'A real framework mixes different KINDS of tests side by side in the same run — a fast unit test with a mock (Module 11), a real API check (Module 12), a full browser flow through a Page Object (Module 14/15) — because every one of them is still just a <code>test_</code> function full of <code>assert</code>s. One <code>pytest -v</code> command runs all of them together, regardless of what each one actually does underneath.'
+      ],
+      tasks:[
+        {
+          id:'m16-t1', kind:'checklist', title:'Set up the folder structure',
+          goal:'Create a new project folder with THREE things inside it: a <code>pages/</code> folder, a <code>tests/</code> folder, and an empty <code>conftest.py</code> file at the top level (next to the two folders, not inside either). Confirm all three exist.',
+          hint:'This exact shape — <code>pages/</code>, <code>tests/</code>, <code>conftest.py</code> — is the smallest real version of what a production test framework looks like; everything else in this module fills these three pieces in.'
+        },
+        {
+          id:'m16-t2', kind:'checklist', title:'A Page Object as its own file',
+          goal:'Inside <code>pages/</code>, create <code>products_page.py</code> containing the <code>ProductsPage</code> class from Module 15\'s boss task (<code>__init__</code>, <code>open</code>, <code>search</code>). Confirm the file runs with no syntax errors (e.g. <code>python -m py_compile pages/products_page.py</code> prints nothing).',
+          hint:'This file has no tests in it at all — it ONLY defines the class. Separating "how to interact with a page" from "what to check" is the entire point of the Page Object pattern.'
+        },
+        {
+          id:'m16-t3', kind:'checklist', title:'A shared page fixture in conftest.py',
+          goal:'In <code>conftest.py</code>, write a <code>yield</code>-based fixture named <code>page</code> that launches Playwright chromium, opens a new page, navigates to the home page, dismisses the cookie banner, <code>yield</code>s the page, then closes the browser afterward. Do NOT import anything from <code>conftest.py</code> into your test file.',
+          hint:'Every test that names <code>page</code> as a parameter gets this exact setup automatically — pytest finds <code>conftest.py</code> by its special filename alone, in the folder the test lives in or any folder above it.'
+        },
+        {
+          id:'m16-t4', kind:'checklist', title:'A test using the fixture and the Page Object together',
+          goal:'In <code>tests/test_search.py</code>, import <code>ProductsPage</code> from your <code>pages</code> package, write <code>def test_search_returns_results(page):</code> using the <code>page</code> fixture, create a <code>ProductsPage(page)</code>, call <code>.open()</code> and <code>.search("Dress")</code>, then assert the result count is greater than 0. Run <code>pytest -v</code> — confirm <b>1 passed</b>.',
+          hint:'The test function never launches or closes a browser itself — it just asks for <code>page</code> as a parameter and trusts <code>conftest.py</code> to have handled that, exactly like Module 9\'s fixtures.'
+        },
+        {
+          id:'m16-t5', kind:'checklist', title:'See setup and teardown run in order',
+          goal:'In a small separate file, write a fixture <code>def resource(): print("Setting up"); yield "ready"; print("Tearing down")</code> and a test that prints <code>f"Running test with {resource}"</code>. Run <code>pytest -v -s test_file.py</code> (the <code>-s</code> flag shows print output). Confirm the three lines appear in EXACTLY this order: <b>Setting up</b>, <b>Running test with ready</b>, <b>Tearing down</b>.',
+          hint:'This is the exact mechanism behind your <code>page</code> fixture in task 3 — the "launch browser" part runs before the test, the "close browser" part runs after, automatically, in that order, every time.'
+        },
+        {
+          id:'m16-t6', kind:'checklist', title:'requirements.txt',
+          goal:'Create a <code>requirements.txt</code> file listing <code>pytest</code>, <code>playwright</code>, and <code>requests</code>, one per line. In a NEW empty virtual environment (or just conceptually), confirm <code>pip install -r requirements.txt</code> would install everything this project needs in one command.',
+          hint:'Run <code>pip freeze</code> to see the exact installed versions on your machine — pinning exact versions (e.g. <code>pytest==9.1.1</code>) makes the project reproducible; leaving them unpinned always installs the latest.'
+        },
+        {
+          id:'m16-t7', kind:'checklist', title:'API and UI tests running together',
+          goal:'Add <code>tests/test_api.py</code> with a test that GETs <code>productsList</code> (Module 12 style) and asserts <code>status_code == 200</code>. Run <code>pytest -v</code> from the project root (not inside <code>tests/</code>) — confirm BOTH <code>test_api.py</code> and <code>test_search.py</code> show up and pass in the same run.',
+          hint:'Nothing links these two test files together on purpose — pytest discovers every <code>test_*.py</code> file under the current folder automatically, regardless of what each one actually does inside.'
+        },
+        {
+          id:'m16-t8', kind:'checklist', title:'Share expensive setup with scope',
+          goal:'Change your <code>page</code> fixture (or a copy of it in a small test file) to <code>@pytest.fixture(scope="module")</code>. Write TWO test functions in the same file that both use it. Run <code>pytest -v -s</code> and confirm the setup print statement appears only ONCE for both tests, not twice.',
+          hint:'For something as slow as launching a real browser, sharing one instance across every test in a file (instead of relaunching per test) is a real, meaningful speed difference in a large suite.'
+        },
+        {
+          id:'m16-t9', kind:'checklist', title:'A .gitignore for the project',
+          goal:'Create a <code>.gitignore</code> file listing <code>__pycache__/</code>, <code>.pytest_cache/</code>, and <code>venv/</code> — folders Python and pytest generate automatically that should never be committed. Run <code>git status</code> after running the test suite once, and confirm none of those show up as untracked files.',
+          hint:'This is Module 6\'s git knowledge applied to a real project — committing generated cache folders bloats a repository and creates pointless merge conflicts for no benefit.'
+        },
+        {
+          id:'m16-t10', kind:'checklist', boss:true, title:'The AutoQuest Test Framework, assembled',
+          goal:'Bring every piece from this module together in one project: <code>pages/products_page.py</code> (task 2), <code>conftest.py</code> with the <code>page</code> fixture (task 3), <code>tests/test_search.py</code> (task 4) AND <code>tests/test_api.py</code> (task 7), plus <code>requirements.txt</code> and <code>.gitignore</code>. Run <code>pytest -v</code> from the project root. Confirm ALL tests pass in one run — this is a real, working, minimal automation framework, not a bigger exercise.',
+          hint:'Nothing here is new code — it is every piece from tasks 1-9 sitting together in the shape described in the theory above. If any single piece is missing, re-read that task rather than guessing.'
+        }
+      ],
+      homework:[
+        {
+          id:'m16-hw1', kind:'checklist', title:'Commit the framework to git',
+          goal:'Inside your framework project, run <code>git init</code> (checking <code>git config user.email</code> first, per Module 6), then <code>git add .</code> and <code>git commit -m "Initial test framework"</code>. Confirm <code>git log</code> shows the commit, and that the ignored folders from task 9 are NOT part of it.',
+          hint:'Check <code>git status</code> right before committing — <code>__pycache__/</code> or <code>.pytest_cache/</code> showing up as staged means <code>.gitignore</code> is missing or was created too late to take effect on already-tracked files.'
+        },
+        {
+          id:'m16-hw2', kind:'checklist', title:'Add a mocked unit test alongside the real ones',
+          goal:'Add <code>tests/test_cart_logic.py</code> containing a fast, mocked unit test in the style of Module 11 (no real network or browser involved at all). Run <code>pytest -v</code> from the project root again — confirm it runs alongside the API and UI tests from task 10, all in one command.',
+          hint:'This is the payoff of the whole module: fast mocked tests, real API tests, and full browser tests all live side by side, and a single <code>pytest</code> run does not care which kind each one is.'
+        },
+        {
+          id:'m16-hw3', kind:'checklist', title:'Write a README',
+          goal:'Create a <code>README.md</code> in the project root with a short description of what the framework tests, and the exact command to run it (<code>pip install -r requirements.txt</code> then <code>pytest -v</code>). Confirm someone with no other context could read it and run the suite themselves.',
+          hint:'A framework nobody but its author can figure out how to run is not really finished — this is the same instinct behind every good README on a real GitHub project, including this AutoQuest repository\'s own one.'
+        }
+      ]
+    }
   ];
