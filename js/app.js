@@ -163,30 +163,35 @@
     let s = seed % 2147483647; if(s <= 0) s += 2147483646;
     return function(){ s = (s * 16807) % 2147483647; return (s - 1) / 2147483646; };
   }
-  // Builds the jagged vertex ring, then traces it with quadratic curves
-  // through each edge's midpoint (a standard "smooth blob" trick: each
-  // vertex becomes a curve CONTROL point rather than a point ON the path,
-  // so the outline bulges toward every spike without ever hitting a raw
-  // corner). 9 Sept 2026 polish pass ("боссов тоже покрасивее") — straight
-  // segments between the same seeded vertices read as a crude zigzag;
-  // curving through them keeps every silhouette exactly as
-  // distinct/seeded as before (same spikes/jitter/rot/seed -> same
-  // vertices) while looking like a designed creature outline instead of
-  // a wireframe dump.
-  function bossBlobPath(spikes, jitter, rotDeg, seed){
-    const rand = seededRand(seed), cx = 100, cy = 100, baseR = 78;
-    const pts = [];
-    for(let i = 0; i < spikes; i++){
-      const angle = (Math.PI * 2 * i / spikes) + (rotDeg * Math.PI / 180);
+  // First attempt at a 9 Sept 2026 polish pass traced the old jitter-around-
+  // a-circle vertices with smooth curves — reported back immediately as
+  // "ужасные дизайны.. просто круги" (looked like plain circles/blobs, not
+  // monsters). Root cause was deeper than the curve smoothing: with only
+  // small radius jitter (as low as .03-.15 for several modules) around a
+  // single circle, the vertices were already nearly circular BEFORE any
+  // smoothing — there was no real spike to preserve. Rebuilt from the
+  // vertices up as an actual star/crown/gear silhouette: alternating
+  // OUTER (spike tip) and INNER (concave notch) vertices, each module's
+  // `inner` ratio (inner radius / outer radius) controlling how sharp
+  // (low ratio, e.g. m6/m10/m16's ninja-star spikes) or chunky (high
+  // ratio, e.g. m3/m8's gear-like teeth) it reads. Straight `L` segments
+  // are kept deliberately — a curve through a spike tip rounds it back
+  // into the "just a blob" look this was trying to escape; sharp corners
+  // are the whole point of a spiky creature silhouette. A small per-vertex
+  // angle wobble (in addition to the existing radius jitter) keeps spikes
+  // from looking like a perfectly regular, mechanical ninja-star stamp.
+  function bossBlobPath(spikes, jitter, rotDeg, seed, innerRatio){
+    const rand = seededRand(seed), cx = 100, cy = 100, outerR = 82;
+    const innerR = outerR * (innerRatio == null ? 0.5 : innerRatio);
+    const n = spikes * 2;
+    let d = '';
+    for(let i = 0; i < n; i++){
+      const baseR = (i % 2 === 0) ? outerR : innerR;
+      const angleWobble = (rand() * 2 - 1) * (Math.PI / n) * 0.35;
+      const angle = (Math.PI * 2 * i / n) + (rotDeg * Math.PI / 180) + angleWobble;
       const r = baseR * (1 + (rand() * 2 - 1) * jitter);
-      pts.push({x: cx + Math.cos(angle) * r, y: cy + Math.sin(angle) * r});
-    }
-    const mid = (a, b) => ({x: (a.x + b.x) / 2, y: (a.y + b.y) / 2});
-    const m0 = mid(pts[pts.length - 1], pts[0]);
-    let d = `M${m0.x.toFixed(1)} ${m0.y.toFixed(1)} `;
-    for(let i = 0; i < pts.length; i++){
-      const m = mid(pts[i], pts[(i + 1) % pts.length]);
-      d += `Q${pts[i].x.toFixed(1)} ${pts[i].y.toFixed(1)} ${m.x.toFixed(1)} ${m.y.toFixed(1)} `;
+      const x = cx + Math.cos(angle) * r, y = cy + Math.sin(angle) * r;
+      d += (i === 0 ? 'M' : 'L') + x.toFixed(1) + ' ' + y.toFixed(1) + ' ';
     }
     return d + 'Z';
   }
@@ -197,40 +202,84 @@
     row: [{cx:80,cy:96,r:2.1},{cx:100,cy:96,r:2.1},{cx:120,cy:96,r:2.1}],
     none: []
   };
-  // Config per module: spikes/jitter/rotation shape the silhouette, `eyes`
-  // picks a face pattern, `accent` adds one small thematic extra.
-  const BOSS_LOOK = {
-    m1: {spikes:6, jitter:.15, rot:0, eyes:'pair'},
-    m2: {spikes:5, jitter:.32, rot:10, eyes:'pair'},
-    m3: {spikes:10, jitter:.06, rot:0, eyes:'single', accent:'spiral'},
-    m4: {spikes:8, jitter:.2, rot:5, eyes:'triangle'},
-    m5: {spikes:12, jitter:.22, rot:0, eyes:'row'},
-    m6: {spikes:4, jitter:.05, rot:45, eyes:'none', accent:'cursor'},
-    m7: {spikes:6, jitter:.03, rot:0, eyes:'triangle'},
-    m8: {spikes:9, jitter:.1, rot:0, eyes:'single', accent:'spiral'},
-    m9: {spikes:7, jitter:.28, rot:-15, eyes:'pair'},
-    m10: {spikes:7, jitter:.42, rot:0, eyes:'single'},
-    m11: {spikes:6, jitter:.18, rot:0, eyes:'pair', accent:'twin'},
-    m12: {spikes:11, jitter:.12, rot:0, eyes:'pair'},
-    m13: {spikes:6, jitter:.05, rot:0, eyes:'single', accent:'stack'},
-    m14: {spikes:8, jitter:.15, rot:0, eyes:'single', accent:'crosshair'},
-    m15: {spikes:6, jitter:.2, rot:0, eyes:'pair', accent:'strings'},
-    m16: {spikes:13, jitter:.25, rot:0, eyes:'triangle'}
+  // Mouths — added alongside the eyes (9 Sept 2026, "мордочки какие-нибудь
+  // интересные придумай") so each boss reads as an actual creature face,
+  // not just a pair of dots. Left off modules whose `accent` already puts
+  // something else in the same lower-face real estate (m6's blinking
+  // cursor, m8/m3's spiral third eye, m13's database stack) to avoid
+  // cluttering one small area with two unrelated motifs.
+  const BOSS_MOUTH_PATTERNS = {
+    fangs: `<path d="M82 110 Q100 117 118 110" fill="none" stroke="#ff6b6b" stroke-width="2.2"/><path d="M90 110 L93.5 121 L97 110 Z" fill="#ffe8e8"/><path d="M103 110 L106.5 121 L110 110 Z" fill="#ffe8e8"/>`,
+    fang1: `<path d="M85 110 Q100 116 115 110" fill="none" stroke="#ff6b6b" stroke-width="2.2"/><path d="M96.5 111 L100 126 L103.5 111 Z" fill="#ffe8e8"/>`,
+    grin: `<path d="M80 111 L86 118 L92 111 L98 118 L104 111 L110 118 L116 111" fill="none" stroke="#ffe8e8" stroke-width="2"/>`,
+    frown: `<path d="M85 120 Q100 108 115 120" fill="none" stroke="#ff6b6b" stroke-width="2.2"/>`,
+    none: ''
   };
+  // Config per module: spikes/jitter/rotation shape the silhouette, `eyes`
+  // picks a face pattern, `accent` adds one small thematic extra. `inner`
+  // (added in the star/crown rewrite above) is the concave-notch radius as
+  // a fraction of the outer spike radius — low (.28-.4) reads as a sharp
+  // dangerous ninja-star, high (.6-.72) reads as a chunkier gear/crystal;
+  // omitted defaults to .5 in bossBlobPath.
+  const BOSS_LOOK = {
+    m1: {spikes:6, jitter:.15, rot:0, inner:.55, eyes:'pair', mouth:'fangs'},
+    m2: {spikes:5, jitter:.28, rot:10, inner:.42, eyes:'pair', mouth:'grin'},
+    m3: {spikes:10, jitter:.06, rot:0, inner:.72, eyes:'single', accent:'spiral', mouth:'none'},
+    m4: {spikes:8, jitter:.15, rot:5, inner:.5, eyes:'triangle', mouth:'fang1'},
+    m5: {spikes:12, jitter:.15, rot:0, inner:.62, eyes:'row', mouth:'grin'},
+    m6: {spikes:4, jitter:.05, rot:45, inner:.3, eyes:'none', accent:'cursor', mouth:'none'},
+    m7: {spikes:6, jitter:.03, rot:0, inner:.65, eyes:'triangle', mouth:'frown'},
+    m8: {spikes:9, jitter:.08, rot:0, inner:.68, eyes:'single', accent:'spiral', mouth:'none'},
+    m9: {spikes:7, jitter:.2, rot:-15, inner:.4, eyes:'pair', mouth:'fangs'},
+    m10: {spikes:7, jitter:.25, rot:0, inner:.28, eyes:'single', mouth:'grin'},
+    m11: {spikes:6, jitter:.15, rot:0, inner:.55, eyes:'pair', accent:'twin', mouth:'fang1'},
+    m12: {spikes:11, jitter:.1, rot:0, inner:.6, eyes:'pair', mouth:'grin'},
+    m13: {spikes:6, jitter:.05, rot:0, inner:.6, eyes:'single', accent:'stack', mouth:'none'},
+    m14: {spikes:8, jitter:.12, rot:0, inner:.48, eyes:'single', accent:'crosshair', mouth:'frown'},
+    m15: {spikes:6, jitter:.15, rot:0, inner:.45, eyes:'pair', accent:'strings', mouth:'fangs'},
+    m16: {spikes:13, jitter:.18, rot:0, inner:.32, eyes:'triangle', mouth:'grin'}
+  };
+  // A handful of seeded lightning-bolt crack lines radiating from the
+  // silhouette's center toward its edge — the "поломанным, трещина" ask
+  // (9 Sept 2026, after the rotate+desaturate-only defeated pose still
+  // didn't read as broken): each bolt is a 2-segment jagged line (a
+  // sideways-jogged midpoint, same trick real glass-crack SVGs use) drawn
+  // in a bright near-white so it pops against the now-grey dead fill.
+  // Seeded off (moduleId hash + 777) so it's stable per boss like
+  // everything else here, not re-randomized on every re-render.
+  function crackLines(seed, count){
+    const rand = seededRand(seed + 777), cx = 100, cy = 100;
+    let out = '';
+    for(let i = 0; i < count; i++){
+      const angle = (Math.PI * 2 * i / count) + (rand() * 2 - 1) * 0.6;
+      const len = 58 + rand() * 22;
+      const midLen = len * (0.45 + rand() * 0.2);
+      const perp = angle + Math.PI / 2;
+      const jag = (rand() * 2 - 1) * 11;
+      const mx = cx + Math.cos(angle) * midLen + Math.cos(perp) * jag;
+      const my = cy + Math.sin(angle) * midLen + Math.sin(perp) * jag;
+      const ex = cx + Math.cos(angle) * len, ey = cy + Math.sin(angle) * len;
+      out += `<path d="M${cx} ${cy} L${mx.toFixed(1)} ${my.toFixed(1)} L${ex.toFixed(1)} ${ey.toFixed(1)}" fill="none" stroke="#e8e4e0" stroke-width="1.6" stroke-linecap="round" opacity=".8"/>`;
+    }
+    return out;
+  }
   // defeated: the module's boss task is already cleared (state.completed).
   // Same silhouette (still recognizably THIS module's boss, not swapped
   // for generic "dead" art), but knocked onto its side (rotated + squashed
-  // flatter) with X eyes instead of its normal ones and lower opacity — a
-  // cheap, purely-CSS-transform "K.O." rather than new art per boss.
+  // flatter), recolored from the living red-gradient to a cracked grey/ash
+  // one (crackLines() above + a grayscale radialGradient below), with X
+  // eyes — a "shattered" K.O. rather than just a dimmer copy of the same
+  // red monster (the tilt-and-fade-only first attempt didn't read as
+  // "broken" either — see CLAUDE.md).
   function renderBossVisual(moduleId, defeated){
     const look = BOSS_LOOK[moduleId] || BOSS_LOOK.m1;
     const seed = hashStr(moduleId);
-    const path = bossBlobPath(look.spikes, look.jitter, look.rot, seed);
+    const path = bossBlobPath(look.spikes, look.jitter, look.rot, seed, look.inner);
     let extra = '';
     if(look.accent === 'twin'){
       // Doppelganger — a faint second copy of the same silhouette, offset,
       // standing in for the module's "mocks and stubs" theme.
-      const twinPath = bossBlobPath(look.spikes, look.jitter, look.rot + 25, seed + 1);
+      const twinPath = bossBlobPath(look.spikes, look.jitter, look.rot + 25, seed + 1, look.inner);
       extra += `<path d="${twinPath}" fill="none" stroke="#ff6b6b" stroke-width="6" stroke-linejoin="round" opacity=".35" transform="translate(14,-10) scale(.82)" transform-origin="100 100"/>`;
     }
     if(look.accent === 'crosshair'){
@@ -248,38 +297,44 @@
     if(look.accent === 'spiral'){
       extra += `<path d="M100 100 m0 -10 a10 10 0 1 1 -8 16 a5 5 0 1 1 3 -8" fill="none" stroke="#ff6b6b" stroke-width="2" opacity=".7"/>`;
     }
-    // Glowing eyes instead of flat dots — a pale near-white core (readable
-    // against the fill added below) with a soft, larger, low-opacity halo
-    // of the same red behind it. Still just 2 circles per eye, no new
-    // asset weight, but reads as "lit from within" rather than a sticker.
+    // Glowing eyes when alive (pale near-white core + soft red halo, "lit
+    // from within" rather than a flat sticker); grey X's when defeated,
+    // matching the grey/ash palette below instead of staying alive-red.
     const eyes = (BOSS_EYE_PATTERNS[look.eyes] || []).map(e => defeated
-      ? `<g stroke="#ff6b6b" stroke-width="2"><line x1="${e.cx-3.2}" y1="${e.cy-3.2}" x2="${e.cx+3.2}" y2="${e.cy+3.2}"/><line x1="${e.cx-3.2}" y1="${e.cy+3.2}" x2="${e.cx+3.2}" y2="${e.cy-3.2}"/></g>`
+      ? `<g stroke="#8a8681" stroke-width="2"><line x1="${e.cx-3.2}" y1="${e.cy-3.2}" x2="${e.cx+3.2}" y2="${e.cy+3.2}"/><line x1="${e.cx-3.2}" y1="${e.cy+3.2}" x2="${e.cx+3.2}" y2="${e.cy-3.2}"/></g>`
       : `<circle cx="${e.cx}" cy="${e.cy}" r="${e.r+2.6}" fill="#ff6b6b" opacity=".35"/><circle cx="${e.cx}" cy="${e.cy}" r="${e.r}" fill="#ffd9d3"/>`
     ).join('');
+    const mouth = BOSS_MOUTH_PATTERNS[look.mouth] || '';
     // Radial gradient gives the silhouette actual volume instead of being
     // a hollow outline (the 9 Sept 2026 "make the bosses prettier" pass) —
-    // lighter coral core fading to a dark maroon edge, same red family the
-    // rest of the boss art already uses (eyes/accents), just shaded. id is
-    // unique per module+state because #view-path renders many of these
-    // <svg> elements on screen at once — a shared id would make every
-    // instance point at whichever <radialGradient> happens to be first
-    // in the DOM.
+    // lighter coral core fading to a dark maroon edge when alive. When
+    // defeated it swaps to a grey/ash version instead of just dimming the
+    // same red (a later 9 Sept 2026 request: "поломанным чтобы был...
+    // трещина" — a dimmer red monster still read as "alive but tired", not
+    // broken) — paired with crackLines() below for an actual shattered
+    // look. id is unique per module+state because #view-path renders many
+    // of these <svg> elements on screen at once — a shared id would make
+    // every instance point at whichever <radialGradient> happens to be
+    // first in the DOM.
     const gradId = `bossGrad-${moduleId}${defeated ? '-d' : ''}`;
+    const edgeColor = defeated ? '#5a564f' : '#ff6b6b';
     const body = `
         <defs>
           <radialGradient id="${gradId}" cx="40%" cy="35%" r="65%">
-            <stop offset="0%" stop-color="#ffab9e"/>
-            <stop offset="55%" stop-color="#ff6b6b"/>
-            <stop offset="100%" stop-color="#7a1f1f"/>
+            <stop offset="0%" stop-color="${defeated ? '#8a8681' : '#ffab9e'}"/>
+            <stop offset="55%" stop-color="${defeated ? '#524e48' : '#ff6b6b'}"/>
+            <stop offset="100%" stop-color="${defeated ? '#1c1a17' : '#7a1f1f'}"/>
           </radialGradient>
         </defs>
-        <path d="${path}" fill="url(#${gradId})" fill-opacity=".6" stroke="#ff6b6b" stroke-width="6" stroke-linejoin="round"/>
+        <path d="${path}" fill="url(#${gradId})" fill-opacity=".6" stroke="${edgeColor}" stroke-width="6" stroke-linejoin="round"/>
+        ${defeated ? crackLines(seed, 4) : ''}
         ${look.eyes !== 'none' && look.accent !== 'stack' && look.accent !== 'crosshair' ? `<circle cx="100" cy="100" r="7" fill="#2a0a0a"/>` : ''}
         ${eyes}
+        ${mouth}
         ${extra}`;
     return `
       <svg viewBox="0 0 200 200">
-        ${defeated ? `<g transform="rotate(65 100 100) scale(1,0.65)" opacity=".55">${body}</g>` : body}
+        ${defeated ? `<g transform="rotate(65 100 100) scale(1,0.65)" opacity=".7">${body}</g>` : body}
       </svg>`;
   }
 
@@ -304,7 +359,7 @@
                 <svg class="boss-hero" viewBox="0 0 100 160">${heroSvgFor(getSignal())}</svg>
                 <div class="boss-hero-name">${escapeHtml(tr(CHARACTER_KEYS[getSignal()] || CHARACTER_KEYS.mint))}</div>
               </div>
-              <div class="boss-ring">${renderBossVisual(m.id, defeated)}</div>
+              <div class="boss-ring${defeated ? ' defeated' : ''}">${renderBossVisual(m.id, defeated)}</div>
             </div>
           </div>
         </div>
