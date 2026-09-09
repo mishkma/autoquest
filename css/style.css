@@ -166,9 +166,31 @@
     position:absolute;left:27px;top:8px;bottom:8px;width:2px;
     background:repeating-linear-gradient(var(--path-line),var(--path-line) 6px,transparent 6px,transparent 12px);
   }
+  /* Root cause of the "large empty rectangle" spanning multiple rows in
+     the path list (10 Sept 2026 report, ~1890px viewport, but actually
+     present any time .wrap sits at its 1180px cap — so also at ordinary
+     ~1200-1400px desktop widths, not just ultra-wide): the middle
+     `1fr` track always stretches to fill .node's FULL width (1140px once
+     .wrap is capped), but its content — .node-title/.node-desc — is
+     deliberately capped for readability (.node-desc max-width:48ch below)
+     and the trailing column is a small fixed 64px boss-preview icon. That
+     left ~600px of the 1fr track's reserved width completely unused
+     between the end of the text and the start of the icon, on every row —
+     and since .node itself carries the hover/current background fill
+     (line ~174 below, `#view-path.arcade .node.current` etc.), that dead
+     zone rendered as a visible, highlightable blank box, not just idle
+     whitespace. This is the grid-track-reserving-space-nothing-uses case,
+     not a mispositioned decoration — .node-boss/.hero-decor are unrelated.
+     Fix: cap .node's own width to what badge+text+boss actually need so
+     the 1fr track stops reserving width nobody fills; any truly leftover
+     width becomes ordinary page margin to the right of a narrower row,
+     the same way `.hero p{max-width:56ch}` already leaves normal margin
+     beside itself, instead of an empty rectangle painted inside the row's
+     own hover/current background. */
   .node{
     position:relative;display:grid;grid-template-columns:56px 1fr 64px;align-items:center;gap:18px;
     padding:14px 6px;border-radius:16px;cursor:pointer;
+    max-width:640px;
     transition:background .15s ease;
   }
   .node:hover{background:var(--surface);}
