@@ -57,7 +57,7 @@
     const taskCount = m.tasks.length;
     let line;
     if(m.checkpoint){
-      line = `Checkpoint reached: ${escapeHtml(m.desc)}. ${taskCount} trials queued &mdash; no new theory, only what already cleared.`;
+      line = `Checkpoint reached: ${escapeHtml(m.desc)}. ${taskCount} trials queued &mdash; everything here is a mix of what already cleared.`;
     } else if(bossTask){
       line = `Incoming: ${escapeHtml(m.desc)}. ${taskCount} trials queued &mdash; boss encounter at the end: <b>${escapeHtml(bossTask.title).toUpperCase()}</b>.`;
     } else {
