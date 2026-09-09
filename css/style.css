@@ -361,3 +361,137 @@
     .node{grid-template-columns:46px 1fr;gap:14px;}
     .path-line{left:22px;}
   }
+
+  /* =====================================================================
+     ARCADE — title screen, boss encounter header, victory overlay.
+     Fully scoped under .arcade so none of it touches the site's own
+     --accent/--surface tokens above. "Signal color" is a per-viewer
+     cosmetic choice (localStorage, key autoquest-signal) that retints
+     every .arcade element via data-signal — nothing here affects
+     difficulty or task content.
+     ===================================================================== */
+  .arcade{
+    --a-accent:#8ff0a8; --a-glow:rgba(60,255,140,.16); --a-line:rgba(60,255,140,.045);
+    --a-dim:#6f9e7c; --a-dim2:#4a6b52; --a-gutternum:#22381f;
+    --a-bg0:#0b0f0c; --a-bg1:#080a09; --a-edge:#1f2a22;
+    --a-danger:#ff6b6b; --a-danger2:#ffa24c;
+    font-family:'JetBrains Mono',ui-monospace,monospace;
+  }
+  .arcade[data-signal="amber"]{
+    --a-accent:#f2c94c; --a-glow:rgba(255,190,60,.16); --a-line:rgba(255,190,60,.05);
+    --a-dim:#a4915a; --a-dim2:#6b5c34; --a-gutternum:#3a3020;
+    --a-bg0:#0f0d0a; --a-bg1:#0a0907; --a-edge:#2a2318;
+  }
+  .arcade[data-signal="violet"]{
+    --a-accent:#c78ff0; --a-glow:rgba(180,110,255,.16); --a-line:rgba(180,110,255,.05);
+    --a-dim:#8f7aa8; --a-dim2:#5c4a70; --a-gutternum:#2c2038;
+    --a-bg0:#0d0a10; --a-bg1:#0a080c; --a-edge:#241a2e;
+  }
+  .arcade[data-signal="cyan"]{
+    --a-accent:#6bc8f0; --a-glow:rgba(60,190,255,.16); --a-line:rgba(60,190,255,.05);
+    --a-dim:#5c8ea4; --a-dim2:#37596b; --a-gutternum:#1c3040;
+    --a-bg0:#080f12; --a-bg1:#070c0e; --a-edge:#182833;
+  }
+
+  .arcade-screen{
+    position:relative; max-width:640px; margin:0 auto; border:5px solid #000;
+    box-shadow: inset 0 0 0 2px var(--a-edge), 0 20px 50px -24px rgba(0,0,0,.7);
+    background: var(--a-bg0); overflow:hidden;
+  }
+  #view-title{ padding:36px 20px 44px; }
+
+  .arcade-backdrop{ position:absolute; inset:0; z-index:0; }
+  .arcade-gutter{
+    position:absolute; top:0; bottom:0; left:0; width:38px; background:var(--a-bg1); border-right:1px solid var(--a-edge);
+    font-size:10px; color:var(--a-gutternum); line-height:24px; padding-top:14px; text-align:right; padding-right:7px;
+  }
+  .arcade-linebg{ position:absolute; inset:0 0 0 38px; background: repeating-linear-gradient(0deg, var(--a-line) 0 24px, transparent 24px 25px); }
+  .arcade-glow{ position:absolute; inset:0 0 0 38px; background: radial-gradient(ellipse 55% 45% at 50% 36%, var(--a-glow), transparent 70%); }
+
+  .arcade-content{ position:relative; z-index:2; padding: 22px 24px 24px 54px; display:flex; flex-direction:column; gap:22px; }
+
+  .arcade-hud{ display:flex; align-items:center; gap:14px; font-family:'Press Start 2P',monospace; font-size:9px; }
+  .arcade-life{ display:flex; gap:4px; }
+  .arcade-life i{ width:8px; height:12px; background:var(--a-accent); display:inline-block; }
+  .arcade-hud-right{ margin-left:auto; color:var(--a-accent); opacity:.85; letter-spacing:.03em; }
+
+  .arcade-titleblock{ text-align:center; }
+  .arcade-title{
+    font-family:'Press Start 2P',monospace; font-size:clamp(22px,5vw,32px); color:var(--a-accent); margin:0; line-height:1.3;
+    text-shadow: 0 0 16px var(--a-glow);
+  }
+  .arcade-title .br{ color:var(--a-dim2); }
+  .arcade-tagline{ font-size:12.5px; color:var(--a-dim); margin-top:10px; }
+  .arcade-tagline .cm{ color:var(--a-dim2); }
+
+  .arcade-herowrap{ display:flex; justify-content:center; }
+  .arcade-hero{ width:104px; filter: drop-shadow(0 0 12px var(--a-glow)); }
+  .arcade-hero .outline{ stroke:var(--a-accent); }
+  .arcade-hero .eye{ fill:var(--a-accent); }
+
+  .arcade-loadout{ text-align:center; }
+  .arcade-lbl{ font-family:'Press Start 2P',monospace; font-size:8.5px; color:var(--a-dim); margin-bottom:12px; letter-spacing:.05em; }
+  .arcade-swatches{ display:flex; justify-content:center; gap:14px; flex-wrap:wrap; }
+  .arcade-swatch{ display:flex; flex-direction:column; align-items:center; gap:7px; cursor:pointer; background:none; border:none; padding:0; font-family:inherit; }
+  .arcade-swatch .ring{
+    width:46px; height:46px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+    border:2px solid #23342a; background:#0d1410; transition: box-shadow .15s ease, border-color .15s ease;
+  }
+  .arcade-swatch:hover .ring{ border-color: var(--c); }
+  .arcade-swatch.active .ring{ border-color: var(--c); box-shadow: 0 0 12px var(--c); }
+  .arcade-swatch .ring svg{ width:22px; }
+  .arcade-swatch .name{ font-family:'Press Start 2P',monospace; font-size:6.5px; color:#54705c; }
+  .arcade-swatch.active .name{ color: var(--c); }
+
+  .arcade-footer{ text-align:center; }
+  .arcade-cta{
+    display:inline-block; font-family:'Press Start 2P',monospace; font-size:11px; color:#0b0f0c; background:var(--a-accent);
+    padding:11px 26px; border:3px solid #000; box-shadow:0 5px 0 #000; cursor:pointer;
+  }
+  .arcade-pressstart{ display:block; margin-top:12px; font-family:'Press Start 2P',monospace; font-size:7.5px; color:var(--a-accent); animation:arcadeblk 1s steps(1) infinite; }
+  @keyframes arcadeblk{ 50%{ opacity:0; } }
+
+  .arcade-floor{ height:18px; background:var(--a-bg1); border-top:2px solid var(--a-edge); position:relative; z-index:2; margin-left:38px; }
+
+  /* boss encounter header — sits above the real task card, purely decorative */
+  .boss-header{ margin-bottom:14px; }
+  .boss-header .arcade-screen{ max-width:none; }
+  .boss-header .arcade-content{ padding: 18px 20px 18px 54px; gap:16px; }
+  .boss-name{ font-family:'Press Start 2P',monospace; font-size:12px; color:var(--a-danger); letter-spacing:.03em; }
+  .boss-track{ margin-top:8px; height:9px; background:#1a0d0d; border:2px solid #3a1414; max-width:340px; }
+  .boss-track i{ display:block; height:100%; width:68%; background: linear-gradient(90deg,var(--a-danger),var(--a-danger2)); }
+  .boss-arena{ display:flex; align-items:center; gap:22px; flex-wrap:wrap; }
+  .boss-hero{ width:76px; flex:0 0 auto; filter: drop-shadow(0 0 10px var(--a-glow)); }
+  .boss-hero .outline{ stroke:var(--a-accent); }
+  .boss-hero .eye{ fill:var(--a-accent); }
+  .boss-ring{ width:96px; height:96px; flex:0 0 auto; }
+  .boss-ring svg{ width:100%; height:100%; filter: drop-shadow(0 0 10px rgba(255,80,110,.3)); }
+  .boss-tag{ font-family:'Press Start 2P',monospace; font-size:8px; color:var(--a-dim); letter-spacing:.04em; }
+
+  /* victory overlay — fixed, dismissed with Continue, no loot slot (yet) */
+  .victory-overlay{
+    position:fixed; inset:0; z-index:100; background:rgba(4,5,6,.86);
+    display:flex; align-items:center; justify-content:center; padding:24px;
+  }
+  .victory-overlay .arcade-screen{ width:100%; }
+  .victory-content{ align-items:center; text-align:center; padding-left:54px; }
+  .victory-badge{ font-family:'Press Start 2P',monospace; font-size:9px; color:var(--a-dim); letter-spacing:.05em; }
+  .victory-ring{ width:130px; height:130px; color:var(--a-accent); filter: drop-shadow(0 0 10px var(--a-glow)); }
+  .victory-result{
+    font-family:'Press Start 2P',monospace; font-size:clamp(16px,3.6vw,22px); color:var(--a-accent); margin:0; line-height:1.4;
+    text-shadow:0 0 14px var(--a-glow);
+  }
+  .victory-statrow{ display:flex; gap:22px; justify-content:center; }
+  .victory-stat{ display:flex; flex-direction:column; align-items:center; gap:5px; }
+  .victory-stat .k{ font-family:'Press Start 2P',monospace; font-size:7px; color:var(--a-dim); letter-spacing:.04em; }
+  .victory-stat .v{ font-family:'Press Start 2P',monospace; font-size:14px; color:var(--a-accent); }
+  .victory-nextcard{
+    border:2px solid var(--a-edge); background:var(--a-bg1); padding:10px 16px; display:flex; align-items:center; gap:12px;
+    max-width:380px; width:100%; text-align:left;
+  }
+  .victory-nextcard .n{
+    width:30px; height:30px; flex:0 0 auto; background:#12201a; border:2px solid var(--a-dim2);
+    display:flex; align-items:center; justify-content:center; font-family:'Press Start 2P',monospace; font-size:11px; color:var(--a-accent);
+  }
+  .victory-nextcard .t{ font-family:'Press Start 2P',monospace; font-size:9px; color:#e8e8ec; }
+  .victory-nextcard .d{ font-size:11px; color:var(--a-dim); margin-top:3px; }

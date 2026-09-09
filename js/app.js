@@ -26,6 +26,118 @@
     return 'The code did not run. Read the error message in the console below — it almost always points to which line to look at.';
   }
 
+  /* ---------------- arcade: signal color (title/boss/victory only) ---------------- */
+  // Purely cosmetic per-viewer choice — retints .arcade elements via
+  // data-signal, stored separately from real progress. Never affects
+  // task content, difficulty, or the rest of the site's own theme.
+  const SIGNALS = ['mint','amber','violet','cyan'];
+  function getSignal(){
+    try{ const s = localStorage.getItem('autoquest-signal'); return SIGNALS.includes(s) ? s : 'mint'; }catch(e){ return 'mint'; }
+  }
+  function setSignal(s){
+    try{ localStorage.setItem('autoquest-signal', s); }catch(e){}
+  }
+
+  const HERO_SVG = `
+    <path class="outline" d="M50 8 C28 8 18 28 20 48 L18 60 L30 56 L28 70 L50 66 L72 70 L70 56 L82 60 L80 48 C82 28 72 8 50 8Z" fill="#101815" stroke-width="2"/>
+    <ellipse cx="50" cy="44" rx="24" ry="20" fill="#0b1210"/>
+    <circle class="eye" cx="41" cy="44" r="3.6"/>
+    <circle class="eye" cx="59" cy="44" r="3.6"/>
+    <path class="outline" d="M34 78 L30 150 L44 150 L48 96 L52 96 L56 150 L70 150 L66 78 Z" fill="#101815" stroke-width="2"/>
+    <rect class="outline" x="8" y="76" width="16" height="46" rx="4" fill="#0b1210" stroke-width="2"/>
+    <rect class="outline" x="76" y="76" width="16" height="46" rx="4" fill="#0b1210" stroke-width="2"/>`;
+
+  function renderBossHeader(t, m){
+    return `
+      <div class="boss-header">
+        <div class="arcade arcade-screen" data-signal="${getSignal()}">
+          <div class="arcade-backdrop"><div class="arcade-linebg"></div></div>
+          <div class="arcade-content">
+            <div class="arcade-hud">
+              <div class="arcade-life"><i></i><i></i><i></i></div>
+              <div class="arcade-hud-right">${m.checkpoint ? 'CHECKPOINT' : 'MODULE ' + m.num}</div>
+            </div>
+            <div>
+              <div class="boss-tag">&gt; BOSS ENCOUNTER</div>
+              <div class="boss-name">${escapeHtml(t.title).toUpperCase()}</div>
+              <div class="boss-track"><i></i></div>
+            </div>
+            <div class="boss-arena">
+              <svg class="boss-hero" viewBox="0 0 100 160">${HERO_SVG}</svg>
+              <div class="boss-ring">
+                <svg viewBox="0 0 200 200">
+                  <path d="M100 22 L138 42 L158 80 L148 118 L166 148 L138 178 L92 182 L58 164 L44 130 L58 100 L44 72 L58 38 Z"
+                        fill="none" stroke="#ff6b6b" stroke-width="13" stroke-linejoin="round"/>
+                  <circle cx="100" cy="100" r="7" fill="#2a0a0a"/>
+                  <circle cx="96" cy="97" r="2" fill="#ff6b6b"/>
+                  <circle cx="104" cy="97" r="2" fill="#ff6b6b"/>
+                </svg>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  function showVictory(t, m){
+    const overlay = document.getElementById('victory-overlay');
+    if(!overlay) return;
+    overlay.dataset.signal = getSignal();
+    const modEl = document.getElementById('victory-module');
+    if(modEl) modEl.textContent = (m.checkpoint ? 'CHECKPOINT' : 'MODULE ' + m.num) + ' CLEARED';
+    const titleEl = document.getElementById('victory-title');
+    if(titleEl) titleEl.textContent = t.title.toUpperCase() + ' — DEFEATED';
+    const xpEl = document.getElementById('victory-xp'); if(xpEl) xpEl.textContent = '+' + XP_PER_TASK;
+    const streakEl = document.getElementById('victory-streak'); if(streakEl) streakEl.textContent = state.streak || 0;
+    const levelEl = document.getElementById('victory-level'); if(levelEl) levelEl.textContent = computeLevel(state.xp);
+
+    const idx = MODULES.findIndex(x=>x.id===m.id);
+    const next = MODULES[idx+1];
+    const nextEl = document.getElementById('victory-next');
+    if(nextEl){
+      if(next){
+        nextEl.innerHTML = `<div class="n">${next.checkpoint ? '\u{1F3AF}' : next.num}</div><div><div class="t">${escapeHtml(next.title).toUpperCase()}</div><div class="d">${escapeHtml(next.desc)}</div></div>`;
+      } else {
+        nextEl.innerHTML = `<div class="t">That was the last one — the whole course is cleared.</div>`;
+      }
+    }
+    overlay.hidden = false;
+  }
+
+  function initTitleScreen(){
+    const titleScreen = document.getElementById('view-title');
+    if(!titleScreen) return;
+    titleScreen.dataset.signal = getSignal();
+    const swatches = titleScreen.querySelectorAll('.arcade-swatch');
+    swatches.forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.signal === getSignal());
+      btn.addEventListener('click', () => {
+        setSignal(btn.dataset.signal);
+        titleScreen.dataset.signal = btn.dataset.signal;
+        swatches.forEach(b => b.classList.toggle('active', b === btn));
+      });
+    });
+    const cta = document.getElementById('title-cta');
+    if(cta){
+      cta.addEventListener('click', () => {
+        document.getElementById('view-title').hidden = true;
+        document.getElementById('view-path').hidden = false;
+        window.scrollTo({top:0, behavior:'smooth'});
+      });
+    }
+    const continueBtn = document.getElementById('victory-continue');
+    if(continueBtn){
+      continueBtn.addEventListener('click', () => {
+        document.getElementById('victory-overlay').hidden = true;
+      });
+    }
+  }
+
+  function updateTitleCta(){
+    const cta = document.getElementById('title-cta');
+    if(cta) cta.textContent = state.xp > 0 ? 'CONTINUE' : 'NEW GAME';
+  }
+
   /* ---------------- state ---------------- */
 
   let state = {xp:0, completed:{}, streak:0, lastOpen:null};
@@ -88,6 +200,7 @@
     persist();
     renderStats();
     renderPath();
+    updateTitleCta();
   }
 
   function persist(){
@@ -253,6 +366,7 @@
       </div>`;
 
     m.tasks.forEach((t, i) => {
+      if(t.boss) html += renderBossHeader(t, m);
       html += renderTaskCard(t, i, m.tasks.length, 'Task');
     });
 
@@ -383,6 +497,7 @@
         btn.textContent = '✓ Done';
         renderStats();
         if(m) updateRoomProgress(m);
+        if(t.boss && m) showVictory(t, m);
       });
       room.querySelector(`[data-hint="${t.id}"]`).addEventListener('click', () => {
         document.getElementById(`hint-${t.id}`).classList.toggle('show');
@@ -758,6 +873,7 @@
       document.getElementById(`task-${t.id}`).classList.add('done');
       renderStats();
       if(m) updateRoomProgress(m);
+      if(t.boss && m) showVictory(t, m);
     }
   }
 
@@ -794,6 +910,7 @@
       document.getElementById(`task-${t.id}`).classList.add('done');
       renderStats();
       if(m) updateRoomProgress(m);
+      if(t.boss && m) showVictory(t, m);
     } else {
       resEl.innerHTML = `<b>Not a match</b>The code actually prints:<br><code>${escapeHtml(actual).replace(/\n/g,'<br>')}</code><br>Try to understand why, type a different answer in the field above, then hit the button again.`;
     }
@@ -808,5 +925,6 @@
     window.scrollTo({top:0, behavior:'smooth'});
   });
 
+  initTitleScreen();
   initState();
 })();
