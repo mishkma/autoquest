@@ -1250,7 +1250,147 @@ print(f"{x=}")
         }
       ]
     },
-    {id:'m7', num:7, phase:'Python basics', title:'OOP: classes and objects', desc:'classes, objects, attributes and methods — the foundation of Page Object and fixtures'},
+    {
+      id:'m7', num:7, phase:'Python basics', title:'OOP: classes and objects',
+      desc:'classes, objects, attributes and methods — the foundation of Page Object and fixtures',
+      theory:[
+        'This sandbox does not understand <code>class</code> at all — every task in this module runs in the real Python and VS Code you set up in Module 6. That also means real errors from here on: an actual Python traceback, not this site\'s friendly explanations. Reading those for real, right now while the stakes are low, is exactly the skill you will lean on later.',
+        'A <code>class</code> is a blueprint; an object (an "instance") is one concrete thing built from it. <code>def __init__(self, name, price):</code> is the constructor — it runs automatically the moment you create an object, and sets up its starting attributes: <code>self.name = name</code> stores the value on THIS particular object.',
+        '<code>self</code> is just "this specific object" — Python passes it automatically as the first argument to every method, you never pass it yourself when calling. <code>product.price_with_tax()</code> quietly becomes <code>Product.price_with_tax(product)</code> under the hood — <code>self</code> IS <code>product</code> inside that method.',
+        'Attributes (<code>self.name</code>, <code>self.price</code>) hold an object\'s data; methods (functions defined inside the class, with <code>self</code> as the first parameter) are what it can DO. Two objects from the same class have completely separate attributes — changing one never affects the other, even though they share the same blueprint.',
+        'This is the exact shape of a Page Object, the pattern you will use constantly once you get to Selenium/Playwright: a class per page, attributes for things like the base URL, methods for actions you can take on that page (<code>login()</code>, <code>search(query)</code>) — instead of copy-pasting raw browser commands into every test.',
+        'A method can call another method on the same object through <code>self</code> — <code>self.total()</code> inside another method of the same class. This is how you build small pieces that combine, exactly like functions did in Module 4, except now they carry shared state (the object\'s attributes) between them automatically.'
+      ],
+      tasks:[
+        {
+          id:'m7-t1', kind:'checklist', title:'Your first class',
+          goal:'In a new file, write <code>class Product:</code> with <code>__init__(self, name, price)</code> that stores both as attributes. Create <code>mouse = Product("Mouse", 25)</code> and print <code>f"{mouse.name}: ${mouse.price}"</code>. Run it — confirm you see <b>Mouse: $25</b>. Mark this done once you do.',
+          hint:'<code>def __init__(self, name, price): self.name = name; self.price = price</code> — each on its own line, indented inside the class. Then access with <code>mouse.name</code>, not just <code>name</code>.'
+        },
+        {
+          id:'m7-t2', kind:'checklist', title:'Add a method',
+          goal:'Add a method <code>price_with_tax(self)</code> to <code>Product</code> that returns <code>self.price * 1.2</code>. Print <code>mouse.price_with_tax()</code> for a product priced at 25 — confirm you see <b>30.0</b>.',
+          hint:'A method is defined exactly like a function, just indented inside the class, with <code>self</code> as its first parameter — even though you never pass it yourself when calling <code>mouse.price_with_tax()</code>.'
+        },
+        {
+          id:'m7-t3', kind:'predict', offline:true, title:'Predict: separate objects, separate state',
+          goal:'Read the code and predict the exact two-line output, then check yourself in real Python.',
+          hint:'<code>a</code> and <code>b</code> are built from the same class, but they are two different objects — each has its own <code>self.count</code>, completely independent of the other.',
+          code:
+`class Counter:
+    def __init__(self):
+        self.count = 0
+
+    def increment(self):
+        self.count += 1
+
+a = Counter()
+b = Counter()
+a.increment()
+a.increment()
+b.increment()
+print(a.count)
+print(b.count)
+`,
+          expected: '2\n1'
+        },
+        {
+          id:'m7-t4', kind:'checklist', title:'Read a real TypeError',
+          goal:'Run this exact code (copy it as-is) and read the real traceback it produces — it complains about the number of arguments to <code>greet</code>. Figure out what is missing from the method definition, fix it, and run again until you see <b>Hello, Alex!</b>',
+          hint:'Every method needs <code>self</code> as its first parameter, even ones that do not use any other input. The traceback\'s "positional arguments" wording is real Python\'s way of describing that mismatch.',
+          starter:
+`class Greeter:
+    def __init__(self, name):
+        self.name = name
+
+    def greet():
+        return f"Hello, {self.name}!"
+
+g = Greeter("Alex")
+print(g.greet())
+`
+        },
+        {
+          id:'m7-t5', kind:'checklist', title:'A tiny Page Object',
+          goal:'Write <code>class LoginPage:</code> with <code>__init__(self, base_url)</code> storing <code>base_url</code>, and a method <code>login_url(self)</code> returning <code>f"{self.base_url}/login"</code>. Create <code>page = LoginPage("https://automationexercise.com")</code> and print <code>page.login_url()</code> — confirm you see <b>https://automationexercise.com/login</b>.',
+          hint:'This is the actual shape of a Page Object: an attribute for the URL, a method for a specific action on that page. Selenium/Playwright modules later reuse exactly this pattern with real browser commands inside the methods.'
+        },
+        {
+          id:'m7-t6', kind:'checklist', title:'Cart as a class',
+          goal:'Write <code>class Cart:</code> with <code>__init__(self)</code> setting <code>self.items = []</code>, a method <code>add_item(self, name, price)</code> that appends <code>{"name": name, "price": price}</code> to <code>self.items</code>, and a method <code>total(self)</code> that loops over <code>self.items</code> and returns the sum of the prices. Add two items priced 25 and 45, print <code>cart.total()</code> — confirm you see <b>70</b>.',
+          hint:'Same accumulator pattern from Module 3 (a running total, a loop, <code>total += item["price"]</code>) — just living inside a method now instead of a standalone script.'
+        },
+        {
+          id:'m7-t7', kind:'checklist', title:'Eligible for free shipping?',
+          goal:'Add a method <code>free_shipping_eligible(self)</code> to <code>Cart</code> that returns <code>True</code> if <code>self.total()</code> is 100 or more, otherwise <code>False</code>. Add items priced 60 and 45, print <code>cart.free_shipping_eligible()</code> — confirm you see <b>True</b>.',
+          hint:'Inside <code>free_shipping_eligible</code>, call <code>self.total()</code> the same way you would call any other method — no need to redo the summing loop, reuse what <code>total()</code> already does.'
+        },
+        {
+          id:'m7-t8', kind:'predict', offline:true, title:'Predict: a method calling another method',
+          goal:'Read the code and predict the exact output, then check yourself in real Python.',
+          hint:'<code>summary()</code> calls <code>self.total()</code> internally — it does not repeat the summing loop, it just reuses the other method through <code>self</code>, exactly like you did in the previous task.',
+          code:
+`class Cart:
+    def __init__(self):
+        self.items = []
+
+    def add_item(self, name, price):
+        self.items.append({"name": name, "price": price})
+
+    def total(self):
+        total = 0
+        for item in self.items:
+            total += item["price"]
+        return total
+
+    def summary(self):
+        return f"Cart total: {self.total()}"
+
+cart = Cart()
+cart.add_item("Mouse", 25)
+cart.add_item("Webcam", 65)
+print(cart.summary())
+`,
+          expected: 'Cart total: 90'
+        },
+        {
+          id:'m7-t9', kind:'checklist', title:'Two independent carts',
+          goal:'Create two separate <code>Cart</code> instances, add different items to each (make sure the totals differ), and print both totals to CONFIRM they are independent — changing one cart\'s items must never affect the other\'s total.',
+          hint:'If both totals come out the same or one affects the other, you probably created only one <code>Cart</code> and reused it, or copied a reference instead of calling <code>Cart()</code> twice.'
+        },
+        {
+          id:'m7-t10', kind:'checklist', boss:true, title:'Test suite report as a class',
+          goal:'Write <code>class TestSuiteReport:</code> with <code>__init__(self, results)</code> storing the list, and a method <code>summary(self)</code> that loops over <code>self.results</code>, counts <code>"pass"</code> vs anything else, and returns EXACTLY two lines: <b>Passed: N</b> and <b>Failed: N</b> (as one string, joined with <code>\\n</code>). Test it with <code>["pass", "fail", "pass", "pass", "fail"]</code> — confirm you see <b>Passed: 3</b> then <b>Failed: 2</b>.',
+          hint:'This is the exact counting pattern from the Module 3 checkpoint (loop + if/else + two counters) — now packaged as a method that owns its own data via <code>self.results</code>, instead of a script with loose variables.'
+        }
+      ],
+      homework:[
+        {
+          id:'m7-hw1', kind:'checklist', title:'Refactor a function into a class',
+          goal:'Write <code>class PriceValidator:</code> with a method <code>is_valid(self, price)</code> that returns <code>True</code> if <code>price &gt; 0</code>, otherwise <code>False</code> (the same logic as <code>is_valid_price</code> from the Module 5 checkpoint, now as a method). Print the result for 25 and for -5 — confirm <b>True</b> then <b>False</b>.',
+          hint:'Notice this class has no <code>__init__</code> at all — not every class needs one if there is no state to set up on creation.'
+        },
+        {
+          id:'m7-hw2', kind:'predict', offline:true, title:'Predict: __init__ runs immediately',
+          goal:'Read the code and predict the exact output, then check yourself in real Python.',
+          hint:'<code>__init__</code> is not something you call yourself — it runs automatically the instant <code>Logger()</code> is evaluated, before anything after that line.',
+          code:
+`class Logger:
+    def __init__(self):
+        print("Logger started")
+
+log = Logger()
+print("Ready")
+`,
+          expected: 'Logger started\nReady'
+        },
+        {
+          id:'m7-hw3', kind:'checklist', title:'A page that knows its own state',
+          goal:'Add a method <code>is_secure(self)</code> to your <code>LoginPage</code> class from earlier, returning <code>self.base_url.startswith("https")</code>. Then, using <code>if page.is_secure():</code>, print <code>"Secure:", page.login_url()</code> in the True branch and <code>"Insecure:", page.login_url()</code> in the False branch. Confirm the output for <code>"https://automationexercise.com"</code> is <b>Secure: https://automationexercise.com/login</b>.',
+          hint:'<code>.startswith("https")</code> is a real Python string method — it checks whether the string begins with that exact text, returning True or False directly, just like the comparisons you have used all along.'
+        }
+      ]
+    },
     {id:'m8', num:8, phase:'Python basics', title:'Standard library and generators', desc:'useful built-in modules, iterators and generators'},
     {id:'m9', num:9, phase:'Automated tests in Python', title:'Pytest', desc:'running tests, assert, fixtures, parametrization'},
     {id:'m10', num:10, phase:'Automated tests in Python', title:'Mocks and stubs', desc:'faking dependencies: mock, stub — when and why'},

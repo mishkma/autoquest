@@ -283,6 +283,7 @@
     const done = !!state.completed[t.id];
     const badge = t.boss ? '<span class="chip boss">🏆 Module finale</span>' : '';
     if(t.kind === 'checklist'){
+      const codeBlock = t.starter ? `<pre class="code-preview">${escapeHtml(t.starter)}</pre>` : '';
       return `
       <div class="card task checklist ${done?'done':''}" id="task-${t.id}">
         <div class="task-head">
@@ -291,6 +292,7 @@
         </div>
         <div class="task-title">${t.title}</div>
         <div class="task-goal">${t.goal}</div>
+        ${codeBlock}
         <div class="rowbtns" style="margin-top:12px;">
           <button class="btn primary" data-checklist="${t.id}">${done ? '✓ Done' : 'Mark as done'}</button>
           <button class="btn" data-hint="${t.id}">💡 Hint</button>
