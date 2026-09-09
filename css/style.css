@@ -744,6 +744,27 @@
   .topbar.arcade .hud-streak b{ color: var(--a-danger2); }
   .topbar.arcade .hud-flame{ font-size:12px; filter:saturate(1.2); }
 
+  /* EN/RU language switch — segmented pair, same building block used in the
+     topbar (small) and on the title screen (.lang-switch-title, larger).
+     var(--a-accent)/var(--a-dim)/var(--a-edge) come from the nearest
+     .arcade ancestor, so it inherits Signal Color for free like everything
+     else — language and signal color are unrelated choices, this just
+     means the switch looks native to whichever screen it's on. */
+  .lang-switch{
+    display:flex; flex:0 0 auto; border:1px solid var(--a-edge); border-radius:6px; overflow:hidden;
+    font-family:'Press Start 2P',monospace; font-size:9px;
+  }
+  .lang-btn{
+    appearance:none; border:none; background:var(--a-bg0); color:var(--a-dim); cursor:pointer;
+    padding:6px 9px; font:inherit; letter-spacing:.02em; transition:color .15s ease, background .15s ease;
+  }
+  .lang-btn + .lang-btn{ border-left:1px solid var(--a-edge); }
+  .lang-btn:hover{ color:#e8e8ec; }
+  .lang-btn.active{ background: var(--a-accent); color:#0b0f0c; }
+  .lang-switch-title{ margin:14px auto 0; }
+  .lang-switch-title .lang-btn{ padding:8px 14px; font-size:10px; }
+  @media (max-width:520px){ .lang-switch{ font-size:8px; } .lang-btn{ padding:5px 7px; } }
+
   @media (max-width:640px){
     .topbar.arcade .hud{ gap:12px; }
     .topbar.arcade .hud-xpbar{ width:52px; }

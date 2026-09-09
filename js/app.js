@@ -7,23 +7,20 @@
 
   /* ---------------- error dictionary ---------------- */
 
-  const ERROR_HINTS = {
-    SyntaxError: 'Syntax error — Python could not parse the structure of the code. Common causes: text typed without quotes around it (Python tries to read it as code, not as a string), an unclosed quote or bracket, or a missing colon after <code>if</code>/<code>while</code>/<code>for</code>.',
-    IndentationError: 'An indentation problem. In Python, the indent at the start of a line is part of the code, not formatting. All lines of the same block must start with the same indent (usually 4 spaces).',
-    NameError: 'Python does not know that name — most likely a typo in the variable name, or it is used before it was created.',
-    TypeError: 'Incompatible data types — for example, trying to add a number and a string directly. Check that every value is the right type (or try an f-string).',
-    ZeroDivisionError: 'Division by zero — Python does not allow this. Check whether the divisor could be zero.',
-    ValueError: 'The value does not fit the operation — for example, trying to turn something that is not a number into a number.',
-    IndexError: 'Accessing a list index that does not exist. Indices in Python start at 0.',
-    KeyError: 'The dictionary has no such key — check the key name and whether it was actually added.',
-    AttributeError: 'No such method here — either a typo, or it is not supported yet in this sandbox.',
-    RuntimeError: 'Looks like the loop never ends — check that its condition eventually becomes False (for example, that the counter actually changes inside the loop).'
+  // Keys into the I18N dictionary (js/i18n.js) rather than the English text
+  // itself — errorHint() must re-resolve the current language on every call,
+  // not freeze in whatever language was active when this file loaded.
+  const ERROR_HINT_KEYS = {
+    SyntaxError: 'errSyntax', IndentationError: 'errIndentation', NameError: 'errName',
+    TypeError: 'errType', ZeroDivisionError: 'errZeroDiv', ValueError: 'errValue',
+    IndexError: 'errIndex', KeyError: 'errKey', AttributeError: 'errAttribute',
+    RuntimeError: 'errRuntime'
   };
 
   function errorHint(pyName, text){
-    if(pyName && ERROR_HINTS[pyName]) return ERROR_HINTS[pyName];
-    for(const key in ERROR_HINTS){ if(text && text.includes(key)) return ERROR_HINTS[key]; }
-    return 'The code did not run. Read the error message in the console below — it almost always points to which line to look at.';
+    if(pyName && ERROR_HINT_KEYS[pyName]) return tr(ERROR_HINT_KEYS[pyName]);
+    for(const key in ERROR_HINT_KEYS){ if(text && text.includes(key)) return tr(ERROR_HINT_KEYS[key]); }
+    return tr('errFallback');
   }
 
   /* ---------------- arcade: signal color (title/boss/victory only) ---------------- */
@@ -55,13 +52,14 @@
   function renderBriefing(m){
     const bossTask = m.tasks.find(t => t.boss);
     const taskCount = m.tasks.length;
+    const desc = escapeHtml(mField(m, 'desc'));
     let line;
     if(m.checkpoint){
-      line = `Checkpoint reached: ${escapeHtml(m.desc)}. ${taskCount} trials queued &mdash; everything here is a mix of what already cleared.`;
+      line = tr('briefingCheckpoint', {desc, n: taskCount});
     } else if(bossTask){
-      line = `Incoming: ${escapeHtml(m.desc)}. ${taskCount} trials queued &mdash; boss encounter at the end: <b>${escapeHtml(bossTask.title).toUpperCase()}</b>.`;
+      line = tr('briefingBoss', {desc, n: taskCount, boss: escapeHtml(taskField(bossTask, m, 'title')).toUpperCase()});
     } else {
-      line = `Incoming: ${escapeHtml(m.desc)}. ${taskCount} trials queued.`;
+      line = tr('briefingPlain', {desc, n: taskCount});
     }
     // The announcer's "face" — a CRT terminal whose mouth is the same blinking
     // cursor block already used at the end of the line, so the icon and the
@@ -92,11 +90,11 @@
           <div class="arcade-content">
             <div class="arcade-hud">
               <div class="arcade-life"><i></i><i></i><i></i></div>
-              <div class="arcade-hud-right">${m.checkpoint ? 'CHECKPOINT' : 'MODULE ' + m.num}</div>
+              <div class="arcade-hud-right">${m.checkpoint ? tr('checkpointLabel').toUpperCase() : tr('moduleLabel').toUpperCase() + ' ' + m.num}</div>
             </div>
             <div>
-              <div class="boss-tag">&gt; BOSS ENCOUNTER</div>
-              <div class="boss-name">${escapeHtml(t.title).toUpperCase()}</div>
+              <div class="boss-tag">${tr('bossTag')}</div>
+              <div class="boss-name">${escapeHtml(taskField(t, m, 'title')).toUpperCase()}</div>
               <div class="boss-track"><i></i></div>
             </div>
             <div class="boss-arena">
@@ -121,9 +119,9 @@
     if(!overlay) return;
     overlay.dataset.signal = getSignal();
     const modEl = document.getElementById('victory-module');
-    if(modEl) modEl.textContent = (m.checkpoint ? 'CHECKPOINT' : 'MODULE ' + m.num) + ' CLEARED';
+    if(modEl) modEl.textContent = tr('victoryCleared', {label: m.checkpoint ? tr('checkpointLabel').toUpperCase() : tr('moduleLabel').toUpperCase() + ' ' + m.num});
     const titleEl = document.getElementById('victory-title');
-    if(titleEl) titleEl.textContent = t.title.toUpperCase() + ' — DEFEATED';
+    if(titleEl) titleEl.textContent = tr('victoryDefeated', {title: taskField(t, m, 'title').toUpperCase()});
     const xpEl = document.getElementById('victory-xp'); if(xpEl) xpEl.textContent = '+' + XP_PER_TASK;
     const streakEl = document.getElementById('victory-streak'); if(streakEl) streakEl.textContent = state.streak || 0;
     const levelEl = document.getElementById('victory-level'); if(levelEl) levelEl.textContent = computeLevel(state.xp);
@@ -133,9 +131,9 @@
     const nextEl = document.getElementById('victory-next');
     if(nextEl){
       if(next){
-        nextEl.innerHTML = `<div class="n">${next.checkpoint ? '\u{1F3AF}' : next.num}</div><div><div class="t">${escapeHtml(next.title).toUpperCase()}</div><div class="d">${escapeHtml(next.desc)}</div></div>`;
+        nextEl.innerHTML = `<div class="n">${next.checkpoint ? '\u{1F3AF}' : next.num}</div><div><div class="t">${escapeHtml(mField(next, 'title')).toUpperCase()}</div><div class="d">${escapeHtml(mField(next, 'desc'))}</div></div>`;
       } else {
-        nextEl.innerHTML = `<div class="t">That was the last one — the whole course is cleared.</div>`;
+        nextEl.innerHTML = tr('victoryLastOne');
       }
     }
     overlay.hidden = false;
@@ -168,6 +166,13 @@
         document.getElementById('view-title').hidden = true;
         document.getElementById('site-wrap').hidden = false;
         document.getElementById('view-path').hidden = false;
+        // The path list was last rendered whenever initState() first ran
+        // (page load, always in whatever language was current then) or the
+        // last time the language switch actually saw #view-path visible —
+        // if the visitor changed language while still on the title screen,
+        // neither of those re-ran it, so it can be stale here. Cheap to
+        // just always re-render on the way in rather than track that.
+        renderPath();
         window.scrollTo({top:0, behavior:'smooth'});
       });
     }
@@ -189,7 +194,10 @@
 
   function updateTitleCta(hasPriorVisit){
     const cta = document.getElementById('title-cta');
-    if(cta) cta.textContent = hasPriorVisit ? 'CONTINUE' : 'NEW GAME';
+    if(cta){
+      cta.dataset.state = hasPriorVisit ? 'continue' : 'new';
+      cta.textContent = tr(hasPriorVisit ? 'titleContinue' : 'titleNewGame');
+    }
   }
 
   /* ---------------- state ---------------- */
@@ -343,9 +351,9 @@
         const head = document.createElement('div');
         head.className = 'phase-head';
         head.innerHTML = `
-          <div class="kicker">Phase ${phaseNum}</div>
-          <div class="phase-title">${m.phase}</div>
-          <div class="phase-sub">${phaseDone[m.phase] || 0} of ${phaseTotals[m.phase]} modules done in this phase</div>`;
+          <div class="kicker">${tr('phaseLabel')} ${phaseNum}</div>
+          <div class="phase-title">${phaseName(m.phase)}</div>
+          <div class="phase-sub">${tr('phaseSub', {done: phaseDone[m.phase] || 0, total: phaseTotals[m.phase]})}</div>`;
         el.appendChild(head);
       }
 
@@ -365,23 +373,23 @@
       const totalCount = m.tasks ? m.tasks.length : null;
 
       const chips = [];
-      if(isCurrent) chips.push('<span class="chip current">▶ you are here</span>');
+      if(isCurrent) chips.push(`<span class="chip current">${tr('youAreHere')}</span>`);
       if(status === 'done'){
-        chips.push('<span class="chip good">✓ done</span>');
+        chips.push(`<span class="chip good">${tr('chipDone')}</span>`);
       } else if(m.tasks){
-        chips.push(`<span class="chip">${doneCount}/${totalCount} tasks</span>`);
+        chips.push(`<span class="chip">${tr('chipTasks', {done: doneCount, total: totalCount})}</span>`);
       } else if(unlocked){
-        chips.push('<span class="chip">unlocked · content coming soon</span>');
+        chips.push(`<span class="chip">${tr('chipUnlockedSoon')}</span>`);
       } else {
-        chips.push('<span class="chip">🔒 locked</span>');
+        chips.push(`<span class="chip">${tr('chipLocked')}</span>`);
       }
 
       node.innerHTML = `
         <div class="badge">${status==='done' ? '✓' : (m.checkpoint ? '🎯' : m.num)}</div>
         <div class="node-body">
-          <div class="node-kicker">${m.checkpoint ? 'Checkpoint' : 'Module ' + m.num}</div>
-          <div class="node-title">${m.title}</div>
-          <div class="node-desc">${m.desc}</div>
+          <div class="node-kicker">${m.checkpoint ? tr('checkpointLabel') : tr('moduleLabel') + ' ' + m.num}</div>
+          <div class="node-title">${mField(m, 'title')}</div>
+          <div class="node-desc">${mField(m, 'desc')}</div>
           <div class="node-meta">${chips.join('')}</div>
         </div>`;
 
@@ -395,7 +403,14 @@
 
   /* ---------------- render: module room ---------------- */
 
+  // Tracked so a language switch while a module is open can re-render THAT
+  // module in the new language (openModule() itself always pulls text
+  // through tr()/mField()/taskField() at render time — it just needs to be
+  // told to run again). Cleared when navigating back to the path.
+  let currentModuleId = null;
+
   function openModule(id){
+    currentModuleId = id;
     const m = MODULES.find(x=>x.id===id);
     document.getElementById('view-path').hidden = true;
     document.getElementById('view-module').hidden = false;
@@ -404,12 +419,12 @@
     if(!m.tasks){
       room.innerHTML = `
         <div class="room-head">
-          <div class="kicker">Module ${m.num}</div>
-          <h2>${m.title}</h2>
+          <div class="kicker">${tr('moduleLabel')} ${m.num}</div>
+          <h2>${mField(m, 'title')}</h2>
         </div>
         <div class="soon">
-          <div class="display">This level unlocks in a future session</div>
-          <p>Content is added gradually, so every practice task relies only on theory that has already been explained.</p>
+          <div class="display">${tr('soonTitle')}</div>
+          <p>${tr('soonDesc')}</p>
         </div>`;
       window.scrollTo({top:0, behavior:'smooth'});
       return;
@@ -417,30 +432,30 @@
 
     let html = `
       <div class="room-head">
-        <div class="kicker">${m.checkpoint ? 'Checkpoint' : 'Module ' + m.num}</div>
-        <h2>${m.title}</h2>
+        <div class="kicker">${m.checkpoint ? tr('checkpointLabel') : tr('moduleLabel') + ' ' + m.num}</div>
+        <h2>${mField(m, 'title')}</h2>
         <div class="room-progress" id="room-progress"></div>
       </div>
       ${renderBriefing(m)}
       <div class="card theory">
-        <h3>The short version</h3>
-        ${m.theory.map(renderTheoryItem).join('')}
+        <h3>${tr('theoryHeading')}</h3>
+        ${m.theory.map((item, i) => renderTheoryItem(theoryItem(m, i))).join('')}
       </div>`;
 
-    m.tasks.forEach((t, i) => {
-      if(t.boss) html += renderBossHeader(t, m);
-      html += renderTaskCard(t, i, m.tasks.length, 'Task');
+    m.tasks.forEach((task, i) => {
+      if(task.boss) html += renderBossHeader(task, m);
+      html += renderTaskCard(task, m, i, m.tasks.length, tr('taskLabel'));
     });
 
     if(m.homework && m.homework.length){
       html += `
       <div class="card hw-head">
-        <h3>📚 Homework</h3>
-        <p>Harder tasks for between sessions. They do not gate the next module, but they give XP and good practice.</p>
+        <h3>${tr('homeworkHeading')}</h3>
+        <p>${tr('homeworkDesc')}</p>
         <div class="room-progress" id="hw-progress"></div>
       </div>`;
-      m.homework.forEach((t, i) => {
-        html += renderTaskCard(t, i, m.homework.length, 'Homework');
+      m.homework.forEach((task, i) => {
+        html += renderTaskCard(task, m, i, m.homework.length, tr('homeworkLabel'));
       });
     }
 
@@ -473,63 +488,64 @@
       </div>`;
   }
 
-  function renderTaskCard(t, i, total, label){
+  function renderTaskCard(t, m, i, total, label){
     const done = !!state.completed[t.id];
-    const badge = t.boss ? '<span class="chip boss">🏆 Module finale</span>' : '';
+    const badge = t.boss ? `<span class="chip boss">${tr('bossFinale')}</span>` : '';
+    const title = taskField(t, m, 'title'), goal = taskField(t, m, 'goal'), hint = taskField(t, m, 'hint');
     if(t.kind === 'checklist'){
       const codeBlock = t.starter ? `<pre class="code-preview">${escapeHtml(t.starter)}</pre>` : '';
       return `
       <div class="card task checklist ${done?'done':''}" id="task-${t.id}">
         <div class="task-head">
-          <span class="task-num">${label} ${i+1} of ${total}</span>
+          <span class="task-num">${tr('taskNumOf', {label, i: i+1, total})}</span>
           ${badge}
         </div>
-        <div class="task-title">${t.title}</div>
-        <div class="task-goal">${t.goal}</div>
+        <div class="task-title">${title}</div>
+        <div class="task-goal">${goal}</div>
         ${codeBlock}
         <div class="rowbtns" style="margin-top:12px;">
-          <button class="btn primary" data-checklist="${t.id}">${done ? '✓ Done' : 'Mark as done'}</button>
-          <button class="btn" data-hint="${t.id}">💡 Hint</button>
+          <button class="btn primary" data-checklist="${t.id}">${done ? tr('done') : tr('markDone')}</button>
+          <button class="btn" data-hint="${t.id}">${tr('hintBtn')}</button>
         </div>
-        <div class="hint-box" id="hint-${t.id}"><b>Hint:</b> ${t.hint || ''}</div>
+        <div class="hint-box" id="hint-${t.id}"><b>${tr('hintPrefix')}</b> ${hint || ''}</div>
         <div class="result" id="res-${t.id}"></div>
       </div>`;
     }
     if(t.kind === 'predict'){
-      const offlineBadge = t.offline ? '<span class="chip">🐍 Real Python — not this sandbox</span>' : '';
+      const offlineBadge = t.offline ? `<span class="chip">${tr('offlineBadge')}</span>` : '';
       return `
       <div class="card task predict ${done?'done':''}" id="task-${t.id}">
         <div class="task-head">
-          <span class="task-num">${label} ${i+1} of ${total}</span>
+          <span class="task-num">${tr('taskNumOf', {label, i: i+1, total})}</span>
           ${badge}${offlineBadge}
         </div>
-        <div class="task-title">${t.title}</div>
-        <div class="task-goal">${t.goal}</div>
+        <div class="task-title">${title}</div>
+        <div class="task-goal">${goal}</div>
         <pre class="code-preview">${escapeHtml(t.code)}</pre>
-        <label class="field-label">What will this code print?</label>
-        <textarea class="editor" id="guess-${t.id}" spellcheck="false" placeholder="Type your answer line by line, as it will appear in the output"></textarea>
+        <label class="field-label">${tr('predictQuestion')}</label>
+        <textarea class="editor" id="guess-${t.id}" spellcheck="false" placeholder="${tr('predictPlaceholder')}"></textarea>
         <div class="rowbtns" style="margin-top:12px;">
-          <button class="btn primary" data-check="${t.id}">🔍 Reveal answer and check</button>
-          <button class="btn" data-hint="${t.id}">💡 Hint</button>
+          <button class="btn primary" data-check="${t.id}">${tr('revealAndCheck')}</button>
+          <button class="btn" data-hint="${t.id}">${tr('hintBtn')}</button>
         </div>
         <div class="console" id="console-${t.id}"></div>
-        <div class="hint-box" id="hint-${t.id}"><b>Hint:</b> ${t.hint || ''}</div>
+        <div class="hint-box" id="hint-${t.id}"><b>${tr('hintPrefix')}</b> ${hint || ''}</div>
         <div class="result" id="res-${t.id}"></div>
       </div>`;
     }
     return `
       <div class="card task ${done?'done':''}" id="task-${t.id}">
         <div class="task-head">
-          <span class="task-num">${label} ${i+1} of ${total}</span>
+          <span class="task-num">${tr('taskNumOf', {label, i: i+1, total})}</span>
           ${badge}
         </div>
-        <div class="task-title">${t.title}</div>
-        <div class="task-goal">${t.goal}</div>
+        <div class="task-title">${title}</div>
+        <div class="task-goal">${goal}</div>
         <div class="editor-hud">
           <div class="editor-hudbar">
             <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
             <span class="editor-hudlabel">${t.id}.py</span>
-            <span class="editor-hudlive"><i></i>READY</span>
+            <span class="editor-hudlive"><i></i>${tr('editorReady')}</span>
           </div>
           <div class="editor-hudframe">
             <span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span>
@@ -544,17 +560,17 @@
         </div>
         ${t.reasonPrompt ? `
         <div class="reason-field">
-          <label class="field-label" for="reason-${t.id}">${t.reasonPrompt}</label>
-          <input type="text" class="reason-input" id="reason-${t.id}" placeholder="One sentence, just for you — not graded, but Check stays locked until you write something">
+          <label class="field-label" for="reason-${t.id}">${taskField(t, m, 'reasonPrompt')}</label>
+          <input type="text" class="reason-input" id="reason-${t.id}" placeholder="${tr('reasonPlaceholder')}">
         </div>` : ''}
         <div class="rowbtns" style="margin-top:12px;">
-          <button class="btn" data-run="${t.id}">▶ Run</button>
-          <button class="btn primary" data-check="${t.id}" ${t.reasonPrompt ? 'disabled' : ''}>✓ Check</button>
-          <button class="btn" data-hint="${t.id}">💡 Hint</button>
-          <button class="btn" data-reset="${t.id}">↺ Reset code</button>
+          <button class="btn" data-run="${t.id}">${tr('btnRun')}</button>
+          <button class="btn primary" data-check="${t.id}" ${t.reasonPrompt ? 'disabled' : ''}>${tr('btnCheck')}</button>
+          <button class="btn" data-hint="${t.id}">${tr('hintBtn')}</button>
+          <button class="btn" data-reset="${t.id}">${tr('btnReset')}</button>
         </div>
         <div class="console" id="console-${t.id}"></div>
-        <div class="hint-box" id="hint-${t.id}"><b>Hint:</b> ${t.hint || ''}</div>
+        <div class="hint-box" id="hint-${t.id}"><b>${tr('hintPrefix')}</b> ${hint || ''}</div>
         <div class="result" id="res-${t.id}"></div>
       </div>`;
   }
@@ -566,7 +582,7 @@
         if(state.completed[t.id]) return;
         markDone(t.id);
         document.getElementById(`task-${t.id}`).classList.add('done');
-        btn.textContent = '✓ Done';
+        btn.textContent = tr('done');
         renderStats();
         if(m) updateRoomProgress(m);
         if(t.boss && m) showVictory(t, m);
@@ -714,7 +730,7 @@
     const prog = document.getElementById('room-progress');
     if(prog){
       const allDone = doneCount === totalCount;
-      prog.innerHTML = `<span class="chip${allDone ? ' good' : ''}">${allDone ? '✓ ' : ''}${doneCount}/${totalCount} tasks done</span>`;
+      prog.innerHTML = `<span class="chip${allDone ? ' good' : ''}">${allDone ? '✓ ' : ''}${tr('roomProgressTasks', {done: doneCount, total: totalCount})}</span>`;
     }
 
     if(m.homework){
@@ -723,7 +739,7 @@
       const hwEl = document.getElementById('hw-progress');
       if(hwEl){
         const allHw = hwDone === hwTotal;
-        hwEl.innerHTML = `<span class="chip${allHw ? ' good' : ''}">${allHw ? '✓ ' : ''}${hwDone}/${hwTotal} homework done</span>`;
+        hwEl.innerHTML = `<span class="chip${allHw ? ' good' : ''}">${allHw ? '✓ ' : ''}${tr('roomProgressHomework', {done: hwDone, total: hwTotal})}</span>`;
       }
     }
 
@@ -732,11 +748,11 @@
     if(doneCount === totalCount){
       const next = MODULES[idx+1];
       if(next){
-        nextEl.innerHTML = `<button class="btn primary" id="btn-next-module">Next module → ${next.title}</button>`;
+        nextEl.innerHTML = `<button class="btn primary" id="btn-next-module">${tr('nextModule', {title: mField(next, 'title')})}</button>`;
         const btn = document.getElementById('btn-next-module');
         if(btn) btn.addEventListener('click', () => openModule(next.id));
       } else {
-        nextEl.innerHTML = `<div class="chip good">🏁 This is the last unlocked module — head back to the path</div>`;
+        nextEl.innerHTML = `<div class="chip good">${tr('lastModule')}</div>`;
       }
     } else {
       nextEl.innerHTML = '';
@@ -921,8 +937,8 @@
   function showConsole(id, r){
     const c = document.getElementById(`console-${id}`);
     c.className = 'console show' + (r.ok ? '' : ' err');
-    const label = r.ok ? 'Output' : 'Error';
-    const body = r.ok ? (r.output || '(empty — the code printed nothing)') : (r.output ? r.output + '\n' + r.error : r.error);
+    const label = r.ok ? tr('outputLabel') : tr('errorLabel');
+    const body = r.ok ? (r.output || tr('emptyOutput')) : (r.output ? r.output + '\n' + r.error : r.error);
     c.innerHTML = `<span class="label">${label}</span>` + body.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   }
 
@@ -946,15 +962,15 @@
 
     if(!r.ok){
       resEl.className = 'result show err';
-      resEl.innerHTML = `<b>The code did not run</b>${errorHint(r.pyName, r.error)}`;
+      resEl.innerHTML = `${tr('codeDidNotRun')}${errorHint(r.pyName, r.error)}`;
       return;
     }
 
     const result = t.check(r.output);
     resEl.className = 'result show ' + (result.ok ? 'ok' : 'err');
     resEl.innerHTML = result.ok
-      ? '<b>Correct! 🎉</b>Exactly what was needed — task complete.'
-      : `<b>Not quite</b>${result.msg}`;
+      ? `${tr('correctTitle')}${tr('correctBody')}`
+      : `${tr('notQuiteTitle')}${result.msg}`;
 
     if(result.ok){
       markDone(t.id);
@@ -984,7 +1000,7 @@
       showConsole(t.id, r);
       if(!r.ok){
         resEl.className = 'result show err';
-        resEl.innerHTML = `<b>Something went wrong</b>The example failed to run — this is a bug in the task, not your mistake.`;
+        resEl.innerHTML = `${tr('predictBrokenTitle')}${tr('predictBrokenBody')}`;
         return;
       }
       actual = r.output.trim();
@@ -993,26 +1009,60 @@
     const isMatch = guess === actual;
     resEl.className = 'result show ' + (isMatch ? 'ok' : 'err');
     if(isMatch){
-      resEl.innerHTML = '<b>Exactly! 🎯</b>You read the code correctly — that is exactly how it runs.';
+      resEl.innerHTML = `${tr('predictExactTitle')}${tr('predictExactBody')}`;
       markDone(t.id);
       document.getElementById(`task-${t.id}`).classList.add('done');
       renderStats();
       if(m) updateRoomProgress(m);
       if(t.boss && m) showVictory(t, m);
     } else {
-      resEl.innerHTML = `<b>Not a match</b>The code actually prints:<br><code>${escapeHtml(actual).replace(/\n/g,'<br>')}</code><br>Try to understand why, type a different answer in the field above, then hit the button again.`;
+      resEl.innerHTML = `${tr('predictWrongTitle')}${tr('predictWrongBody', {actual: escapeHtml(actual).replace(/\n/g,'<br>')})}`;
     }
   }
 
   /* ---------------- nav ---------------- */
 
   document.getElementById('btn-back').addEventListener('click', () => {
+    currentModuleId = null;
     document.getElementById('view-module').hidden = true;
     document.getElementById('view-path').hidden = false;
     renderPath();
     window.scrollTo({top:0, behavior:'smooth'});
   });
 
+  /* ---------------- language switch ---------------- */
+  // Static chrome (title screen, path hero, victory labels, topbar HUD
+  // labels) is just [data-i18n]/[data-i18n-title] text swapped in place.
+  // Dynamic content (path list, an open module's room) is rebuilt by
+  // calling its own render function again — every one of those already
+  // pulls text through tr()/mField()/taskField() at render time, so
+  // calling them again is all a language switch needs, no separate
+  // "translate this DOM" step for them.
+  function applyLangEverywhere(){
+    document.documentElement.lang = getLang();
+    document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = tr(el.dataset.i18n); });
+    document.querySelectorAll('[data-i18n-title]').forEach(el => { el.title = tr(el.dataset.i18nTitle); });
+    document.querySelectorAll('.lang-switch .lang-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.lang === getLang());
+    });
+    const cta = document.getElementById('title-cta');
+    if(cta && cta.dataset.state) cta.textContent = tr(cta.dataset.state === 'continue' ? 'titleContinue' : 'titleNewGame');
+    if(!document.getElementById('view-path').hidden) renderPath();
+    if(currentModuleId && !document.getElementById('view-module').hidden) openModule(currentModuleId);
+  }
+
+  function initLangSwitch(){
+    document.querySelectorAll('.lang-switch .lang-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if(btn.dataset.lang === getLang()) return;
+        setLang(btn.dataset.lang);
+        applyLangEverywhere();
+      });
+    });
+    applyLangEverywhere();
+  }
+
+  initLangSwitch();
   initTitleScreen();
   initState();
 })();
