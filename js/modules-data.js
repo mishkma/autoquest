@@ -2102,7 +2102,126 @@ print(counter.call_count)
         }
       ]
     },
-    {id:'m13', num:13, phase:'Automation tooling', title:'Databases', desc:'checking data in a DB straight from tests'},
+    {
+      id:'m13', num:13, phase:'Automation tooling', title:'Databases',
+      desc:'checking data in a DB straight from tests',
+      theory:[
+        'A UI or API saying "order placed" is not proof it actually happened — checking the database directly confirms the real state, underneath whatever the interface claims. <code>sqlite3</code> is part of the standard library (no install), stores everything in a single file — or, for tests, entirely in memory with <code>sqlite3.connect(":memory:")</code>, which vanishes the moment the script ends. No server, no cleanup, ideal for quick checks.',
+        'A <code>cursor</code> is what actually runs SQL: <code>cursor.execute("CREATE TABLE tests (name TEXT, status TEXT)")</code>, then <code>cursor.execute("INSERT INTO tests VALUES (\'test_login\', \'pass\')")</code>, then <code>conn.commit()</code> — nothing is actually saved until you commit. <code>cursor.fetchone()</code> gets one row back as a plain tuple; <code>cursor.fetchall()</code> gets every matching row as a list of tuples.',
+        'NEVER build SQL by gluing strings together with a value that came from outside your own code — <code>"...WHERE name = \'" + user_input + "\'"</code> lets that value change what the query actually does (SQL injection: a real, serious vulnerability class, not a theoretical one). Use a <code>?</code> placeholder and pass the value separately: <code>cursor.execute("SELECT * FROM tests WHERE name = ?", (name,))</code> — the database handles it safely no matter what the value contains.',
+        '<code>WHERE</code> filters which rows a query touches — <code>SELECT * FROM tests WHERE status = \'fail\'</code> only returns the failing ones. The exact same clause works with <code>UPDATE</code> and <code>DELETE</code>: <code>UPDATE tests SET status = ? WHERE name = ?</code> changes only the matching row, everything else stays untouched.',
+        'A row comes back as a TUPLE, not a dict — <code>row[0]</code>, <code>row[1]</code> access columns by position, in the order they were selected, not by name. This is different from the dicts you have used everywhere since Module 5; keep the two straight.'
+      ],
+      tasks:[
+        {
+          id:'m13-t1', kind:'checklist', title:'Create, insert, select',
+          goal:'Connect with <code>conn = sqlite3.connect(":memory:")</code>, get <code>cursor = conn.cursor()</code>, run <code>CREATE TABLE tests (name TEXT, status TEXT)</code>, insert one row <code>(\'test_login\', \'pass\')</code>, commit, then <code>SELECT * FROM tests</code> and print <code>cursor.fetchone()</code>. Confirm you see <b>(\'test_login\', \'pass\')</b>.',
+          hint:'Four steps in order: create the table, insert a row, <code>conn.commit()</code>, then select — skipping the commit still lets you read it back later in the SAME connection, but it is good habit to commit right after writing.'
+        },
+        {
+          id:'m13-t2', kind:'checklist', title:'Count all rows',
+          goal:'Create the same table, insert THREE rows (any names/statuses), commit, then run <code>SELECT COUNT(*) FROM tests</code> and print <code>cursor.fetchone()[0]</code>. Confirm you see <b>3</b>.',
+          hint:'<code>COUNT(*)</code> returns one row with one column — the count itself — so <code>fetchone()</code> gives you a one-item tuple, and <code>[0]</code> pulls the number out of it.'
+        },
+        {
+          id:'m13-t3', kind:'predict', offline:true, title:'Predict: fetchall returns a list of tuples',
+          goal:'Read the code and predict the exact two-line output, then check yourself in real Python.',
+          hint:'<code>fetchall()</code> gives every matching row as a list — <code>len(rows)</code> counts them, and <code>rows[0]</code> is the first row, itself a tuple like the one from the previous task.',
+          code:
+`import sqlite3
+conn = sqlite3.connect(":memory:")
+cursor = conn.cursor()
+cursor.execute("CREATE TABLE tests (name TEXT, status TEXT)")
+cursor.execute("INSERT INTO tests VALUES ('a', 'pass')")
+cursor.execute("INSERT INTO tests VALUES ('b', 'fail')")
+conn.commit()
+cursor.execute("SELECT * FROM tests")
+rows = cursor.fetchall()
+print(len(rows))
+print(rows[0])
+`,
+          expected: "2\n('a', 'pass')"
+        },
+        {
+          id:'m13-t4', kind:'checklist', title:'Filter with WHERE',
+          goal:'Insert three tests, two of them with <code>status = \'fail\'</code>. Run <code>SELECT name FROM tests WHERE status = \'fail\'</code> and loop over <code>cursor.fetchall()</code>, printing <code>row[0]</code> for each. Confirm you see exactly the two failing test names, nothing else.',
+          hint:'Selecting only <code>name</code> (not <code>*</code>) means each row is a one-item tuple — <code>row[0]</code> is the name, there is no <code>row[1]</code> to accidentally use here.'
+        },
+        {
+          id:'m13-t5', kind:'checklist', title:'A safe parameterized query',
+          goal:'Insert one row using <code>cursor.execute("INSERT INTO tests VALUES (?, ?)", (name, status))</code> with variables, not a hand-built string. Then select it back with <code>cursor.execute("SELECT * FROM tests WHERE name = ?", (name,))</code> and print the result. Confirm it matches what you inserted.',
+          hint:'The second argument to <code>execute(...)</code> is always a TUPLE, even with one value — <code>(name,)</code> needs that trailing comma, or Python reads it as parentheses around a single value instead of a tuple.'
+        },
+        {
+          id:'m13-t6', kind:'predict', offline:true, title:'Predict: a row is a tuple, not a dict',
+          goal:'Read the code and predict the exact two-line output, then check yourself in real Python.',
+          hint:'<code>row[0]</code> is whatever was selected first (<code>name</code>), <code>row[1]</code> is whatever came second (<code>status</code>) — position, not a key name like a dict would use.',
+          code:
+`import sqlite3
+conn = sqlite3.connect(":memory:")
+cursor = conn.cursor()
+cursor.execute("CREATE TABLE tests (name TEXT, status TEXT)")
+cursor.execute("INSERT INTO tests VALUES ('test_login', 'pass')")
+conn.commit()
+cursor.execute("SELECT * FROM tests")
+row = cursor.fetchone()
+print(row[0])
+print(row[1])
+`,
+          expected: 'test_login\npass'
+        },
+        {
+          id:'m13-t7', kind:'checklist', title:'Update a row and verify it',
+          goal:'Insert <code>(\'test_login\', \'fail\')</code>. Run <code>UPDATE tests SET status = ? WHERE name = ?</code> with <code>("pass", "test_login")</code>, commit, then select the status back for <code>\'test_login\'</code> and print it. Confirm you see <b>pass</b> — the change actually happened.',
+          hint:'Never trust that an <code>UPDATE</code> worked just because it did not crash — selecting the row again afterward is the only real proof, exactly like checking a UI after clicking a button.'
+        },
+        {
+          id:'m13-t8', kind:'checklist', title:'Delete and verify the count dropped',
+          goal:'Insert two rows, one <code>\'pass\'</code> and one <code>\'fail\'</code>. Run <code>DELETE FROM tests WHERE status = \'fail\'</code>, commit, then <code>SELECT COUNT(*) FROM tests</code> and print the count. Confirm you see <b>1</b>.',
+          hint:'<code>DELETE FROM tests WHERE ...</code> removes only the matching rows — leaving off the <code>WHERE</code> entirely would delete everything, so always double check it is there before running a real delete.'
+        },
+        {
+          id:'m13-t9', kind:'checklist', title:'Insert a list of results in a loop',
+          goal:'Given <code>results = [{"name": "test_login", "status": "pass"}, {"name": "test_logout", "status": "fail"}, {"name": "test_search", "status": "pass"}]</code>, loop over it and insert each one with a parameterized <code>INSERT</code>. Commit, then print <code>SELECT COUNT(*)</code>. Confirm you see <b>3</b>.',
+          hint:'This is the exact list-of-dicts shape from Module 5 and the JSON responses from Module 12 — only the destination changed, from a printed report to rows in a real table.'
+        },
+        {
+          id:'m13-t10', kind:'checklist', boss:true, title:'A reusable pass-count function',
+          goal:'Write <code>count_passed_tests(conn)</code> that takes an open connection, runs <code>SELECT COUNT(*) FROM tests WHERE status = \'pass\'</code> on it, and returns the count. Set up a table with a mix of pass/fail rows, then call the function and print the result.',
+          hint:'The function takes the CONNECTION as a parameter and creates its own cursor from it — this is how a real test suite shares one database connection across many small helper functions instead of reconnecting every time.'
+        }
+      ],
+      homework:[
+        {
+          id:'m13-hw1', kind:'checklist', title:'See a real SQL injection',
+          goal:'Create a <code>users</code> table with one row, <code>(\'admin\', \'secret123\')</code>. Set <code>malicious_input = "\' OR \'1\'=\'1"</code>. Build an UNSAFE query with string concatenation: <code>"SELECT * FROM users WHERE username = \'" + malicious_input + "\'"</code>, run it, and print the result — confirm it WRONGLY returns the admin row, despite never actually matching that username. Then run the SAME lookup safely with a <code>?</code> placeholder instead, and confirm it correctly returns nothing.',
+          hint:'The malicious string turns the WHERE clause into something that is always true, regardless of username — this is the actual mechanism behind real SQL injection attacks, not just a warning label.'
+        },
+        {
+          id:'m13-hw2', kind:'predict', offline:true, title:'Predict: rowcount after an UPDATE',
+          goal:'Read the code and predict the exact output, then check yourself in real Python.',
+          hint:'<code>cursor.rowcount</code> reports how many rows the LAST executed statement actually affected — two rows matched <code>status = \'fail\'</code> here, the third already being <code>\'pass\'</code> was left untouched.',
+          code:
+`import sqlite3
+conn = sqlite3.connect(":memory:")
+cursor = conn.cursor()
+cursor.execute("CREATE TABLE tests (name TEXT, status TEXT)")
+cursor.execute("INSERT INTO tests VALUES ('a', 'fail')")
+cursor.execute("INSERT INTO tests VALUES ('b', 'fail')")
+cursor.execute("INSERT INTO tests VALUES ('c', 'pass')")
+conn.commit()
+cursor.execute("UPDATE tests SET status = 'pass' WHERE status = 'fail'")
+print(cursor.rowcount)
+`,
+          expected: '2'
+        },
+        {
+          id:'m13-hw3', kind:'checklist', title:'with conn does not close the connection',
+          goal:'Run <code>with conn:</code> around one insert, letting it auto-commit. AFTER that block ends, try running another query on the SAME <code>conn</code> — confirm it still works. <code>with conn:</code> manages commit/rollback for the block, nothing more; the connection itself stays open until you explicitly call <code>conn.close()</code>.',
+          hint:'This trips people up constantly — <code>with</code> on a database connection in Python does NOT mean "close it when done," unlike a file opened with <code>with open(...)</code>. Two different libraries, two different meanings for the same keyword.'
+        }
+      ]
+    },
     {id:'m14', num:14, phase:'Automation tooling', title:'Locators and Selenium', desc:'finding elements and automating the browser'},
     {id:'m15', num:15, phase:'Automation tooling', title:'Playwright', desc:'modern browser automation'},
     {id:'m16', num:16, phase:'Automation tooling', title:'Test framework architecture', desc:'building a maintainable autotest project'}
