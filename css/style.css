@@ -633,6 +633,20 @@
   #view-module.arcade .editor-gutter{ border-right-color: var(--a-edge); color: var(--a-dim); }
   #view-module.arcade .editor-highlight{ color:#e8e8ec; }
   #view-module.arcade .editor-wrap textarea.editor{ caret-color:#e8e8ec; }
+  /* The textarea's own scrollbar is the only default OS-chrome widget left in
+     the arcade room — restyle it to the signal palette instead of a plain
+     grey system bar. Firefox via scrollbar-color, Chromium/Safari via the
+     ::-webkit-scrollbar-* pseudo-elements (scrollbar-width alone doesn't
+     draw one, so both are needed for cross-browser coverage). */
+  #view-module.arcade .editor-wrap textarea.editor{
+    scrollbar-width:thin; scrollbar-color:var(--a-dim2) var(--a-bg1);
+  }
+  #view-module.arcade .editor-wrap textarea.editor::-webkit-scrollbar{ width:10px; }
+  #view-module.arcade .editor-wrap textarea.editor::-webkit-scrollbar-track{ background:var(--a-bg1); }
+  #view-module.arcade .editor-wrap textarea.editor::-webkit-scrollbar-thumb{
+    background:var(--a-dim2); border-radius:0; border:2px solid var(--a-bg1);
+  }
+  #view-module.arcade .editor-wrap textarea.editor::-webkit-scrollbar-thumb:hover{ background:var(--a-accent); }
   #view-module.arcade .tok-keyword{ color:#c792ea; }
   #view-module.arcade .tok-string{ color:#7fd8a6; }
   #view-module.arcade .tok-number{ color:#f2b366; }

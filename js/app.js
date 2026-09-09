@@ -588,9 +588,27 @@
       const rr = document.getElementById(`res-${t.id}`);
       if(rr){ rr.className = 'result'; rr.innerHTML = ''; }
     });
+    const syncEditorScroll = () => { gutter.scrollTop = editor.scrollTop; hl.scrollTop = editor.scrollTop; };
     editor.addEventListener('scroll', () => {
-      gutter.scrollTop = editor.scrollTop; hl.scrollTop = editor.scrollTop;
+      syncEditorScroll();
       if(ac.editor === editor) acPosition(editor);
+    });
+    // Dragging the textarea's own native scrollbar thumb scrolls it on the
+    // compositor every frame, but the 'scroll' event we listen to above is
+    // dispatched on the main thread and can be throttled/coalesced during a
+    // fast drag — so gutter/highlight (only updated from that event) can
+    // visibly lag a frame or two behind the real textarea mid-drag, even
+    // though they always catch up and match again once the drag ends. Keep
+    // polling scrollTop every animation frame for the duration of the drag
+    // (mousedown → mouseup) to close that gap while it's actually visible.
+    let scrollDragRaf = null;
+    const pollScrollDuringDrag = () => { syncEditorScroll(); scrollDragRaf = requestAnimationFrame(pollScrollDuringDrag); };
+    editor.addEventListener('mousedown', () => {
+      if(scrollDragRaf) cancelAnimationFrame(scrollDragRaf);
+      scrollDragRaf = requestAnimationFrame(pollScrollDuringDrag);
+    });
+    window.addEventListener('mouseup', () => {
+      if(scrollDragRaf){ cancelAnimationFrame(scrollDragRaf); scrollDragRaf = null; }
     });
     editor.addEventListener('blur', () => { if(ac.editor === editor) acClose(); });
 
