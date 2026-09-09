@@ -431,8 +431,14 @@
      overlapping the content column instead. Deliberately just the traces —
      LEDs/chips/bug-easter-eggs were pitched and dropped to keep this quiet. */
   .cab-rail{
-    position:fixed; top:0; bottom:0; width:160px; color: var(--a-accent);
-    opacity:.5; pointer-events:none; z-index:0;
+    position:fixed; top:0; bottom:0; color: var(--a-accent);
+    /* Fill the ENTIRE real gap, not a fixed slice of it — .wrap caps at
+       920px centered, so its edge sits at 50vw - 460px; stop just short of
+       it (16px breathing room) instead of leaving unfilled black beyond a
+       fixed-width rail on wider windows. Capped at 640px so the pattern
+       doesn't thin out into sparse-looking traces on ultrawide monitors. */
+    width:calc(50vw - 460px - 16px); max-width:640px;
+    opacity:.6; pointer-events:none; z-index:0;
   }
   .cab-rail.left{ left:0; }
   .cab-rail.right{ right:0; transform:scaleX(-1); }
