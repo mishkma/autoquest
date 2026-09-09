@@ -104,16 +104,24 @@
     overlay.hidden = false;
   }
 
+  // Every top-level .arcade container (title, path/world-map, victory) shares
+  // the same persisted signal color — applied here whenever it changes, not
+  // just on the screen the swatch happens to live on.
+  function applySignalEverywhere(){
+    const s = getSignal();
+    document.querySelectorAll('.arcade').forEach(el => { el.dataset.signal = s; });
+  }
+
   function initTitleScreen(){
     const titleScreen = document.getElementById('view-title');
     if(!titleScreen) return;
-    titleScreen.dataset.signal = getSignal();
+    applySignalEverywhere();
     const swatches = titleScreen.querySelectorAll('.arcade-swatch');
     swatches.forEach(btn => {
       btn.classList.toggle('active', btn.dataset.signal === getSignal());
       btn.addEventListener('click', () => {
         setSignal(btn.dataset.signal);
-        titleScreen.dataset.signal = btn.dataset.signal;
+        applySignalEverywhere();
         swatches.forEach(b => b.classList.toggle('active', b === btn));
       });
     });

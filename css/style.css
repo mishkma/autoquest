@@ -401,6 +401,8 @@
     background: var(--a-bg0); overflow:hidden;
   }
   #view-title{ padding:36px 20px 44px; }
+  #view-title .arcade-screen{ max-width:none; }
+  #view-title .arcade-content{ max-width:680px; margin:0 auto; }
 
   .arcade-backdrop{ position:absolute; inset:0; z-index:0; }
   .arcade-gutter{
@@ -497,3 +499,45 @@
   }
   .victory-nextcard .t{ font-family:'Press Start 2P',monospace; font-size:9px; color:#e8e8ec; }
   .victory-nextcard .d{ font-size:11px; color:var(--a-dim); margin-top:3px; }
+
+  /* world map — the path view retinted under the arcade signal, structure
+     untouched: every module still renders, phase grouping still renders,
+     this is CSS-only against the exact same DOM renderPath() already builds. */
+  #view-path.arcade{ background: var(--a-bg0); margin: 0 -20px; padding: 0 20px 40px; }
+  #view-path.arcade .hero{ position:relative; }
+  #view-path.arcade .hero .kicker{ font-family:'Press Start 2P',monospace; font-size:9px; color:var(--a-accent); letter-spacing:.06em; }
+  #view-path.arcade .hero h2{
+    font-family:'Press Start 2P',monospace; font-weight:400; font-size:clamp(17px,3vw,24px); line-height:1.6;
+    color:#e8e8ec; text-shadow:0 0 12px var(--a-glow);
+  }
+  #view-path.arcade .hero p{ color: var(--a-dim); }
+  #view-path.arcade .hero .storage-note{ color: var(--a-dim2); }
+
+  #view-path.arcade .phase-head{ background: var(--a-bg0); }
+  #view-path.arcade .phase-head .kicker{ font-family:'Press Start 2P',monospace; font-size:9px; color:var(--a-accent); }
+  #view-path.arcade .phase-title{ font-family:'Press Start 2P',monospace; font-size:15px; color:#e8e8ec; }
+  #view-path.arcade .phase-sub{ color: var(--a-dim); font-family:'JetBrains Mono',monospace; }
+
+  #view-path.arcade .path-line{ background: repeating-linear-gradient(var(--a-edge),var(--a-edge) 6px, transparent 6px, transparent 12px); }
+  #view-path.arcade .node{ border:1px solid transparent; }
+  #view-path.arcade .node:hover{ background: var(--a-bg1); }
+  #view-path.arcade .node.current{ background: var(--a-bg1); box-shadow: 0 0 0 2px var(--a-accent); }
+  #view-path.arcade .node-kicker{ font-family:'Press Start 2P',monospace; font-size:8.5px; color: var(--a-dim); }
+  #view-path.arcade .node.current .node-kicker{ color: var(--a-accent); }
+  #view-path.arcade .node-title{ color:#e8e8ec; }
+  #view-path.arcade .node-desc{ color: var(--a-dim); }
+  #view-path.arcade .node[data-locked="true"] .node-title{ color: var(--a-dim2); }
+  #view-path.arcade .node[data-locked="true"] .node-desc{ color: var(--a-dim2); }
+
+  #view-path.arcade .badge{ background: var(--a-bg1); border-color: var(--a-edge); color: var(--a-dim); font-family:'Press Start 2P',monospace; box-shadow:none; }
+  #view-path.arcade .node[data-status="available"] .badge{ background: var(--a-accent); border-color: var(--a-accent); color:#0b0f0c; }
+  #view-path.arcade .node[data-status="done"] .badge{ background:#3ecf6b; border-color:#3ecf6b; color:#0b0f0c; }
+  #view-path.arcade .node[data-status="locked"] .badge{ opacity:.5; }
+
+  #view-path.arcade .chip{ background: var(--a-bg1); border-color: var(--a-edge); color: var(--a-dim); font-family:'Press Start 2P',monospace; font-size:8.5px; }
+  #view-path.arcade .chip.good{ background: rgba(60,255,140,.12); color:#3ecf6b; border-color:transparent; }
+  #view-path.arcade .chip.current{ background: var(--a-accent); color:#0b0f0c; border-color:transparent; }
+
+  @media (max-width:520px){
+    #view-path.arcade{ margin: 0 -14px; padding: 0 14px 32px; }
+  }
