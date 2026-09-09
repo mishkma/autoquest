@@ -550,3 +550,65 @@
   @media (max-width:520px){
     #view-path.arcade{ margin: 0 -14px; padding: 0 14px 32px; }
   }
+
+  /* module room — theory + task-card chrome only. The code editor itself
+     (.editor-wrap, textarea.editor, .editor-gutter, .editor-highlight,
+     .tok-*, autocomplete) is DELIBERATELY untouched here — its readability
+     matters more than matching the arcade palette, and it stays legible in
+     both light and dark system themes regardless of signal color. */
+  #view-module.arcade{ background: var(--a-bg0); margin: 0 -20px; padding: 0 20px 40px; }
+
+  #view-module.arcade .room-head .kicker{ font-family:'Press Start 2P',monospace; font-size:9px; color: var(--a-accent); }
+  #view-module.arcade .room-head h2{ color:#e8e8ec; }
+  #view-module.arcade .backbtn{ color: var(--a-dim); }
+  #view-module.arcade .backbtn:hover{ color:#e8e8ec; }
+
+  #view-module.arcade .card{ background: var(--a-bg1); border-color: var(--a-edge); box-shadow:none; }
+  #view-module.arcade .theory h3{ font-family:'Press Start 2P',monospace; font-size:12px; color: var(--a-accent); letter-spacing:.03em; }
+  #view-module.arcade .theory-text{ color: var(--a-dim); }
+  #view-module.arcade .theory code, #view-module.arcade .task-goal code{ background: var(--a-bg0); color:#e8e8ec; }
+  #view-module.arcade .theory-ex{ background: var(--a-bg0); border-color: var(--a-edge); }
+  #view-module.arcade .theory-ex-label{ color: var(--a-dim); border-color: var(--a-edge); }
+  #view-module.arcade .theory-ex.real .theory-ex-label{ color: var(--a-danger2); }
+  #view-module.arcade .theory-ex pre{ color:#e8e8ec; }
+  #view-module.arcade .theory-ex-result{ background: var(--a-bg1); border-color: var(--a-edge); }
+  #view-module.arcade .theory-ex-result code{ color: var(--a-accent); }
+
+  #view-module.arcade .task-num{ color: var(--a-dim); }
+  #view-module.arcade .task-title{ color:#e8e8ec; }
+  #view-module.arcade .task-goal{ background: var(--a-bg0); border-color: var(--a-edge); color: var(--a-dim); }
+  #view-module.arcade .task-goal b{ color:#e8e8ec; }
+  #view-module.arcade .field-label{ color: var(--a-dim); }
+
+  #view-module.arcade .chip{ background: var(--a-bg0); border-color: var(--a-edge); color: var(--a-dim); }
+  #view-module.arcade .chip.good{ background: rgba(60,255,140,.12); color:#3ecf6b; border-color:transparent; }
+  #view-module.arcade .chip.boss{ background: rgba(255,107,107,.14); color: var(--a-danger); border-color:transparent; }
+
+  #view-module.arcade .btn{ background: var(--a-bg0); border-color: var(--a-edge); color:#e8e8ec; }
+  #view-module.arcade .btn:hover{ border-color: var(--a-accent); }
+  #view-module.arcade .btn.primary{ background: var(--a-accent); border-color: var(--a-accent); color:#0b0f0c; }
+  #view-module.arcade .btn.primary:hover{ background: var(--a-accent); opacity:.9; }
+  #view-module.arcade .btn:disabled{ opacity:.4; }
+
+  #view-module.arcade .console{ background: var(--a-bg0); border-color: var(--a-edge); color: var(--a-dim); }
+  #view-module.arcade .console .label{ color: var(--a-dim2); }
+  #view-module.arcade .console.err{ color: var(--a-danger); }
+
+  #view-module.arcade .hint-box{ background: rgba(255,190,60,.08); color: var(--a-dim); }
+  #view-module.arcade .hint-box b{ color: var(--a-danger2); }
+
+  #view-module.arcade .result.ok{ background: rgba(60,255,140,.12); color:#3ecf6b; }
+  #view-module.arcade .result.err{ background: rgba(255,107,107,.12); color: var(--a-danger); }
+
+  #view-module.arcade .reason-field .reason-input{ background: rgba(255,190,60,.08); border-color: var(--a-edge); color:#e8e8ec; }
+
+  #view-module.arcade .hw-head{ border-color: var(--a-edge); background: var(--a-bg1); }
+  #view-module.arcade .hw-head h3{ color: var(--a-accent); }
+  #view-module.arcade .hw-head p{ color: var(--a-dim); }
+
+  #view-module.arcade .task.done{ opacity:.8; }
+  #view-module.arcade .task.done .task-title::after{ color:#3ecf6b; }
+
+  @media (max-width:520px){
+    #view-module.arcade{ margin: 0 -14px; padding: 0 14px 32px; }
+  }
