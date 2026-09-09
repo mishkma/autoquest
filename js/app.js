@@ -150,9 +150,9 @@
     }
   }
 
-  function updateTitleCta(){
+  function updateTitleCta(hasPriorVisit){
     const cta = document.getElementById('title-cta');
-    if(cta) cta.textContent = state.xp > 0 ? 'CONTINUE' : 'NEW GAME';
+    if(cta) cta.textContent = hasPriorVisit ? 'CONTINUE' : 'NEW GAME';
   }
 
   /* ---------------- state ---------------- */
@@ -197,6 +197,10 @@
 
   async function initState(){
     const local = loadLocal();
+    // Snapshot BEFORE bumpStreak() below — that always sets streak >= 1 on
+    // every load, including a genuine first visit, so it cannot tell the
+    // title screen apart. Whether a saved state already existed can.
+    let hasPriorVisit = !!local;
     if(local) state = mergeState(state, local);
 
     try{
@@ -208,6 +212,7 @@
         const snap = await db.doc('progress/state').get();
         if(snap.exists){
           const d = snap.data();
+          hasPriorVisit = true;
           state = mergeState(state, d);
         }
       }catch(e){}
@@ -217,7 +222,7 @@
     persist();
     renderStats();
     renderPath();
-    updateTitleCta();
+    updateTitleCta(hasPriorVisit);
   }
 
   function persist(){
