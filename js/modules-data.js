@@ -22,6 +22,7 @@ const MODULES = [
         'The type of a value matters: <code>"5"</code> is a string (text), while <code>5</code> is a number. They cannot be added directly with <code>+</code>. A number itself can be a whole number — <code>5</code> (<code>int</code>) — or a fractional one — <code>5.0</code> (<code>float</code>).',
         'An f-string inserts values right into text: <code>age = 30</code>; <code>print(f"Age: {age}")</code> → <code>Age: 30</code>. Inside the curly braces you can even compute: <code>f"{a + b}"</code> inserts the sum.',
         'Arithmetic: <code>+ - * /</code> work as in math, but <code>/</code> ALWAYS gives a fractional number: <code>10 / 2</code> → <code>5.0</code>. There is also <code>//</code> — integer division (<code>7 // 2</code> → <code>3</code>), <code>%</code> — remainder (<code>7 % 2</code> → <code>1</code>) and <code>**</code> — power. The remainder and integer division are handy when splitting something into groups or pages.',
+        'This sandbox is a teaching subset of Python — it runs entirely in the browser, with no install. Real Python is bigger: it has slices, <code>.items()</code>, tuple unpacking, <code>*args</code>/<code>**kwargs</code> and more, none of which exist here yet. All of that arrives once you install real Python in Module 6 — this sandbox is not the whole language, just enough of it to build real habits fast.',
         'The tasks below are of different kinds: write code from scratch, complete it, find and fix a bug, predict the output, and a final boss task. If a task condition is unclear, hit "Hint".'
       ],
       tasks:[
@@ -67,7 +68,7 @@ const MODULES = [
         },
         {
           id:'m1-t4', title:'Fix the typo (NameError)',
-          goal:'This code crashes with a NameError. Fix it so it prints: <b>5</b>',
+          goal:'This code crashes with a NameError. Before you fix it, find the exact mismatch and put into one sentence (to yourself) why Python cannot find that name — that habit matters more than the fix itself. Then fix it so it prints: <b>5</b>',
           hint:'A NameError means Python does not know that name. Compare the variable created on the first line with the name used on the second — they must match exactly.',
           starter:
 `count = 5
@@ -221,7 +222,7 @@ else:
         },
         {
           id:'m2-t4', title:'Fix: one equals',
-          goal:'This code crashes because the condition uses a single <code>=</code>. Fix it so it prints: <b>Five</b>',
+          goal:'This code crashes because the condition uses a single <code>=</code>. Before fixing it, put into one sentence why a single <code>=</code> cannot go inside a condition — this is the kind of thing you would explain in a code review. Then fix it so it prints: <b>Five</b>',
           hint:'Inside a condition you must COMPARE with <code>==</code> (two equals). One <code>=</code> means "assign", which is not allowed in an <code>if</code>.',
           starter:
 `x = 5
@@ -425,7 +426,7 @@ total = 0
         },
         {
           id:'m3-t4', title:'Fix: the loop never stops',
-          goal:'This code hangs forever — the counter never changes. Fix it so it prints <b>1</b>, <b>2</b>, <b>3</b>, each on its own line, then stops.',
+          goal:'This code hangs forever — the counter never changes. Before fixing it, put into one sentence why this specific loop can never become False on its own. Then fix it so it prints <b>1</b>, <b>2</b>, <b>3</b>, each on its own line, then stops.',
           hint:'Every <code>while</code> loop needs something that changes inside it, or the condition stays True forever. Add <code>count += 1</code> inside the loop body.',
           starter:
 `count = 1
@@ -706,7 +707,7 @@ print(result)
         },
         {
           id:'m4-t4', title:'Fix: prints instead of returns',
-          goal:'Calling <code>print(triple(5))</code> should print only <b>15</b>. Right now it prints two lines (<code>15</code> and then <code>None</code>) because the function prints internally instead of returning. Fix the function.',
+          goal:'Calling <code>print(triple(5))</code> should print only <b>15</b>. Right now it prints two lines (<code>15</code> and then <code>None</code>) because the function prints internally instead of returning. Before fixing it, put into one sentence why the outer <code>print</code> gets <code>None</code> even though <code>15</code> did get printed. Fix the function.',
           hint:'Remove the <code>print(result)</code> line inside the function and replace it with <code>return result</code> — then the outer <code>print(triple(5))</code> will show the value.',
           starter:
 `def triple(x):
@@ -926,7 +927,7 @@ print(cart)
         },
         {
           id:'m5-t5', title:'Fix: missing key crashes',
-          goal:'This code crashes with a <b>KeyError</b> because <code>"discount"</code> is not in <code>settings</code>. Fix it to safely read <code>"discount"</code> with a default value of <b>0</b>, and print the result.',
+          goal:'This code crashes with a <b>KeyError</b> because <code>"discount"</code> is not in <code>settings</code>. Before fixing it, put into one sentence why square-bracket access has no way to fail gracefully here. Fix it to safely read <code>"discount"</code> with a default value of <b>0</b>, and print the result.',
           hint:'Use <code>settings.get("discount", 0)</code> instead of <code>settings["discount"]</code> — <code>.get</code> lets you provide a default instead of crashing when the key is missing.',
           starter:
 `settings = {"currency": "USD", "tax_rate": 20}
