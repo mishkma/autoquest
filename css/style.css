@@ -620,6 +620,17 @@
   #view-module.arcade .backbtn:hover{ color:#e8e8ec; }
 
   #view-module.arcade .card{ background: var(--a-bg1); border-color: var(--a-edge); box-shadow:none; }
+  /* Task cards read as plain recolored light-UI cards next to the more
+     "chromed" arcade pieces around them (boss header, editor HUD, topbar) —
+     the same corner-bracket frame already used on .editor-hudframe, reused
+     here on the whole task card (see TASK_CORNERS in app.js) so a task
+     reads as one more arcade screen, not a leftover default card. */
+  #view-module.arcade .card.task{ position:relative; }
+  #view-module.arcade .card.task .corner{ position:absolute; width:14px; height:14px; border:2px solid var(--a-accent); opacity:.6; pointer-events:none; }
+  #view-module.arcade .card.task .corner.tl{ top:8px; left:8px; border-right:none; border-bottom:none; }
+  #view-module.arcade .card.task .corner.tr{ top:8px; right:8px; border-left:none; border-bottom:none; }
+  #view-module.arcade .card.task .corner.bl{ bottom:8px; left:8px; border-right:none; border-top:none; }
+  #view-module.arcade .card.task .corner.br{ bottom:8px; right:8px; border-left:none; border-top:none; }
   #view-module.arcade .theory h3{ font-family:'Press Start 2P',monospace; font-size:12px; color: var(--a-accent); letter-spacing:.03em; }
   #view-module.arcade .theory-text{ color: var(--a-dim); }
   #view-module.arcade .theory code, #view-module.arcade .task-goal code{ background: var(--a-bg0); color:#e8e8ec; }

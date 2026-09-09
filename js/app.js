@@ -492,6 +492,12 @@
       </div>`;
   }
 
+  // HUD corner brackets — same span/class shape as .editor-hudframe's, just
+  // reused on the outer task card so a task's whole frame reads as one more
+  // arcade screen instead of a plain recolored card (see CLAUDE.md → task
+  // card visual pass). Pure decoration, absolutely positioned by CSS.
+  const TASK_CORNERS = `<span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span>`;
+
   function renderTaskCard(t, m, i, total, label){
     const done = !!state.completed[t.id];
     const badge = t.boss ? `<span class="chip boss">${tr('bossFinale')}</span>` : '';
@@ -500,6 +506,7 @@
       const codeBlock = t.starter ? `<pre class="code-preview">${escapeHtml(t.starter)}</pre>` : '';
       return `
       <div class="card task checklist ${done?'done':''}" id="task-${t.id}">
+        ${TASK_CORNERS}
         <div class="task-head">
           <span class="task-num">${tr('taskNumOf', {label, i: i+1, total})}</span>
           ${badge}
@@ -519,6 +526,7 @@
       const offlineBadge = t.offline ? `<span class="chip">${tr('offlineBadge')}</span>` : '';
       return `
       <div class="card task predict ${done?'done':''}" id="task-${t.id}">
+        ${TASK_CORNERS}
         <div class="task-head">
           <span class="task-num">${tr('taskNumOf', {label, i: i+1, total})}</span>
           ${badge}${offlineBadge}
@@ -539,6 +547,7 @@
     }
     return `
       <div class="card task ${done?'done':''}" id="task-${t.id}">
+        ${TASK_CORNERS}
         <div class="task-head">
           <span class="task-num">${tr('taskNumOf', {label, i: i+1, total})}</span>
           ${badge}
@@ -711,12 +720,25 @@
     return out;
   }
 
+  // Each line is its own block <div>, not text joined by literal '\n'
+  // characters — a real, persistent bug (not the earlier scroll-timing
+  // ones): when `code` ends in a newline (or several — a "blank line at
+  // the end" is exactly what triggered it), the trailing empty segment
+  // from code.split('\n') contributes nothing to a plain text node's
+  // rendered height in a few browsers, so the <pre> ends up one full
+  // line-height SHORTER than .editor-gutter's plain-text line list (which
+  // never has a trailing newline — syncGutter() only inserts '\n' BETWEEN
+  // numbers) and the real textarea. No amount of scroll-timing sync fixes
+  // that: the two layers disagree on their own scrollHeight, not just on
+  // when scrollTop last got copied. A block-level div per line always gets
+  // its own line box — including a genuinely empty one — so this can't
+  // recur regardless of what the code ends with.
   function renderHighlight(code, errLine){
     return code.split('\n').map((line, i) => {
-      const html = highlightLine(line);
-      if (errLine && (i + 1) === errLine) return `<span class="err-line">${html || ' '}</span>`;
-      return html;
-    }).join('\n');
+      const html = highlightLine(line) || '&nbsp;';
+      const cls = (errLine && (i + 1) === errLine) ? ' err-line' : '';
+      return `<div class="hl-line${cls}">${html}</div>`;
+    }).join('');
   }
 
   // hl — элемент <pre class="editor-highlight"> над textarea; errLine — номер
