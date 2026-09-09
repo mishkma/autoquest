@@ -197,9 +197,9 @@
       }
 
       node.innerHTML = `
-        <div class="badge">${status==='done' ? '✓' : m.num}</div>
+        <div class="badge">${status==='done' ? '✓' : (m.checkpoint ? '🎯' : m.num)}</div>
         <div class="node-body">
-          <div class="node-kicker">Module ${m.num}</div>
+          <div class="node-kicker">${m.checkpoint ? 'Checkpoint' : 'Module ' + m.num}</div>
           <div class="node-title">${m.title}</div>
           <div class="node-desc">${m.desc}</div>
           <div class="node-meta">${chips.join('')}</div>
@@ -237,7 +237,7 @@
 
     let html = `
       <div class="room-head">
-        <div class="kicker">Module ${m.num}</div>
+        <div class="kicker">${m.checkpoint ? 'Checkpoint' : 'Module ' + m.num}</div>
         <h2>${m.title}</h2>
         <div class="room-progress" id="room-progress"></div>
       </div>

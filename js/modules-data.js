@@ -132,17 +132,18 @@ print(7 / 2)
 `
         },
         {
-          id:'m1-t9', title:'From text to number',
-          goal:'A value arrived as text. Convert it to a number, add 8, and print the result.',
-          hint:'<code>int("42")</code> turns the text <code>"42"</code> into the number 42. Then you can do math with it.',
+          id:'m1-t9', title:'Total test count from the API',
+          goal:'An API returned the number of passed tests as text: <code>passed_raw = "34"</code>. You also have <code>failed = 9</code>. Print one line, exactly: <b>Total tests: 43</b>',
+          hint:'The value from the API is text, not a number — you cannot do math with it as-is. Think back to how you turned text into a number earlier in this module, then build the final message.',
           starter:
-`raw = "42"
+`passed_raw = "34"
+failed = 9
 
-# Task: convert raw to a number, add 8, print the result
+# Task: convert passed_raw to a number, add failed, print: Total tests: 43
 `,
           check(out){
-            const m = matchEn(out, '50'); if(m) return m;
-            return {ok:false, msg:'Expected <code>50</code> — convert <code>raw</code> with <code>int(...)</code>, then add 8.'};
+            const m = matchEn(out, 'Total tests: 43'); if(m) return m;
+            return {ok:false, msg:'Expected exactly <code>Total tests: 43</code>. Convert <code>passed_raw</code> to a number first, then add <code>failed</code>, then build the message with an f-string.'};
           }
         },
         {
@@ -289,18 +290,18 @@ else:
 `
         },
         {
-          id:'m2-t9', title:'Age range (and)',
-          goal:'Given <code>age = 25</code>, print <b>Eligible</b> if age is at least 18 AND at most 60, otherwise print <b>Not eligible</b>.',
-          hint:'Two separate comparisons joined with <code>and</code>, e.g. <code>age &gt;= 18 and age &lt;= 60</code>. Do NOT chain them into one expression.',
+          id:'m2-t9', title:'Safe to run in production',
+          goal:'Given <code>is_destructive = False</code> and <code>env = "prod"</code>, print <b>Blocked</b> only if the test is BOTH destructive AND running in prod, otherwise print <b>Allowed</b>.',
+          hint:'Figure out which two things must be true AT THE SAME TIME for the run to be blocked — you already know how to require two conditions together.',
           starter:
-`age = 25
+`is_destructive = False
+env = "prod"
 
-# Task: print Eligible if age is at least 18 AND at most 60; otherwise Not eligible
-# Combine two separate comparisons with and (do not chain them)
+# Task: print Blocked only when the test is destructive AND env is "prod"; otherwise print Allowed
 `,
           check(out){
-            const m = matchEn(out, 'Eligible'); if(m) return m;
-            return {ok:false, msg:'Expected <code>Eligible</code> for age 25. Join <code>age &gt;= 18</code> and <code>age &lt;= 60</code> with <code>and</code>.'};
+            const m = matchEn(out, 'Allowed'); if(m) return m;
+            return {ok:false, msg:'Expected <code>Allowed</code> — the test is not destructive, so it should never be Blocked, no matter the environment. Check how you combine the two conditions.'};
           }
         },
         {
@@ -489,18 +490,20 @@ while count <= 3:
 `
         },
         {
-          id:'m3-t9', title:'Count failed tests',
-          goal:'Given <code>results = ["pass", "pass", "fail", "pass", "fail", "fail"]</code>, count how many items equal <b>fail</b> and print the count as one number.',
-          hint:'Start a counter <code>count = 0</code> before the loop. Inside the loop, when <code>r == "fail"</code>, do <code>count += 1</code>. Print <code>count</code> after the loop.',
+          id:'m3-t9', title:'Consecutive passes before the first failure',
+          goal:'Given <code>results = ["pass", "pass", "pass", "fail", "pass", "fail"]</code>, count how many tests passed IN A ROW starting from the beginning, and print that count as one number. A test after the first failure does not count, even if it passed.',
+          hint:'Keep a counter starting at 0 and loop through <code>results</code>, increasing it while you see <code>"pass"</code>. The moment you see anything else, counting has to stop right there — think about which keyword stops a loop immediately.',
           starter:
-`results = ["pass", "pass", "fail", "pass", "fail", "fail"]
-count = 0
+`results = ["pass", "pass", "pass", "fail", "pass", "fail"]
+streak = 0
 
-# Task: loop over results, increase count by 1 for each "fail", then print count
+# Task: count consecutive "pass" values from the start of results
+# Stop counting the instant you hit something that is not "pass"
+# Then print streak
 `,
           check(out){
             const m = matchEn(out, '3'); if(m) return m;
-            return {ok:false, msg:'Expected <code>3</code> — the number of <code>"fail"</code> items in the list. Make sure the counter only increases on a match.'};
+            return {ok:false, msg:'Expected <code>3</code> — three passes in a row before the first fail. Make sure you stop counting (and stop the loop) as soon as you hit something other than "pass".'};
           }
         },
         {
@@ -569,6 +572,79 @@ failed = 0
           check(out){
             const m = matchEn(out, 'Passed: 3\nFailed: 4'); if(m) return m;
             return {ok:false, msg:'Expected exactly <code>Passed: 3</code> then <code>Failed: 4</code>. Check both counters and that each result matches only one branch.'};
+          }
+        }
+      ]
+    },
+    {
+      id:'cp1', checkpoint:true, phase:'Python basics', title:'Checkpoint: variables, conditions, loops',
+      desc:'no new theory — every task mixes concepts from modules 1-3',
+      theory:[
+        'No new concepts here. Every task below deliberately combines things from the last three modules (variables, <code>if</code>/<code>elif</code>/<code>else</code>, <code>for</code>/<code>while</code>, <code>break</code>) the way a real script does — nothing isolated anymore. If a task feels harder than what you just did, that is the point: re-open Module 1-3 theory if something does not click.'
+      ],
+      tasks:[
+        {
+          id:'cp1-t1', title:'Fizz for multiples of three',
+          goal:'Print the numbers 1 to 15, one per line — but for every multiple of 3, print <b>Fizz</b> instead of the number.',
+          hint:'Loop with <code>range(1, 16)</code>. Inside, check <code>i % 3 == 0</code> to decide what to print for this number.',
+          starter:
+`# Task: print 1 to 15, one per line
+# For multiples of 3, print Fizz instead of the number
+`,
+          check(out){
+            const m = matchEn(out, '1\n2\nFizz\n4\n5\nFizz\n7\n8\nFizz\n10\n11\nFizz\n13\n14\nFizz'); if(m) return m;
+            return {ok:false, msg:'Expected 1 to 15 with every multiple of 3 replaced by <code>Fizz</code>. Check your <code>%</code> comparison and the range bounds.'};
+          }
+        },
+        {
+          id:'cp1-t2', title:'Total time spent on slow responses',
+          goal:'Given <code>times = [120, 340, 90, 410, 260, 500]</code> (response times in ms), add up only the ones that are 300 or more, and print the total.',
+          hint:'Same accumulator pattern as before, but this time you sum the slow VALUES themselves, not how many there are.',
+          starter:
+`times = [120, 340, 90, 410, 260, 500]
+total_slow = 0
+
+# Task: loop over times, add up only the values >= 300, print total_slow
+`,
+          check(out){
+            const m = matchEn(out, '1250'); if(m) return m;
+            return {ok:false, msg:'Expected <code>1250</code> — the sum of 340, 410 and 500. Make sure you add the VALUE, not increase a counter by 1.'};
+          }
+        },
+        {
+          id:'cp1-t3', title:'Poll until ready',
+          goal:'Starting from <code>attempt = 1</code>, simulate polling a slow service: while <code>attempt</code> is 10 or below, print <b>Waiting... attempt N</b> and increase <code>attempt</code> by 1 — UNLESS <code>attempt</code> equals 4, in which case print <b>Ready on attempt 4</b> instead and stop polling immediately.',
+          hint:'A <code>while</code> loop with an <code>if</code>/<code>else</code> inside it. The <code>if</code> branch (attempt == 4) needs to print its message and then stop the loop right away — think about which keyword does that inside a <code>while</code>, not just a <code>for</code>.',
+          starter:
+`attempt = 1
+
+# Task: while attempt <= 10:
+#   if attempt == 4: print "Ready on attempt 4" and stop the loop
+#   otherwise: print "Waiting... attempt N" and increase attempt by 1
+`,
+          check(out){
+            const m = matchEn(out, 'Waiting... attempt 1\nWaiting... attempt 2\nWaiting... attempt 3\nReady on attempt 4'); if(m) return m;
+            return {ok:false, msg:'Expected three "Waiting..." lines for attempts 1-3, then <code>Ready on attempt 4</code>, and nothing after that. <code>break</code> works inside <code>while</code> loops too.'};
+          }
+        },
+        {
+          id:'cp1-t4', title:'Test suite triage report',
+          goal:'Given <code>results = ["pass", "fail", "pass", "skip", "fail", "pass", "fail"]</code>, count how many are <b>pass</b>, <b>fail</b> and <b>skip</b>, then print EXACTLY three lines:<br><code>Passed: 3</code><br><code>Failed: 3</code><br><code>Skipped: 1</code>',
+          hint:'Three counters, one loop, an <code>if</code>/<code>elif</code>/<code>elif</code> chain deciding which counter to bump for each result. This is exactly what a CI pipeline prints after a test run.',
+          starter:
+`results = ["pass", "fail", "pass", "skip", "fail", "pass", "fail"]
+passed = 0
+failed = 0
+skipped = 0
+
+# Task: loop once, bump the right counter for each result, then print:
+# Passed: <passed>
+# Failed: <failed>
+# Skipped: <skipped>
+`,
+          check(out){
+            const m = matchEn(out, 'Passed: 3\nFailed: 3\nSkipped: 1'); if(m) return m;
+            return {ok:false, msg:'Expected exactly <code>Passed: 3</code>, <code>Failed: 3</code>, <code>Skipped: 1</code>, in that order. Check that every result updates exactly one of the three counters.'};
           }
         }
       ]
@@ -706,20 +782,18 @@ print(count)
 `
         },
         {
-          id:'m4-t9', title:'Is the response fast?',
-          goal:'Write a function <code>is_fast(response_time)</code> that returns <code>True</code> if <code>response_time</code> is less than 200, otherwise <code>False</code>. Then write <code>if is_fast(150): print("OK") else: print("SLOW")</code>.',
-          hint:'<code>def is_fast(response_time): return response_time &lt; 200</code> — a comparison is already a value, you can return it directly without an <code>if</code> inside the function.',
+          id:'m4-t9', title:'Classify the response speed',
+          goal:'Write a function <code>speed_label(response_time)</code> that returns <b>"Fast"</b> if <code>response_time</code> is below 100, <b>"Normal"</b> if below 300, otherwise <b>"Slow"</b>. Then print <code>speed_label(250)</code>.',
+          hint:'Inside a function you can use <code>if</code> / <code>elif</code> / <code>else</code> exactly like anywhere else — the only difference is you <code>return</code> the label in each branch instead of printing it.',
           starter:
-`# Task: define is_fast(response_time) that returns response_time < 200
+`def speed_label(response_time):
+    # Task: return "Fast" / "Normal" / "Slow" using if / elif / else
 
-if is_fast(150):
-    print("OK")
-else:
-    print("SLOW")
+print(speed_label(250))
 `,
           check(out){
-            const m = matchEn(out, 'OK'); if(m) return m;
-            return {ok:false, msg:'Expected <code>OK</code> — 150 is less than 200. Check that <code>is_fast</code> returns the comparison result.'};
+            const m = matchEn(out, 'Normal'); if(m) return m;
+            return {ok:false, msg:'Expected <code>Normal</code> — 250 is not below 100, but it is below 300. Check the order of your bounds inside the function.'};
           }
         },
         {
@@ -795,7 +869,7 @@ print(count_fails(results))
         'A dictionary (<code>dict</code>) stores key-value pairs — handy for one structured object instead of a pile of separate variables. Simple example: <code>product = {"name": "Mouse", "price": 25}</code>; access by key — <code>product["name"]</code> → <code>"Mouse"</code>. A trickier example: a dict with several value types at once — string, number, boolean.',
         '<code>.get(key, default)</code> is a safe way to read from a dict: if the key is missing, it returns the default value instead of a <code>KeyError</code>. Example: <code>settings.get("discount", 0)</code> returns 0 if <code>"discount"</code> is not set — useful for optional test settings.',
         '<code>.keys()</code> and <code>.values()</code> give just the keys or just the values to loop over. This sandbox has no <code>.items()</code> — to get both the key and the value at once, loop over <code>.keys()</code> and look up the value by key: <code>for key in settings.keys(): print(key, settings[key])</code>.',
-        'A list of dictionaries is a way to represent a set of same-shaped objects, for example a product catalog: <code>catalog = [{"name": "Mouse", "price": 25}, {"name": "Keyboard", "price": 45}]</code>. Looping works the same as with a plain list: <code>for product in catalog:</code>, and inside — <code>product["name"]</code>.'
+        'A list of dictionaries is a way to represent a set of same-shaped objects, for example a product catalog: <code>catalog = [{"name": "Mouse", "price": 25}, {"name": "Keyboard", "price": 45}]</code>. Looping works the same as with a plain list: <code>for product in catalog:</code>, and inside — <code>product["name"]</code>. This is not just a coincidence: a JSON response from a real API — the exact thing you will parse in Module 11 (API testing) — looks and behaves exactly like this in Python: a list of dicts, or a dict of dicts.'
       ],
       tasks:[
         {
@@ -907,17 +981,19 @@ print(total)
 `
         },
         {
-          id:'m5-t9', title:'Fix: wrong key name',
-          goal:'This code crashes with a <b>KeyError</b>. Fix the key name so it correctly prints the price of the first product.',
-          hint:'The dict uses the key <code>"price"</code>, not <code>"cost"</code> — check the dict literal above for the exact key name.',
+          id:'m5-t9', title:'Average price of products in stock',
+          goal:'Given a <code>catalog</code> of four products, some missing the <code>"in_stock"</code> key entirely, compute the average price of only the products that ARE in stock (a missing key counts as not in stock), and print the result.',
+          hint:'Use <code>.get("in_stock", False)</code> so a missing key is treated as not in stock instead of crashing. Keep a running total AND a running count of in-stock items, then divide the total by the count after the loop.',
           starter:
-`catalog = [{"name": "Mouse", "price": 25}, {"name": "Keyboard", "price": 45}]
+`catalog = [{"name": "Mouse", "price": 25, "in_stock": True}, {"name": "Keyboard", "price": 45}, {"name": "Monitor", "price": 150, "in_stock": True}, {"name": "Webcam", "price": 65, "in_stock": True}]
 
-print(catalog[0]["cost"])
+# Task: loop over catalog, add up the price of in-stock products into a total,
+# and count how many are in stock (treat a missing "in_stock" key as not in stock)
+# Then print total / count
 `,
           check(out){
-            const m = matchEn(out, '25'); if(m) return m;
-            return {ok:false, msg:'Expected <code>25</code>. Fix the key name used to look up the price.'};
+            const m = matchEn(out, '80.0'); if(m) return m;
+            return {ok:false, msg:'Expected <code>80.0</code> — the average of the three in-stock prices (25, 150, 65). Check you use <code>.get("in_stock", False)</code> and divide by the count of in-stock items only.'};
           }
         },
         {
@@ -978,6 +1054,81 @@ print(prices)
           check(out){
             const m = matchEn(out, '45'); if(m) return m;
             return {ok:false, msg:'Expected <code>45</code> — the price of the Keyboard product. Check the comparison and that you print product["price"], not something else.'};
+          }
+        }
+      ]
+    },
+    {
+      id:'cp2', checkpoint:true, phase:'Python basics', title:'Checkpoint: functions, lists, dicts',
+      desc:'no new theory — every task mixes functions with real catalog/cart data',
+      theory:[
+        'No new concepts here. Every task below writes a small reusable function that works on a list of dicts — exactly the shape of a real API response or test fixture. This is the pattern you will use constantly once you get to Pytest and API testing: a helper function, called from a test, that returns something the test can check.'
+      ],
+      tasks:[
+        {
+          id:'cp2-t1', title:'Filter valid prices',
+          goal:'Write a function <code>is_valid_price(price)</code> that returns <code>True</code> if <code>price</code> is greater than 0, otherwise <code>False</code>. Given <code>prices = [25, -5, 40, 0, 15]</code>, use the function to print only the valid prices, one per line.',
+          hint:'Define the function first. Then loop over <code>prices</code>, and for each one call <code>is_valid_price(p)</code> inside an <code>if</code> to decide whether to print it.',
+          starter:
+`# Task: define is_valid_price(price) -> True if price > 0, else False
+
+prices = [25, -5, 40, 0, 15]
+
+# Task: loop over prices, print only the ones where is_valid_price(p) is True
+`,
+          check(out){
+            const m = matchEn(out, '25\n40\n15'); if(m) return m;
+            return {ok:false, msg:'Expected <code>25</code>, <code>40</code>, <code>15</code> on separate lines, in that order. Check that is_valid_price returns a comparison, and that you call it inside the loop.'};
+          }
+        },
+        {
+          id:'cp2-t2', title:'Cart total with quantities',
+          goal:'Write a function <code>calc_cart_total(cart)</code> that loops over a list of product dicts (each with <code>"price"</code> and <code>"qty"</code>), sums <code>price * qty</code> for all of them, and returns the total. Then print <code>calc_cart_total(cart)</code> for <code>cart = [{"name": "Mouse", "price": 25, "qty": 2}, {"name": "Keyboard", "price": 45, "qty": 1}, {"name": "Monitor", "price": 150, "qty": 1}]</code>.',
+          hint:'Inside the function: a running total starting at 0, a loop over <code>cart</code>, and for each <code>item</code> add <code>item["price"] * item["qty"]</code>. Return the total after the loop — do not print it inside the function.',
+          starter:
+`def calc_cart_total(cart):
+    # Task: sum price * qty for every item in cart, return the total
+
+cart = [{"name": "Mouse", "price": 25, "qty": 2}, {"name": "Keyboard", "price": 45, "qty": 1}, {"name": "Monitor", "price": 150, "qty": 1}]
+print(calc_cart_total(cart))
+`,
+          check(out){
+            const m = matchEn(out, '245'); if(m) return m;
+            return {ok:false, msg:'Expected <code>245</code> — (25*2) + (45*1) + (150*1). Check the function multiplies price by qty for every item and returns the sum.'};
+          }
+        },
+        {
+          id:'cp2-t3', title:'Find the cheapest product',
+          goal:'Write a function <code>find_cheapest(catalog)</code> that loops over a list of product dicts and returns the NAME of the one with the lowest price. Then print <code>find_cheapest(catalog)</code> for <code>catalog = [{"name": "Mouse", "price": 25}, {"name": "Keyboard", "price": 45}, {"name": "Monitor", "price": 150}, {"name": "Webcam", "price": 15}]</code>.',
+          hint:'<code>min()</code> only compares plain numbers here, not dicts — you have to track the cheapest one yourself. Start by assuming the first product is the cheapest (<code>catalog[0]</code>), then loop and update your tracked name and price whenever you find something cheaper.',
+          starter:
+`def find_cheapest(catalog):
+    # Task: track the name and price of the cheapest product as you loop, return the name
+
+catalog = [{"name": "Mouse", "price": 25}, {"name": "Keyboard", "price": 45}, {"name": "Monitor", "price": 150}, {"name": "Webcam", "price": 15}]
+print(find_cheapest(catalog))
+`,
+          check(out){
+            const m = matchEn(out, 'Webcam'); if(m) return m;
+            return {ok:false, msg:'Expected <code>Webcam</code> — it has the lowest price (15). Check you update BOTH the tracked name and the tracked price together whenever you find a cheaper product.'};
+          }
+        },
+        {
+          id:'cp2-t4', title:'Cart eligibility report',
+          goal:'Write a function <code>cart_report(cart)</code> that sums <code>price * qty</code> for every item in <code>cart</code>, and returns the string <b>"Total: N, Free shipping: Yes"</b> if the total is 100 or more, otherwise <b>"Total: N, Free shipping: No"</b>. Print <code>cart_report(cart)</code> for <code>cart = [{"name": "Mouse", "price": 25, "qty": 2}, {"name": "Keyboard", "price": 45, "qty": 1}]</code>.',
+          hint:'Reuse the total-summing loop from the earlier task, then a plain <code>if</code>/<code>else</code> deciding which f-string to return. The function needs exactly one <code>return</code> in each branch — no need for anything fancier.',
+          starter:
+`def cart_report(cart):
+    # Task: sum price * qty for every item into total
+    # Then return "Total: <total>, Free shipping: Yes" if total >= 100
+    # Otherwise return "Total: <total>, Free shipping: No"
+
+cart = [{"name": "Mouse", "price": 25, "qty": 2}, {"name": "Keyboard", "price": 45, "qty": 1}]
+print(cart_report(cart))
+`,
+          check(out){
+            const m = matchEn(out, 'Total: 95, Free shipping: No'); if(m) return m;
+            return {ok:false, msg:'Expected <code>Total: 95, Free shipping: No</code> — total is 25*2 + 45*1 = 95, which is below 100. Check both the total calculation and the 100 threshold.'};
           }
         }
       ]
