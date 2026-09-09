@@ -716,10 +716,78 @@
     });
     const resetBtn = document.getElementById('settings-reset-btn');
     if(resetBtn){
-      resetBtn.addEventListener('click', () => {
-        if(!window.confirm(tr('settingsResetConfirm'))) return;
+      resetBtn.addEventListener('click', openResetConfirm);
+    }
+  }
+
+  // Themed replacement for window.confirm() on "Reset progress" (see
+  // ROADMAP.md "Нативный браузерный window.confirm()") — the reset is
+  // destructive/irreversible, so this stays a true blocking modal: opening
+  // it remembers whatever had focus so Cancel/Escape/confirm can restore it,
+  // moves focus into the panel (Escape/Tab both need somewhere to land),
+  // and the actual wipe only ever runs from the confirm button's own click
+  // handler, never as a side effect of opening or closing the dialog.
+  let resetConfirmPrevFocus = null;
+  function openResetConfirm(){
+    const overlay = document.getElementById('reset-confirm-overlay');
+    if(!overlay) return;
+    overlay.dataset.signal = getSignal();
+    resetConfirmPrevFocus = document.activeElement;
+    overlay.hidden = false;
+    document.addEventListener('keydown', onResetConfirmKeydown, true);
+    const confirmBtn = document.getElementById('reset-confirm-confirm');
+    if(confirmBtn) confirmBtn.focus();
+  }
+  function closeResetConfirm(){
+    const overlay = document.getElementById('reset-confirm-overlay');
+    if(!overlay) return;
+    overlay.hidden = true;
+    document.removeEventListener('keydown', onResetConfirmKeydown, true);
+    if(resetConfirmPrevFocus && typeof resetConfirmPrevFocus.focus === 'function') resetConfirmPrevFocus.focus();
+    resetConfirmPrevFocus = null;
+  }
+  function onResetConfirmKeydown(e){
+    const overlay = document.getElementById('reset-confirm-overlay');
+    if(!overlay || overlay.hidden) return;
+    if(e.key === 'Escape'){
+      e.preventDefault();
+      closeResetConfirm();
+      return;
+    }
+    // Minimal focus trap — only two focusable elements in this dialog, so
+    // Tab/Shift+Tab just needs to bounce between them instead of letting
+    // focus escape onto the page hidden behind the backdrop.
+    if(e.key === 'Tab'){
+      const cancelBtn = document.getElementById('reset-confirm-cancel');
+      const confirmBtn = document.getElementById('reset-confirm-confirm');
+      if(!cancelBtn || !confirmBtn) return;
+      const goingBack = e.shiftKey;
+      const onCancel = document.activeElement === cancelBtn;
+      const onConfirm = document.activeElement === confirmBtn;
+      if((goingBack && onCancel) || (!goingBack && onConfirm)){
+        e.preventDefault();
+        (goingBack ? confirmBtn : cancelBtn).focus();
+      }
+    }
+  }
+  function initResetConfirmModal(){
+    const overlay = document.getElementById('reset-confirm-overlay');
+    if(!overlay) return;
+    const cancelBtn = document.getElementById('reset-confirm-cancel');
+    const confirmBtn = document.getElementById('reset-confirm-confirm');
+    if(cancelBtn) cancelBtn.addEventListener('click', closeResetConfirm);
+    // Click-outside cancels — but only a genuine click ON the backdrop
+    // itself (event target === overlay), never a click that started inside
+    // the panel and merely bubbled up, so text selection / random panel
+    // clicks can't be misread as "outside".
+    overlay.addEventListener('mousedown', (e) => {
+      if(e.target === overlay) closeResetConfirm();
+    });
+    if(confirmBtn){
+      confirmBtn.addEventListener('click', () => {
         state = {xp:0, completed:{}, streak:0, lastOpen:null};
         persist();
+        closeResetConfirm();
         renderStats();
         renderPath();
         renderSettingsPage();
@@ -1664,5 +1732,6 @@
   initLangSwitch();
   initTitleScreen();
   initTopbarNav();
+  initResetConfirmModal();
   initState();
 })();
