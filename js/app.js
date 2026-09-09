@@ -588,28 +588,26 @@
       const rr = document.getElementById(`res-${t.id}`);
       if(rr){ rr.className = 'result'; rr.innerHTML = ''; }
     });
-    const syncEditorScroll = () => { gutter.scrollTop = editor.scrollTop; hl.scrollTop = editor.scrollTop; };
-    editor.addEventListener('scroll', () => {
-      syncEditorScroll();
-      if(ac.editor === editor) acPosition(editor);
-    });
-    // Dragging the textarea's own native scrollbar thumb scrolls it on the
-    // compositor every frame, but the 'scroll' event we listen to above is
-    // dispatched on the main thread and can be throttled/coalesced during a
-    // fast drag — so gutter/highlight (only updated from that event) can
-    // visibly lag a frame or two behind the real textarea mid-drag, even
-    // though they always catch up and match again once the drag ends. Keep
-    // polling scrollTop every animation frame for the duration of the drag
-    // (mousedown → mouseup) to close that gap while it's actually visible.
-    let scrollDragRaf = null;
-    const pollScrollDuringDrag = () => { syncEditorScroll(); scrollDragRaf = requestAnimationFrame(pollScrollDuringDrag); };
-    editor.addEventListener('mousedown', () => {
-      if(scrollDragRaf) cancelAnimationFrame(scrollDragRaf);
-      scrollDragRaf = requestAnimationFrame(pollScrollDuringDrag);
-    });
-    window.addEventListener('mouseup', () => {
-      if(scrollDragRaf){ cancelAnimationFrame(scrollDragRaf); scrollDragRaf = null; }
-    });
+    // gutter/highlight only ever moved in response to the textarea's 'scroll'
+    // event, but that event is dispatched on the main thread and can be
+    // throttled/coalesced while the user is actively dragging the textarea's
+    // own native scrollbar thumb — the textarea itself keeps repainting on
+    // the compositor every frame regardless, so gutter/highlight visibly lag
+    // behind it during the drag (confirmed by hand, screen-recorded — an
+    // event-driven or drag-window-scoped rAF sync both still missed frames).
+    // Polling scrollTop unconditionally on every animation frame, for as
+    // long as this editor stays in the DOM, removes the dependency on any
+    // event firing at all — there's no window where the three can drift.
+    // Self-terminates once the task's DOM is torn down (room re-rendered),
+    // so it doesn't keep spinning forever for editors nobody can see.
+    (function pollEditorScroll(){
+      if(!editor.isConnected) return;
+      const st = editor.scrollTop;
+      if(gutter.scrollTop !== st) gutter.scrollTop = st;
+      if(hl.scrollTop !== st) hl.scrollTop = st;
+      requestAnimationFrame(pollEditorScroll);
+    })();
+    editor.addEventListener('scroll', () => { if(ac.editor === editor) acPosition(editor); });
     editor.addEventListener('blur', () => { if(ac.editor === editor) acClose(); });
 
     const checkBtn = room.querySelector(`[data-check="${t.id}"]`);
