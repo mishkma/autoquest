@@ -1134,7 +1134,122 @@ print(cart_report(cart))
         }
       ]
     },
-    {id:'m6', num:6, phase:'Python basics', title:'Environment setup', desc:'installing Python for real — VS Code, running files'},
+    {
+      id:'m6', num:6, phase:'Python basics', title:'Environment setup',
+      desc:'installing Python for real — VS Code, running files, git, first push',
+      theory:[
+        'The browser sandbox was for speed — no install, instant feedback, learn the language fast. A real project needs a real interpreter, a real file, a real terminal and a real editor. That is what this module sets up: real Python, VS Code, and git — the exact same tools you will use to build the AutoQuest Test Framework starting in a few modules.',
+        'Install Python from <code>python.org</code> (3.12 or newer). To confirm it worked, open a terminal and run <code>python --version</code> (on some systems it is <code>python3 --version</code>) — it should print something like <code>Python 3.12.4</code>. This terminal command is completely different from the <code>print()</code> you have been using: <code>python --version</code> asks the INSTALLED PROGRAM about itself, it does not run any of your code.',
+        'VS Code is a code editor with a Python extension (install it from the Extensions panel — look for the official one by Microsoft). Once installed, opening a <code>.py</code> file gives you a Run button, and VS Code\'s own integrated terminal lets you run <code>python file.py</code> directly — same result, two ways to trigger it.',
+        'Git tracks snapshots of a folder over time: <code>git init</code> turns a folder into a repository, <code>git add file.py</code> stages a file for the next snapshot, <code>git commit -m "message"</code> saves that snapshot with a description. This AutoQuest site itself lives in a git repository exactly like this — every module you have completed so far exists as a commit history you could inspect.',
+        'GitHub hosts your repository online so it is not just on one machine. <code>git push</code> uploads your local commits there. This matters for two reasons: it is a backup, and — starting a few modules from now — it is what lets an automated pipeline (CI) run your tests every time you push, instead of you running them by hand.',
+        'A few real Python features do not exist in this sandbox on purpose (it is a teaching subset, remember?) — slicing (<code>list[1:3]</code>), <code>.items()</code>, tuple unpacking, <code>*args</code>. Several tasks below show you real code using them and ask you to predict the output, the same way the "predict" tasks worked before — except now nothing runs in the browser, because this is real Python, not the sandbox.'
+      ],
+      tasks:[
+        {
+          id:'m6-t1', kind:'checklist', title:'Install real Python',
+          goal:'Install Python 3.12 or newer from <code>python.org</code>. Open a terminal and run <code>python --version</code> (or <code>python3 --version</code>) — confirm it prints a <code>Python 3.x.x</code> line. Mark this done once you see that output.',
+          hint:'On Windows, during install, tick "Add python.exe to PATH" — otherwise the terminal will not find the <code>python</code> command afterward.'
+        },
+        {
+          id:'m6-t2', kind:'checklist', title:'Install VS Code and the Python extension',
+          goal:'Install VS Code, then open the Extensions panel (the icon with four squares in the sidebar) and install the official <b>Python</b> extension by Microsoft. Mark this done once it shows as installed.',
+          hint:'You can also install it from the command line with <code>code --install-extension ms-python.python</code> if you prefer not to click through the UI.'
+        },
+        {
+          id:'m6-t3', kind:'checklist', title:'Run your first real .py file',
+          goal:'Create a folder called <code>autoquest-practice</code>, open it in VS Code, create a file <code>hello.py</code> containing <code>print("Hello from real Python")</code>, and run it — either with the Run button in VS Code, or by typing <code>python hello.py</code> in a terminal opened in that folder. Mark this done once you see the message printed in a REAL terminal, not this browser sandbox.',
+          hint:'If <code>python hello.py</code> says the file is not found, your terminal is probably not open in the <code>autoquest-practice</code> folder — check the current directory first.'
+        },
+        {
+          id:'m6-t4', kind:'predict', offline:true, title:'Predict: real slicing',
+          goal:'This uses a real Python feature (slicing) that this sandbox does not support. Read the code, predict the output as it would run in the real Python you just installed, then check yourself.',
+          hint:'<code>list[1:3]</code> takes items starting at index 1, up to (not including) index 3 — so items at index 1 and 2.',
+          code:
+`nums = [10, 20, 30, 40, 50]
+print(nums[1:3])
+`,
+          expected: '[20, 30]'
+        },
+        {
+          id:'m6-t5', kind:'predict', offline:true, title:'Predict: real dict.items()',
+          goal:'Real Python dicts have an <code>.items()</code> method this sandbox does not implement. Read the code and predict the output.',
+          hint:'<code>.items()</code> gives you both the key and the value together on each pass of the loop — no need for <code>settings[key]</code> lookups like you did before.',
+          code:
+`settings = {"env": "staging", "retries": 3}
+for key, value in settings.items():
+    print(key, value)
+`,
+          expected: 'env staging\nretries 3'
+        },
+        {
+          id:'m6-t6', kind:'predict', offline:true, title:'Predict: tuple unpacking',
+          goal:'Real Python lets you unpack a tuple into several variables in one line — this sandbox does not support it. Read the code and predict the output.',
+          hint:'<code>x, y = point</code> takes the two values out of the tuple <code>point</code> and assigns them to <code>x</code> and <code>y</code> in order.',
+          code:
+`point = (3, 7)
+x, y = point
+print(x + y)
+`,
+          expected: '10'
+        },
+        {
+          id:'m6-t7', kind:'checklist', title:'Turn the folder into a git repository',
+          goal:'Inside <code>autoquest-practice</code>, run <code>git init</code>, then <code>git add hello.py</code>, then <code>git commit -m "first commit"</code>. Confirm it worked by running <code>git log</code> — you should see your commit listed. Mark this done once you see it.',
+          hint:'If <code>git commit</code> asks you to configure <code>user.name</code>/<code>user.email</code> first, that is normal for a brand new machine — follow the exact command it prints, then try the commit again.'
+        },
+        {
+          id:'m6-t8', kind:'checklist', title:'Push to GitHub',
+          goal:'Create a new empty repository on GitHub (any name, e.g. <code>autoquest-practice</code>) — do not initialize it with a README. Follow GitHub\'s own instructions to connect your local folder as <code>origin</code> and run <code>git push -u origin main</code> (or <code>master</code>, depending on your default branch name). Confirm your <code>hello.py</code> file shows up on the GitHub page. Mark this done once you see it there.',
+          hint:'If <code>push</code> is rejected or asks for credentials in a way that fails, GitHub now requires a personal access token instead of your account password for this — GitHub\'s own push instructions page explains how to set one up.'
+        },
+        {
+          id:'m6-t9', kind:'predict', offline:true, title:'Predict: *args collects extra arguments',
+          goal:'Real Python lets a function accept any number of arguments with <code>*args</code> — this sandbox does not support it. Read the code and predict the output.',
+          hint:'<code>*args</code> collects every argument passed into the function as a tuple of numbers; <code>sum(args)</code> adds them all up, how ever many there are.',
+          code:
+`def total(*args):
+    return sum(args)
+
+print(total(10, 20, 30))
+`,
+          expected: '60'
+        },
+        {
+          id:'m6-t10', kind:'predict', offline:true, boss:true, title:'Predict: sorted() and slicing together',
+          goal:'Combine two real-Python-only features: <code>sorted()</code> and slicing. Read the code and predict the exact output.',
+          hint:'<code>sorted(durations)</code> returns a NEW list in ascending order, without changing <code>durations</code> itself (unlike <code>.sort()</code> from Module 5, which sorts in place). Then <code>[:3]</code> takes the first three items of that new sorted list.',
+          code:
+`durations = [12, 45, 8, 30, 5]
+fastest_three = sorted(durations)[:3]
+print(fastest_three)
+`,
+          expected: '[5, 8, 12]'
+        }
+      ],
+      homework:[
+        {
+          id:'m6-hw1', kind:'checklist', title:'Use the integrated terminal',
+          goal:'Open VS Code\'s own integrated terminal (View → Terminal, or the shortcut it shows there) instead of a separate terminal window, and run both <code>python --version</code> and <code>git --version</code> inside it. Mark this done once both work from inside VS Code.',
+          hint:'Everything you have done in a separate terminal so far also works inside VS Code\'s integrated one — that is the whole point of using it day to day.'
+        },
+        {
+          id:'m6-hw2', kind:'predict', offline:true, title:'Predict: self-documenting f-strings',
+          goal:'Real Python f-strings (3.8+) have a debugging shortcut this sandbox does not support. Read the code and predict the exact output.',
+          hint:'Adding <code>=</code> right before the closing <code>}</code> in an f-string prints both the expression AND its value, exactly as written — handy for quick debugging without writing a full message yourself.',
+          code:
+`x = 5
+print(f"{x=}")
+`,
+          expected: 'x=5'
+        },
+        {
+          id:'m6-hw3', kind:'checklist', title:'Edit, commit, push again',
+          goal:'Change the message in <code>hello.py</code> to something else, save it, then <code>git add</code>, <code>git commit -m "..."</code> and <code>git push</code> again. Confirm the updated file shows on GitHub. Mark this done once it does — this edit → commit → push loop is exactly what you will repeat constantly once building the real test framework.',
+          hint:'You do not need <code>git init</code> or to reconnect <code>origin</code> again — that setup only happens once per repository. This time it is just add, commit, push.'
+        }
+      ]
+    },
     {id:'m7', num:7, phase:'Python basics', title:'OOP: classes and objects', desc:'classes, objects, attributes and methods — the foundation of Page Object and fixtures'},
     {id:'m8', num:8, phase:'Python basics', title:'Standard library and generators', desc:'useful built-in modules, iterators and generators'},
     {id:'m9', num:9, phase:'Automated tests in Python', title:'Pytest', desc:'running tests, assert, fixtures, parametrization'},

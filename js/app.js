@@ -276,12 +276,30 @@
   function renderTaskCard(t, i, total, label){
     const done = !!state.completed[t.id];
     const badge = t.boss ? '<span class="chip boss">🏆 Module finale</span>' : '';
+    if(t.kind === 'checklist'){
+      return `
+      <div class="card task checklist ${done?'done':''}" id="task-${t.id}">
+        <div class="task-head">
+          <span class="task-num">${label} ${i+1} of ${total}</span>
+          ${badge}
+        </div>
+        <div class="task-title">${t.title}</div>
+        <div class="task-goal">${t.goal}</div>
+        <div class="rowbtns" style="margin-top:12px;">
+          <button class="btn primary" data-checklist="${t.id}">${done ? '✓ Done' : 'Mark as done'}</button>
+          <button class="btn" data-hint="${t.id}">💡 Hint</button>
+        </div>
+        <div class="hint-box" id="hint-${t.id}"><b>Hint:</b> ${t.hint || ''}</div>
+        <div class="result" id="res-${t.id}"></div>
+      </div>`;
+    }
     if(t.kind === 'predict'){
+      const offlineBadge = t.offline ? '<span class="chip">🐍 Real Python — not this sandbox</span>' : '';
       return `
       <div class="card task predict ${done?'done':''}" id="task-${t.id}">
         <div class="task-head">
           <span class="task-num">${label} ${i+1} of ${total}</span>
-          ${badge}
+          ${badge}${offlineBadge}
         </div>
         <div class="task-title">${t.title}</div>
         <div class="task-goal">${t.goal}</div>
@@ -325,6 +343,21 @@
   }
 
   function bindTask(room, t, m){
+    if(t.kind === 'checklist'){
+      const btn = room.querySelector(`[data-checklist="${t.id}"]`);
+      btn.addEventListener('click', () => {
+        if(state.completed[t.id]) return;
+        markDone(t.id);
+        document.getElementById(`task-${t.id}`).classList.add('done');
+        btn.textContent = '✓ Done';
+        renderStats();
+        if(m) updateRoomProgress(m);
+      });
+      room.querySelector(`[data-hint="${t.id}"]`).addEventListener('click', () => {
+        document.getElementById(`hint-${t.id}`).classList.toggle('show');
+      });
+      return;
+    }
     if(t.kind === 'predict'){
       const guessEl = room.querySelector(`#guess-${t.id}`);
       guessEl.addEventListener('keydown', onEditorTab);
@@ -683,16 +716,24 @@
   function runPredictCheck(t, m){
     const guess = document.getElementById(`guess-${t.id}`).value.trim();
     const resEl = document.getElementById(`res-${t.id}`);
-    const r = runPython(t.code);
-    showConsole(t.id, r);
+    let actual;
 
-    if(!r.ok){
-      resEl.className = 'result show err';
-      resEl.innerHTML = `<b>Something went wrong</b>The example failed to run — this is a bug in the task, not your mistake.`;
-      return;
+    if(t.offline){
+      // Real-Python-only feature: this sandbox cannot run the code, so there is
+      // nothing to execute — the expected output is simply the known-correct
+      // behavior of real CPython, provided by the task itself.
+      actual = t.expected.trim();
+    } else {
+      const r = runPython(t.code);
+      showConsole(t.id, r);
+      if(!r.ok){
+        resEl.className = 'result show err';
+        resEl.innerHTML = `<b>Something went wrong</b>The example failed to run — this is a bug in the task, not your mistake.`;
+        return;
+      }
+      actual = r.output.trim();
     }
 
-    const actual = r.output.trim();
     const isMatch = guess === actual;
     resEl.className = 'result show ' + (isMatch ? 'ok' : 'err');
     if(isMatch){
