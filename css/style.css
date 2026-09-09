@@ -303,7 +303,7 @@
     font-family:'JetBrains Mono',monospace;white-space:pre;tab-size:4;
   }
   .editor-wrap textarea.editor{
-    position:relative;width:100%;
+    position:relative;width:100%;min-height:148px;
     background:transparent;border:none;border-radius:0;
     color:transparent;caret-color:var(--ink);
     resize:none;overflow-y:auto;overflow-x:hidden;
@@ -316,7 +316,15 @@
        scrollable range ends up a few px shorter than the textarea's — right
        at the bottom of a scrolled editor their scrollTop then clamps short
        of the textarea's, and the last line renders visibly offset between
-       the two layers (looks like a duplicated/ghost last line). */
+       the two layers (looks like a duplicated/ghost last line).
+       min-height override (148px, not the base rule's 150px): .editor-wrap
+       is border-box with a 1px border top+bottom, so its flex-stretched
+       children (.editor-gutter/.editor-code, and .editor-highlight inside
+       it via inset:0) get a 148px content box, not 150px. The base
+       textarea.editor rule's min-height:150px made the textarea 2px taller
+       than that, clipped by .editor-wrap's overflow:hidden — a residual
+       ~2px scrollTop-range gap versus gutter/highlight even after the
+       overflow-x fix above. 148px matches them exactly. */
   }
   .tok-keyword{color:var(--tok-kw);font-weight:600;}
   .tok-string{color:var(--tok-str);}
