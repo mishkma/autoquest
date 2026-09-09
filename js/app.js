@@ -63,8 +63,22 @@
     } else {
       line = `Incoming: ${escapeHtml(m.desc)}. ${taskCount} trials queued.`;
     }
+    // The announcer's "face" — a CRT terminal whose mouth is the same blinking
+    // cursor block already used at the end of the line, so the icon and the
+    // text share one motif instead of introducing a second one. 12x12 pixel
+    // grid, drawn as plain <rect> blocks (see the icon pitch artifact) —
+    // crispEdges keeps it sharp at the small size it renders at here.
+    const briefingIcon = `
+      <svg class="briefing-icon" viewBox="0 0 13 13" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <rect x="2" y="1" width="8" height="1"/><rect x="1" y="2" width="1" height="8"/>
+        <rect x="10" y="2" width="1" height="8"/><rect x="2" y="10" width="8" height="1"/>
+        <rect x="4" y="4" width="2" height="2"/><rect x="7" y="4" width="2" height="2"/>
+        <rect x="4" y="7" width="4" height="2"/>
+        <rect x="5" y="11" width="2" height="1"/><rect x="3" y="12" width="6" height="1"/>
+      </svg>`;
     return `
       <div class="briefing">
+        ${briefingIcon}
         <span class="briefing-who">SYSTEM&gt;</span>
         <span class="briefing-text">${line}<span class="briefing-cursor"></span></span>
       </div>`;
