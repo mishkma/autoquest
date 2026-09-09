@@ -2222,7 +2222,87 @@ print(cursor.rowcount)
         }
       ]
     },
-    {id:'m14', num:14, phase:'Automation tooling', title:'Locators and Selenium', desc:'finding elements and automating the browser'},
+    {
+      id:'m14', num:14, phase:'Automation tooling', title:'Locators and Selenium',
+      desc:'finding elements and automating the browser',
+      theory:[
+        'Selenium drives a REAL browser — unlike Module 12\'s <code>requests</code> calls (talking straight to the server) or every module before it, this actually opens Chrome and clicks/types exactly like a person would. <code>pip install selenium</code>, then <code>from selenium import webdriver; driver = webdriver.Chrome()</code>, then <code>driver.get("https://automationexercise.com")</code> opens a real page. Every task below runs against that real, live site.',
+        'A locator finds an element: <code>driver.find_element(By.ID, "search_product")</code> — needs <code>from selenium.webdriver.common.by import By</code> first. <code>find_element</code> (singular) returns exactly ONE match and raises <code>NoSuchElementException</code> if there is none; <code>find_elements</code> (plural) always returns a LIST, empty (<code>[]</code>) if nothing matches — it never crashes, which makes it the safer choice for "does this exist at all" checks.',
+        'Reading vs acting, same split as everywhere else in this course: <code>.text</code> reads visible text, <code>.get_attribute("value")</code> reads an attribute (like what is currently typed into a field); <code>.click()</code> and <code>.send_keys("...")</code> actually act on the element, exactly like a real click or real typing.',
+        'THE single most important lesson in browser automation: a page takes TIME to load and react. Calling <code>find_element</code> the instant after <code>.get(...)</code> or <code>.click()</code> can fail simply because the element has not rendered yet — not because the locator is wrong. <code>WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.ID, "...")))</code> checks repeatedly for up to 10 seconds instead of guessing a fixed pause, needing <code>from selenium.webdriver.support.ui import WebDriverWait</code> and <code>from selenium.webdriver.support import expected_conditions as EC</code>.',
+        'Always <code>driver.quit()</code> when a script is done — a leftover browser process wastes resources, and piles up fast across a real test suite running many times in CI.',
+        'This is the exact moment Module 7\'s <code>Page Object</code> preview stops being a preview: a class per page, an <code>__init__</code> storing the <code>driver</code>, methods wrapping the raw <code>find_element</code>/<code>click</code>/<code>send_keys</code> calls for that one page — so a test reads like <code>login_page.login(email, password)</code> instead of five raw Selenium lines repeated in every test that needs to log in.'
+      ],
+      tasks:[
+        {
+          id:'m14-t1', kind:'checklist', title:'Open a real page',
+          goal:'Run <code>pip install selenium</code>, then <code>driver = webdriver.Chrome()</code>, then <code>driver.get("https://automationexercise.com")</code>, then print <code>driver.title</code>. Confirm you see <b>Automation Exercise</b>, and that a real Chrome window actually opened.',
+          hint:'If Chrome does not open at all, Selenium (4.6+) downloads a matching chromedriver automatically the first time — make sure you have an actual Chrome browser installed on your machine first.'
+        },
+        {
+          id:'m14-t2', kind:'checklist', title:'Find one element',
+          goal:'On the home page, find the site logo with <code>driver.find_element(By.CSS_SELECTOR, ".logo")</code> and print its <code>.tag_name</code>. Confirm it runs without a <code>NoSuchElementException</code>.',
+          hint:'A CSS selector starting with a dot (<code>.logo</code>) matches by CLASS name — the same idea as a CSS class in any web page, just used here to locate an element instead of styling it.'
+        },
+        {
+          id:'m14-t3', kind:'checklist', title:'Find many elements safely',
+          goal:'Use <code>driver.find_elements(By.CSS_SELECTOR, ".nav.navbar-nav li a")</code> (plural) to get every top navigation link, and print <code>len(...)</code>. Then try the SAME selector but for something that does not exist, e.g. <code>driver.find_elements(By.ID, "nothing_here_12345")</code>, and print the result directly — confirm it is an empty list <code>[]</code>, not a crash.',
+          hint:'This is exactly why <code>find_elements</code> exists alongside <code>find_element</code> — checking "how many are there, including maybe zero" should never need a <code>try</code>/<code>except</code> around it.'
+        },
+        {
+          id:'m14-t4', kind:'checklist', title:'Read form field attributes',
+          goal:'Navigate to <code>https://automationexercise.com/login</code>. Find the email field with <code>driver.find_element(By.CSS_SELECTOR, \'input[data-qa="login-email"]\')</code> and print <code>.get_attribute("name")</code>. Confirm you see <b>email</b>.',
+          hint:'<code>data-qa="..."</code> attributes exist on this site specifically to give automation a stable way to find things, independent of visual styling classes that might change — a real pattern worth recognizing when you see it on other sites.'
+        },
+        {
+          id:'m14-t5', kind:'checklist', title:'Type into a field and read it back',
+          goal:'On the login page, find the email field and call <code>.send_keys("test@example.com")</code> on it. Then print <code>.get_attribute("value")</code> on that SAME element. Confirm it shows exactly what you typed.',
+          hint:'<code>send_keys</code> does not overwrite by default — it types onto whatever is already there. On an empty field like this one, that does not matter, but it is worth remembering for a field that might already have text in it.'
+        },
+        {
+          id:'m14-t6', kind:'checklist', title:'Read a real NoSuchElementException',
+          goal:'Run <code>driver.find_element(By.ID, "this_does_not_exist_12345")</code> on any page — it deliberately crashes. Read the traceback and confirm you can find the locator you used (<code>this_does_not_exist_12345</code>) echoed back inside the error message.',
+          hint:'Reading exactly which locator failed, right there in the message, is what tells you whether the problem is a typo, the wrong page, or a genuinely missing element — the same disciplined reading habit from every traceback since Module 6.'
+        },
+        {
+          id:'m14-t7', kind:'checklist', title:'Wait for an element instead of guessing',
+          goal:'Navigate to the home page, then use <code>WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, ".logo")))</code> instead of calling <code>find_element</code> directly. Print the found element\'s <code>.tag_name</code>. Confirm it works the same as task 2, just through an explicit wait.',
+          hint:'On a fast page like this one the difference is invisible — but on a slower real page, <code>WebDriverWait</code> gives the page real time to finish rendering, while a bare <code>find_element</code> called too early would simply fail.'
+        },
+        {
+          id:'m14-t8', kind:'checklist', title:'Click a link and confirm navigation',
+          goal:'On the home page, wait for the "Cart" link to be clickable with <code>WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.LINK_TEXT, "Cart")))</code>, click it, then print <code>driver.current_url</code>. Confirm the URL now contains <b>view_cart</b>.',
+          hint:'<code>EC.element_to_be_clickable</code> checks both that the element exists AND that nothing else is currently covering it — a stricter, more useful wait than just checking it is present when the next step is a click.'
+        },
+        {
+          id:'m14-t9', kind:'checklist', title:'Always quit, even on failure',
+          goal:'Wrap a small script (open the site, find one element) in <code>try</code>/<code>finally</code>, with <code>driver.quit()</code> in the <code>finally</code> block. Deliberately make the middle step fail (look for a locator that does not exist) — confirm the browser still closes properly instead of being left open.',
+          hint:'This is Module 10\'s <code>finally</code>, applied to the one cleanup step that matters most in browser automation — a crashed test should never leave a browser process running behind it.'
+        },
+        {
+          id:'m14-t10', kind:'checklist', boss:true, title:'A real Page Object',
+          goal:'Write <code>class LoginPage:</code> with <code>__init__(self, driver)</code> storing the driver, and a method <code>open(self)</code> that navigates to the login URL, and a method <code>enter_email(self, email)</code> that finds the email field and sends it the given text. Create an instance, call <code>.open()</code>, then <code>.enter_email("alex@example.com")</code>, then read the field\'s value directly through <code>page.driver.find_element(...)</code> to confirm it worked.',
+          hint:'This is Module 7\'s class syntax wrapping Module 14\'s Selenium calls — the exact shape a real Page Object takes: the class knows HOW to interact with one page, a test just calls its methods by name.'
+        }
+      ],
+      homework:[
+        {
+          id:'m14-hw1', kind:'checklist', title:'Compare implicit and explicit waits',
+          goal:'Add <code>driver.implicitly_wait(10)</code> right after creating the driver — this makes EVERY <code>find_element</code> call automatically retry for up to 10 seconds before giving up, without any <code>WebDriverWait</code> needed. Try a normal <code>find_element</code> call after setting this and confirm it still works. Do not mix implicit and explicit waits in the same real project — pick one style and stick to it.',
+          hint:'Implicit wait is simpler to set up once; explicit <code>WebDriverWait</code> is more precise about WHAT condition you are actually waiting for (present vs visible vs clickable) — most real projects choose explicit waits for that precision.'
+        },
+        {
+          id:'m14-hw2', kind:'checklist', title:'A screenshot on failure',
+          goal:'Wrap a script in <code>try</code>/<code>except Exception:</code>, and inside the <code>except</code> block, call <code>driver.save_screenshot("failure.png")</code> before re-raising or printing the error. Deliberately trigger a failure (a bad locator) and confirm a real <code>failure.png</code> file appears in your folder.',
+          hint:'This is one of the most common real patterns in browser test suites — a screenshot taken at the exact moment of failure is often the single most useful piece of debugging information in a CI log.'
+        },
+        {
+          id:'m14-hw3', kind:'checklist', title:'Extend the Page Object',
+          goal:'Add a method <code>enter_password(self, password)</code> to your <code>LoginPage</code> class from task 10, following the same pattern as <code>enter_email</code>. Call both methods on one instance, then read both field values back to confirm.',
+          hint:'A real Page Object grows exactly like this over time — one small, focused method per interaction, added as the tests that need them are written, not all planned out perfectly in advance.'
+        }
+      ]
+    },
     {id:'m15', num:15, phase:'Automation tooling', title:'Playwright', desc:'modern browser automation'},
     {id:'m16', num:16, phase:'Automation tooling', title:'Test framework architecture', desc:'building a maintainable autotest project'}
   ];
