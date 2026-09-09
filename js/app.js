@@ -129,7 +129,16 @@
     if(cta){
       cta.addEventListener('click', () => {
         document.getElementById('view-title').hidden = true;
+        document.getElementById('site-wrap').hidden = false;
         document.getElementById('view-path').hidden = false;
+        window.scrollTo({top:0, behavior:'smooth'});
+      });
+    }
+    const brandBtn = document.getElementById('brand-home');
+    if(brandBtn){
+      brandBtn.addEventListener('click', () => {
+        document.getElementById('site-wrap').hidden = true;
+        document.getElementById('view-title').hidden = false;
         window.scrollTo({top:0, behavior:'smooth'});
       });
     }

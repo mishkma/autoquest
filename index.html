@@ -8,13 +8,13 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Karla:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Press+Start+2P&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=20260909j">
+<link rel="stylesheet" href="css/style.css?v=20260909k">
 </head>
 <body>
 
 <div class="topbar">
   <div class="topbar-inner">
-    <div class="brand"><span class="mark">&gt;_</span><h1>AutoQuest</h1></div>
+    <button class="brand" id="brand-home" title="Back to title screen"><span class="mark">&gt;_</span><h1>AutoQuest</h1></button>
     <div class="stat">Level <b id="stat-level">1</b></div>
     <div class="xpbar"><i id="xpbar-fill" style="width:0%"></i></div>
     <div class="stat"><b id="stat-xp">0</b>&nbsp;XP</div>
@@ -79,7 +79,7 @@
   </div>
 </section>
 
-<div class="wrap">
+<div class="wrap" id="site-wrap" hidden>
 
   <section id="view-path" class="view arcade" hidden>
     <div class="hero">
@@ -131,8 +131,8 @@
   </div>
 </div>
 
-<script src="js/interpreter.js?v=20260909j"></script>
-<script src="js/modules-data.js?v=20260909j"></script>
-<script src="js/app.js?v=20260909j"></script>
+<script src="js/interpreter.js?v=20260909k"></script>
+<script src="js/modules-data.js?v=20260909k"></script>
+<script src="js/app.js?v=20260909k"></script>
 </body>
 </html>

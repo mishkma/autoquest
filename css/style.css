@@ -116,7 +116,11 @@
     max-width:920px;margin:0 auto;padding:14px 20px;
     display:flex;align-items:center;gap:16px;flex-wrap:wrap;
   }
-  .brand{display:flex;align-items:baseline;gap:8px;margin-right:auto;}
+  .brand{
+    display:flex;align-items:baseline;gap:8px;margin-right:auto;
+    appearance:none;border:none;background:none;padding:0;cursor:pointer;font-family:inherit;text-align:left;
+  }
+  .brand:hover h1{color:var(--accent-strong);}
   .brand .mark{font-family:'JetBrains Mono';color:var(--accent-strong);font-weight:600;}
   .brand h1{font-size:19px;font-weight:800;letter-spacing:-.01em;}
   .stat{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink-dim);}
@@ -400,9 +404,9 @@
     box-shadow: inset 0 0 0 2px var(--a-edge), 0 20px 50px -24px rgba(0,0,0,.7);
     background: var(--a-bg0); overflow:hidden;
   }
-  #view-title{ padding:36px 20px 44px; }
-  #view-title .arcade-screen{ max-width:none; }
-  #view-title .arcade-content{ max-width:680px; margin:0 auto; }
+  #view-title{ padding:0; }
+  #view-title .arcade-screen{ max-width:none; border-left:none; border-right:none; }
+  #view-title .arcade-content{ max-width:680px; margin:0 auto; padding-top:32px; padding-bottom:36px; }
 
   .arcade-backdrop{ position:absolute; inset:0; z-index:0; }
   .arcade-gutter{
@@ -519,9 +523,14 @@
   #view-path.arcade .phase-sub{ color: var(--a-dim); font-family:'JetBrains Mono',monospace; }
 
   #view-path.arcade .path-line{ background: repeating-linear-gradient(var(--a-edge),var(--a-edge) 6px, transparent 6px, transparent 12px); }
-  #view-path.arcade .node{ border:1px solid transparent; }
-  #view-path.arcade .node:hover{ background: var(--a-bg1); }
+  /* nodes sit flush against each other by default (a connected timeline) —
+     that reads fine for a plain background, but a bright current-ring or
+     hover fill needs real breathing room or it visually bleeds into the
+     next node. Give arcade nodes their own boundary and gap. */
+  #view-path.arcade .node{ border:1px solid transparent; border-radius:12px; margin-bottom:10px; }
+  #view-path.arcade .node:hover{ background: var(--a-bg1); border-color: var(--a-edge); }
   #view-path.arcade .node.current{ background: var(--a-bg1); box-shadow: 0 0 0 2px var(--a-accent); }
+  #view-path.arcade .node.current:hover{ background: var(--a-bg1); }
   #view-path.arcade .node-kicker{ font-family:'Press Start 2P',monospace; font-size:8.5px; color: var(--a-dim); }
   #view-path.arcade .node.current .node-kicker{ color: var(--a-accent); }
   #view-path.arcade .node-title{ color:#e8e8ec; }
