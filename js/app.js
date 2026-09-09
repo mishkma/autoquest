@@ -257,6 +257,16 @@
         document.getElementById('view-title').hidden = true;
         document.getElementById('site-wrap').hidden = false;
         document.getElementById('view-path').hidden = false;
+        // Defensive: title -> path should always land on a clean path
+        // screen. Without this, Title -> open a module -> click the
+        // brand/logo (which only hides #site-wrap, not #view-module
+        // itself) -> Continue from the title again left the OLD module
+        // room sitting un-hidden underneath the freshly-shown path list —
+        // both rendered on the same page at once (found by the user,
+        // 9 September 2026). Belt-and-suspenders with the brand-home fix
+        // right below, which is the actual place that state goes stale.
+        document.getElementById('view-module').hidden = true;
+        currentModuleId = null;
         // The path list was last rendered whenever initState() first ran
         // (page load, always in whatever language was current then) or the
         // last time the language switch actually saw #view-path visible —
@@ -272,6 +282,16 @@
       brandBtn.addEventListener('click', () => {
         document.getElementById('site-wrap').hidden = true;
         document.getElementById('view-title').hidden = false;
+        // Root cause of the "path and an old module both visible" bug:
+        // this only ever hid the outer #site-wrap, leaving whichever of
+        // #view-path/#view-module was showing underneath still marked
+        // not-hidden — invisible while site-wrap itself was hidden, but
+        // #view-module came back un-hidden the moment title-cta's click
+        // handler un-hid #site-wrap again on the next "Continue click".
+        // Reset to the same clean state the back-to-path button leaves.
+        document.getElementById('view-module').hidden = true;
+        document.getElementById('view-path').hidden = true;
+        currentModuleId = null;
         window.scrollTo({top:0, behavior:'smooth'});
       });
     }

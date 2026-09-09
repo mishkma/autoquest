@@ -514,6 +514,15 @@
      left edge. */
   .boss-header .arcade-screen{ max-width:560px; }
   .boss-header .arcade-content{ padding: 18px 20px; gap:16px; }
+  /* .arcade-linebg/.arcade-glow default to inset:0 0 0 38px — reserved for
+     the .arcade-gutter line-number column the title/victory screens have.
+     renderBossHeader() never renders a gutter, so that 38px strip on the
+     left just went uncovered by the line pattern/glow, showing the plain
+     screen background underneath instead — a visible seam distinct enough
+     to keep reading as a stray dark line along the left edge even after
+     the padding-reservation fix above. Filled edge to edge here since
+     there's no gutter column to leave room for. */
+  .boss-header .arcade-linebg, .boss-header .arcade-glow{ inset:0; }
   .boss-name{ font-family:'Press Start 2P',monospace; font-size:12px; color:var(--a-danger); letter-spacing:.03em; }
   .boss-track{ margin-top:8px; height:9px; background:#1a0d0d; border:2px solid #3a1414; max-width:340px; }
   .boss-track i{ display:block; height:100%; width:68%; background: linear-gradient(90deg,var(--a-danger),var(--a-danger2)); }
