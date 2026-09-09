@@ -13,6 +13,20 @@
 
 var I18N_LANGS = ['en', 'ru'];
 
+// Russian noun agreement after a count: 1/21/31... -> one, 2-4/22-24... ->
+// few, everything else (0, 5-20, 25-30...) -> many. Needed because a fixed
+// word baked into a template (e.g. "N испытаний") is only correct for some
+// counts — a 4-task checkpoint needs "испытания", not "испытаний" (found
+// during the 9 September 2026 QA pass, see ROADMAP.md). Only the briefing's
+// "trial(s)" noun needs this right now — English doesn't (it only ever
+// shows counts >1 here), so there's no pluralEn() to match.
+function pluralRu(n, one, few, many){
+  const mod10 = n % 10, mod100 = n % 100;
+  if(mod10 === 1 && mod100 !== 11) return one;
+  if(mod10 >= 2 && mod10 <= 4 && (mod100 < 10 || mod100 >= 20)) return few;
+  return many;
+}
+
 var I18N = {
   en: {
     // topbar / brand
@@ -74,9 +88,9 @@ var I18N = {
     predictWrongBody: 'The code actually prints:<br><code>{actual}</code><br>Try to understand why, type a different answer in the field above, then hit the button again.',
     predictBrokenTitle: '<b>Something went wrong</b>', predictBrokenBody: 'The example failed to run — this is a bug in the task, not your mistake.',
     // briefing / boss / victory
-    briefingCheckpoint: 'Checkpoint reached: {desc}. {n} trials queued &mdash; everything here is a mix of what already cleared.',
-    briefingBoss: 'Incoming: {desc}. {n} trials queued &mdash; boss encounter at the end: <b>{boss}</b>.',
-    briefingPlain: 'Incoming: {desc}. {n} trials queued.',
+    briefingCheckpoint: 'Checkpoint reached: {desc}. {n} {trialWord} queued &mdash; everything here is a mix of what already cleared.',
+    briefingBoss: 'Incoming: {desc}. {n} {trialWord} queued &mdash; boss encounter at the end: <b>{boss}</b>.',
+    briefingPlain: 'Incoming: {desc}. {n} {trialWord} queued.',
     bossTag: '&gt; BOSS ENCOUNTER',
     victoryCleared: '{label} CLEARED',
     victoryDefeated: '{title} — DEFEATED',
@@ -151,9 +165,9 @@ var I18N = {
     predictWrongTitle: '<b>Не совпадает</b>',
     predictWrongBody: 'На самом деле код печатает:<br><code>{actual}</code><br>Попробуйте понять, почему, введите другой ответ в поле выше и нажмите кнопку ещё раз.',
     predictBrokenTitle: '<b>Что-то пошло не так</b>', predictBrokenBody: 'Пример не выполнился — это ошибка в задаче, а не ваша.',
-    briefingCheckpoint: 'Контрольная точка: {desc}. В очереди {n} испытаний &mdash; здесь всё смешано из уже пройденного.',
-    briefingBoss: 'Внимание: {desc}. В очереди {n} испытаний &mdash; в конце босс: <b>{boss}</b>.',
-    briefingPlain: 'Внимание: {desc}. В очереди {n} испытаний.',
+    briefingCheckpoint: 'Контрольная точка: {desc}. В очереди {n} {trialWord} &mdash; здесь всё смешано из уже пройденного.',
+    briefingBoss: 'Внимание: {desc}. В очереди {n} {trialWord} &mdash; в конце босс: <b>{boss}</b>.',
+    briefingPlain: 'Внимание: {desc}. В очереди {n} {trialWord}.',
     bossTag: '&gt; СХВАТКА С БОССОМ',
     victoryCleared: '{label} ПРОЙДЕН',
     victoryDefeated: '{title} — ПОВЕРЖЕН',

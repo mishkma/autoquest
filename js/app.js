@@ -53,13 +53,19 @@
     const bossTask = m.tasks.find(t => t.boss);
     const taskCount = m.tasks.length;
     const desc = escapeHtml(mField(m, 'desc'));
+    // Russian needs the noun after the count to agree with it (испытание /
+    // испытания / испытаний) — a checkpoint's 4 tasks previously always
+    // rendered the invariant "испытаний" from the template text itself,
+    // which reads as "4 испытаний" (wrong; found in the 9 Sept 2026 QA
+    // pass). English doesn't need this — every count shown here is >1.
+    const trialWord = getLang() === 'ru' ? pluralRu(taskCount, 'испытание', 'испытания', 'испытаний') : (taskCount === 1 ? 'trial' : 'trials');
     let line;
     if(m.checkpoint){
-      line = tr('briefingCheckpoint', {desc, n: taskCount});
+      line = tr('briefingCheckpoint', {desc, n: taskCount, trialWord});
     } else if(bossTask){
-      line = tr('briefingBoss', {desc, n: taskCount, boss: escapeHtml(taskField(bossTask, m, 'title')).toUpperCase()});
+      line = tr('briefingBoss', {desc, n: taskCount, trialWord, boss: escapeHtml(taskField(bossTask, m, 'title')).toUpperCase()});
     } else {
-      line = tr('briefingPlain', {desc, n: taskCount});
+      line = tr('briefingPlain', {desc, n: taskCount, trialWord});
     }
     // The announcer's "face" — a CRT terminal whose mouth is the same blinking
     // cursor block already used at the end of the line, so the icon and the
