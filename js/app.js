@@ -506,6 +506,21 @@
     if(pathHero) pathHero.innerHTML = svg;
     const nameEl = document.getElementById('character-name');
     if(nameEl) nameEl.textContent = tr(CHARACTER_KEYS[s] || CHARACTER_KEYS.mint);
+    // Bug found 10 Sept 2026 (user report): pick a color in Settings, then
+    // go to the title screen — the whole page is correctly retinted, but
+    // the title screen's OWN swatch ring still shows the PREVIOUS color as
+    // "active". Root cause: each swatch UI (title screen's .arcade-swatch,
+    // Settings page's .settings-sw) only ever toggled its own `.active`
+    // class inside its own click handler — correct for the screen you
+    // changed it FROM, stale for any other screen showing swatches, since
+    // nothing re-synced them when the signal changed from elsewhere.
+    // Centralized here instead: applySignalEverywhere() already runs on
+    // every actual signal change (either swatch's click handler, initial
+    // load) and now keeps BOTH sets of swatch buttons in sync with the one
+    // real source of truth (getSignal()), not just the set that was
+    // physically clicked.
+    document.querySelectorAll('.arcade-swatch').forEach(b => b.classList.toggle('active', b.dataset.signal === s));
+    document.querySelectorAll('.settings-sw').forEach(b => b.classList.toggle('active', b.dataset.signal === s));
   }
 
   function initTitleScreen(){
@@ -1548,7 +1563,7 @@
     resEl.className = 'result show ' + (result.ok ? 'ok' : 'err');
     resEl.innerHTML = result.ok
       ? `${tr('correctTitle')}${tr('correctBody')}`
-      : `${tr('notQuiteTitle')}${result.msg}`;
+      : `${tr('notQuiteTitle')}${msgTr(t, m, result.msg)}`;
 
     if(result.ok){
       markDone(t.id);

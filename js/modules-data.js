@@ -8,7 +8,14 @@ function deCyr(s){ return String(s).replace(/[А-Яа-яЁё]/g, c => CYR2LAT[c]
 function matchEn(out, expected){
   const t = String(out).trim();
   if(t === expected) return {ok:true};
-  if(deCyr(t) === expected) return {ok:false, msg:'Looks like some letters were typed in the Cyrillic layout — they look like English letters, but Python sees different characters. Switch to the English keyboard layout and retype.'};
+  // tr() (js/i18n.js, loaded before this file) rather than a hardcoded
+  // English literal — this exact message is shared by nearly every check()
+  // in the course, so localizing it here once covers all of them, instead
+  // of needing a msgs-map entry per task like check()'s own custom text
+  // does (see msgTr() in i18n.js). Safe to resolve immediately: matchEn is
+  // only ever called at check-time, well after i18n.js has loaded and the
+  // visitor's language choice is already known.
+  if(deCyr(t) === expected) return {ok:false, msg: tr('cyrillicLayoutMsg')};
   return null;
 }
 
@@ -36,6 +43,13 @@ const MODULES = [
           examples:[
             {label:'Simple', code:'print(5 == 5.0)', result:'True'},
             {label:'In practice', kind:'real', code:'print(200 == "200")', result:'False'}
+          ]
+        },
+        {
+          text:'<code>int(...)</code> converts text into a whole number — <code>int("34")</code> becomes the actual number <code>34</code>, which can then be used in arithmetic like <code>+</code>; the string <code>"34"</code> on its own cannot. The reverse, <code>str(...)</code>, turns a number into text. This matters constantly in real automation: data from an API, a form field, or a file is almost always TEXT, even when it looks like a number.',
+          examples:[
+            {label:'Simple', code:'age_text = "30"\nage = int(age_text)\nprint(age + 1)', result:'31'},
+            {label:'In practice', kind:'real', code:'passed_raw = "18"\npassed = int(passed_raw)\nprint(passed + 4)', result:'22'}
           ]
         },
         {
@@ -166,7 +180,7 @@ print(7 / 2)
         {
           id:'m1-t9', title:'Total test count from the API',
           goal:'An API returned the number of passed tests as text: <code>passed_raw = "34"</code>. You also have <code>failed = 9</code>. Print one line, exactly: <b>Total tests: 43</b>',
-          hint:'The value from the API is text, not a number — you cannot do math with it as-is. Think back to how you turned text into a number earlier in this module, then build the final message.',
+          hint:'The value from the API is text, not a number — you cannot do math with it as-is. Convert it first: <code>int(passed_raw)</code>. Then add <code>failed</code> and build the final message with an f-string.',
           starter:
 `passed_raw = "34"
 failed = 9
@@ -193,6 +207,62 @@ total = 8
           check(out){
             const m = matchEn(out, 'Passed: 6 of 8\nPass rate: 75.0%'); if(m) return m;
             return {ok:false, msg:'Expected exactly two lines: <code>Passed: 6 of 8</code> and <code>Pass rate: 75.0%</code>. Pass rate is <code>passed / total * 100</code>.'};
+          }
+        }
+      ],
+      // Added 9 Sept 2026 — Module 1 was the only regular module with no
+      // homework at all (found during a learner-perspective content
+      // review). No new concepts here on purpose — same as every other
+      // module's homework, this reuses exactly what the 10 tasks above
+      // already taught (variables, f-strings, arithmetic, and the
+      // int()/str() conversion theory item added in this same pass),
+      // just combined a little more than the regular tasks do.
+      homework:[
+        {
+          id:'m1-hw1', title:'Duration in seconds',
+          goal:'A test took <code>duration_ms = 1500</code> milliseconds. Print exactly: <b>Duration: 1.5s</b> (convert to seconds by dividing by 1000).',
+          hint:'Divide <code>duration_ms</code> by 1000 inside an f-string: <code>f"Duration: {duration_ms / 1000}s"</code>.',
+          starter:
+`duration_ms = 1500
+
+# Task: print  Duration: 1.5s   (duration_ms / 1000)
+`,
+          check(out){
+            const m = matchEn(out, 'Duration: 1.5s'); if(m) return m;
+            return {ok:false, msg:'Expected exactly <code>Duration: 1.5s</code>. Divide <code>duration_ms</code> by 1000 inside an f-string.'};
+          }
+        },
+        {
+          id:'m1-hw2', title:'Retries remaining',
+          goal:'A config file stores the retries already used as text: <code>retries_used_raw = "3"</code>. You also have <code>max_retries = 5</code>. Print exactly: <b>2 retries left</b> (max_retries minus the used retries, converted to a number first).',
+          hint:'<code>retries_used_raw</code> is text — convert it first: <code>int(retries_used_raw)</code>. Then <code>retries_left = max_retries - int(retries_used_raw)</code>, and print it with an f-string: <code>f"{retries_left} retries left"</code>.',
+          starter:
+`retries_used_raw = "3"
+max_retries = 5
+
+# Task: convert retries_used_raw to a number, subtract it from max_retries,
+# print: <n> retries left
+`,
+          check(out){
+            const m = matchEn(out, '2 retries left'); if(m) return m;
+            return {ok:false, msg:'Expected exactly <code>2 retries left</code>. Convert <code>retries_used_raw</code> to a number first, then subtract it from <code>max_retries</code>.'};
+          }
+        },
+        {
+          id:'m1-hw3', title:'Pass rate from raw API text',
+          goal:'An API returned two raw text values: <code>passed_raw = "13"</code> and <code>total_raw = "16"</code>. Convert both to numbers, then print a two-line report EXACTLY like this:<br><code>Passed: 13 of 16</code><br><code>Pass rate: 81.25%</code>',
+          hint:'Convert both first: <code>passed = int(passed_raw)</code>, <code>total = int(total_raw)</code>. The first line is plain text with the two numbers via an f-string. Pass rate is <code>passed / total * 100</code> — same formula as the Module 1 boss task, just starting from text instead of numbers.',
+          starter:
+`passed_raw = "13"
+total_raw = "16"
+
+# Task: convert both to numbers, then print two lines:
+# 1) Passed: 13 of 16
+# 2) Pass rate: 81.25%   (that is passed / total * 100)
+`,
+          check(out){
+            const m = matchEn(out, 'Passed: 13 of 16\nPass rate: 81.25%'); if(m) return m;
+            return {ok:false, msg:'Expected exactly two lines: <code>Passed: 13 of 16</code> and <code>Pass rate: 81.25%</code>. Convert both raw values with <code>int(...)</code> first.'};
           }
         }
       ]
@@ -441,6 +511,13 @@ b = 95
           examples:[
             {label:'Simple', code:'for i in range(3):\n    print(i)', result:'0\n1\n2'},
             {label:'In practice', kind:'real', code:'for i in range(2, 10, 2):\n    print(i)', result:'2\n4\n6\n8'}
+          ]
+        },
+        {
+          text:'<code>len(...)</code> counts how many items are in something — <code>len([1, 2, 3])</code> is <code>3</code>, <code>len("hello")</code> is <code>5</code>. It comes up constantly once you are looping over real data: "how many results came back", "how many tests ran" — both are just <code>len(...)</code> on the list.',
+          examples:[
+            {label:'Simple', code:'items = [10, 20, 30]\nprint(len(items))', result:'3'},
+            {label:'In practice', kind:'real', code:'results = ["pass", "fail", "pass", "pass"]\nprint(f"Ran {len(results)} tests")', result:'Ran 4 tests'}
           ]
         },
         {
@@ -1880,7 +1957,7 @@ check_age(-5)
         {
           id:'m10-hw1', kind:'checklist', title:'Your own exception type',
           goal:'Define <code>class InvalidPriceError(Exception): pass</code> — a custom exception. Write <code>validate_price(price)</code> that raises it with the message <code>"Price must be positive"</code> if <code>price &lt;= 0</code>. Catch it with <code>except InvalidPriceError as e:</code> and print <code>f"Rejected: {e}"</code>. Test with <code>validate_price(-10)</code> — confirm you see <b>Rejected: Price must be positive</b>.',
-          hint:'<code>class InvalidPriceError(Exception): pass</code> creates a new exception TYPE by building on the real <code>Exception</code> class from Module 7\'s class syntax — <code>as e</code> then lets you read its message back with <code>str(e)</code> or, as here, directly inside an f-string.'
+          hint:'<code>class InvalidPriceError(Exception):</code> — the name in parentheses is the PARENT class: this creates a new exception TYPE that inherits everything <code>Exception</code> already knows how to do (like carrying a message and being catchable), the same class syntax from Module 7, just building on an existing class instead of starting from nothing. <code>pass</code> is Python\'s "do nothing" placeholder — it means "this class body is empty on purpose, nothing to add," and is needed here only because a class (like a function) cannot have a completely empty body. <code>as e</code> then lets you read the exception\'s message back with <code>str(e)</code> or, as here, directly inside an f-string.'
         },
         {
           id:'m10-hw2', kind:'predict', offline:true, title:'Predict: nested try/except',

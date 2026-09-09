@@ -123,7 +123,11 @@ var I18N = {
     errKey: 'The dictionary has no such key — check the key name and whether it was actually added.',
     errAttribute: 'No such method here — either a typo, or it is not supported yet in this sandbox.',
     errRuntime: 'Looks like the loop never ends — check that its condition eventually becomes False (for example, that the counter actually changes inside the loop).',
-    errFallback: 'The code did not run. Read the error message in the console below — it almost always points to which line to look at.'
+    errFallback: 'The code did not run. Read the error message in the console below — it almost always points to which line to look at.',
+    // matchEn()'s own shared check() message (js/modules-data.js) — identical
+    // text on every task that hits this branch, so it's one tr() key rather
+    // than a per-task msgs entry like the rest of check()'s custom text.
+    cyrillicLayoutMsg: 'Looks like some letters were typed in the Cyrillic layout — they look like English letters, but Python sees different characters. Switch to the English keyboard layout and retype.'
   },
   ru: {
     brandBackTitle: 'Вернуться на титульный экран',
@@ -211,7 +215,8 @@ var I18N = {
     errKey: 'В словаре нет такого ключа — проверьте название ключа и то, действительно ли он был добавлен.',
     errAttribute: 'Такого метода здесь нет — либо опечатка, либо он пока не поддерживается в этой песочнице.',
     errRuntime: 'Похоже, цикл никогда не заканчивается — проверьте, что его условие рано или поздно станет False (например, что счётчик действительно меняется внутри цикла).',
-    errFallback: 'Код не выполнился. Прочитайте сообщение об ошибке в консоли ниже — оно почти всегда указывает, на какую строку смотреть.'
+    errFallback: 'Код не выполнился. Прочитайте сообщение об ошибке в консоли ниже — оно почти всегда указывает, на какую строку смотреть.',
+    cyrillicLayoutMsg: 'Похоже, часть букв напечатана в русской раскладке — они похожи на английские буквы, но Python видит другие символы. Переключитесь на английскую раскладку и введите заново.'
   }
 };
 
@@ -273,6 +278,28 @@ function taskField(taskObj, m, field){
     if(tov && tov[field] !== undefined) return tov[field];
   }
   return taskObj[field];
+}
+// msgTr(t, m, msg) — the .msg strings inside a task's own check() function
+// (js/modules-data.js) are a different shape from title/goal/hint: they're
+// generated at RUN TIME by arbitrary JS logic inside check(out){...}, not a
+// static field on the task object, so mField/taskField above (which just
+// read a named property) can't reach them. Rather than rewrite every
+// check() to go through tr() internally (touching ~50 functions across the
+// English source, exactly the file this project keeps English-only), the
+// RU override lives as a `msgs: {<exact English text>: <Russian text>}`
+// map per task in MODULES_RU — msgTr looks up the literal English msg text
+// t.check() just returned and swaps it for the RU version if one exists,
+// falling back to the English text otherwise (same fallback philosophy as
+// mField/taskField). Only used at the one call site that actually displays
+// a check() msg (runCheck in app.js) — checklist/predict tasks don't call
+// check() at all, so they never need this.
+function msgTr(taskObj, m, msg){
+  if(getLang() === 'ru' && window.MODULES_RU){
+    const ov = MODULES_RU[m.id];
+    const tov = ov && ov.tasks && ov.tasks[taskObj.id];
+    if(tov && tov.msgs && tov.msgs[msg] !== undefined) return tov.msgs[msg];
+  }
+  return msg;
 }
 // Theory is an array (of strings, or {text, examples:[{label,...}]} objects)
 // — translated as a parallel array by index under MODULES_RU[id].theory.
