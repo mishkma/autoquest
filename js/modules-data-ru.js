@@ -114,5 +114,363 @@ var MODULES_RU = {
         hint: 'Первая строка — просто текст с двумя числами через f-строку. Pass rate = passed / total * 100; знак <code>%</code> — обычный текст сразу после числа.'
       }
     }
+  },
+  m2: {
+    title: 'Условия',
+    desc: 'if / elif / else, сравнения, and / or / not',
+    theory: [
+      {
+        text: '<code>if condition:</code> выполняет блок с отступом только тогда, когда условие истинно. Обязательны и двоеточие в конце строки, и отступ в 4 пробела для блока.',
+        examples: [
+          {label:'Просто', code:'x = 5\nif x > 0:\n    print("positive")', result:'positive'},
+          {label:'На практике', kind:'real', code:'status = 500\nif status >= 500:\n    print("Server error")', result:'Server error'}
+        ]
+      },
+      {
+        text: 'Сравнения возвращают <code>True</code> или <code>False</code>: <code>==</code> равно, <code>!=</code> не равно, а также <code>&gt;</code>, <code>&lt;</code>, <code>&gt;=</code>, <code>&lt;=</code>. Это именно тот механизм, который стоит за любой проверкой «ожидаемое vs фактическое» в автотесте.',
+        examples: [
+          {label:'Просто', code:'print(5 == 5)', result:'True'},
+          {label:'На практике', kind:'real', code:'expected = "PASS"\nactual = "FAIL"\nprint(expected == actual)', result:'False'}
+        ]
+      },
+      {
+        text: '<code>else</code> означает «иначе», <code>elif</code> — «иначе если». В цепочке <code>if / elif / elif / else</code> выполняется только ПЕРВАЯ подошедшая ветка — Python даже не смотрит на остальные, как только одна сработала.',
+        examples: [
+          {label:'Просто', code:'if 5 > 3:\n    print("yes")\nelse:\n    print("no")', result:'yes'},
+          {label:'На практике', kind:'real', code:'score = 72\nif score >= 90:\n    print("A")\nelif score >= 70:\n    print("B")\nelse:\n    print("F")', result:'B'}
+        ]
+      },
+      {
+        text: '<code>and</code> / <code>or</code> / <code>not</code> объединяют условия: <code>and</code> — оба сразу, <code>or</code> — хотя бы одно, <code>not</code> — переворачивает значение.',
+        examples: [
+          {label:'Просто', code:'print(3 > 0 and 3 < 10)', result:'True'},
+          {label:'На практике', kind:'real', code:'is_ci = True\nis_flaky = False\nprint(is_ci and not is_flaky)', result:'True'}
+        ]
+      },
+      'Задачи ниже разных видов: написать с нуля, дописать, найти и исправить баг, предсказать вывод, и финальная задача-босс. Плюс блок «Домашнее задание» — задачи посложнее на потом, они не блокируют следующий модуль. Если условие на английском неясно, нажмите «Подсказка».'
+    ],
+    tasks: {
+      'm2-t1': {
+        title: 'Пройден или провален',
+        goal: 'При <code>passed = True</code> напечатайте <b>PASS</b>, если тест прошёл, иначе <b>FAIL</b>.',
+        hint: '<code>if</code> выполняет свой блок только когда условие True; <code>else</code> — ветка «иначе». Не забудьте двоеточие и отступ в 4 пробела.'
+      },
+      'm2-t2': {
+        title: 'Код ответа',
+        goal: 'При <code>status = 200</code> напечатайте <b>OK</b>, если он равен 200, иначе <b>Error</b>.',
+        hint: 'Равенство в условии — это ДВА знака равно <code>==</code>. Один <code>=</code> присваивает значение, а не сравнивает.'
+      },
+      'm2-t3': {
+        title: 'Предскажите: оценка',
+        goal: 'Пока не запускайте. Прочитайте цепочку elif и напишите, что она напечатает, затем проверьте себя.',
+        hint: 'Ветки проверяются сверху вниз, и выполняется только ПЕРВАЯ подошедшая. 72 не &gt;= 90, но &gt;= 70.'
+      },
+      'm2-t4': {
+        title: 'Исправьте: одно равно',
+        goal: 'Этот код падает, потому что в условии один <code>=</code>. Прежде чем чинить, сформулируйте одним предложением, почему одиночный <code>=</code> нельзя использовать внутри условия — это ровно то, что вы бы объяснили на код-ревью. Затем исправьте код так, чтобы он напечатал: <b>Five</b>',
+        reasonPrompt: 'Почему одиночный <code>=</code> нельзя использовать внутри условия?',
+        hint: 'Внутри условия нужно СРАВНИВАТЬ через <code>==</code> (два равно). Один <code>=</code> означает «присвоить», это недопустимо в <code>if</code>.'
+      },
+      'm2-t5': {
+        title: 'Логин и пароль (and)',
+        goal: 'При <code>login_ok = True</code> и <code>password_ok = True</code> напечатайте <b>Access granted</b>, если оба True, иначе <b>Denied</b>.',
+        hint: '<code>and</code> значит оба сразу. Если хоть одна сторона False — всё условие False.'
+      },
+      'm2-t6': {
+        title: 'Выходной или праздник (or)',
+        goal: 'При <code>is_weekend = False</code> и <code>is_holiday = True</code> напечатайте <b>Rest day</b>, если хотя бы одно True, иначе <b>Work day</b>.',
+        hint: '<code>or</code> значит хотя бы одно из двух. Истинно, если истинна хотя бы одна сторона.'
+      },
+      'm2-t7': {
+        title: 'Исправьте: пропущено двоеточие',
+        goal: 'Этот код падает, потому что пропущено двоеточие. Исправьте его так, чтобы он напечатал: <b>Even</b>',
+        hint: 'Каждое условие <code>if</code> заканчивается двоеточием <code>:</code> — оно говорит Python «дальше идёт блок с отступом».'
+      },
+      'm2-t8': {
+        title: 'Предскажите: not',
+        goal: 'Прочитайте код и напишите, что он напечатает, затем проверьте себя.',
+        hint: '<code>not</code> переворачивает булево значение: <code>not False</code> — это True, поэтому выполнится ветка if.'
+      },
+      'm2-t9': {
+        title: 'Безопасно запускать в проде',
+        goal: 'При <code>is_destructive = False</code> и <code>env = "prod"</code> напечатайте <b>Blocked</b> только если тест ОДНОВРЕМЕННО разрушающий И выполняется в prod, иначе <b>Allowed</b>.',
+        hint: 'Подумайте, какие два условия должны быть истинны ОДНОВРЕМЕННО, чтобы прогон заблокировали — вы уже умеете требовать выполнения двух условий сразу.'
+      },
+      'm2-t10': {
+        title: 'Скорость ответа API',
+        goal: 'При <code>response_ms = 250</code> напечатайте метку скорости: <b>Fast</b>, если меньше 100, <b>Normal</b>, если меньше 300, иначе <b>Slow</b>.',
+        hint: 'Три диапазона — значит <code>if</code> / <code>elif</code> / <code>else</code>. Начните с наименьшей границы (100), затем 300, затем else. Порядок важен.'
+      },
+      'm2-hw1': {
+        title: 'Категория HTTP-статуса',
+        goal: 'При <code>status = 404</code> напечатайте категорию: <b>Success</b> для 200-299, <b>Client error</b> для 400-499, <b>Server error</b> для 500-599, иначе <b>Other</b>.',
+        hint: 'Цепочка elif по диапазонам. Диапазон пишется как <code>status &gt;= 200 and status &lt; 300</code>. Идите от меньших кодов к большим. Именно так автотесты классифицируют ответы.'
+      },
+      'm2-hw2': {
+        title: 'Предскажите: результат теста',
+        goal: 'Прочитайте составное условие и напишите, что оно напечатает, затем проверьте себя.',
+        hint: 'Первая ветка требует ОБА условия: passed И duration меньше 10. Здесь duration равен 12, поэтому эта ветка пропускается и срабатывает следующая подходящая.'
+      },
+      'm2-hw3': {
+        title: 'Какой прогон быстрее',
+        goal: 'При <code>a = 120</code> и <code>b = 95</code> (время ответа в мс, меньше — быстрее) напечатайте <b>A is faster</b>, если a меньше, <b>B is faster</b>, если b меньше, иначе <b>Same</b>.',
+        hint: 'Тройное сравнение через <code>if</code> / <code>elif</code> / <code>else</code>. Меньшее время значит быстрее — подумайте, какое значение здесь меньше.'
+      }
+    }
+  },
+  m3: {
+    title: 'Циклы',
+    desc: 'for, while, range — повторение действий',
+    theory: [
+      {
+        text: '<code>for i in range(5):</code> повторяет блок 5 раз, и <code>i</code> по очереди принимает значения 0, 1, 2, 3, 4 — Python считает с нуля. <code>range(start, stop, step)</code> позволяет управлять всеми тремя параметрами; значение <code>stop</code> никогда не включается.',
+        examples: [
+          {label:'Просто', code:'for i in range(3):\n    print(i)', result:'0\n1\n2'},
+          {label:'На практике', kind:'real', code:'for i in range(2, 10, 2):\n    print(i)', result:'2\n4\n6\n8'}
+        ]
+      },
+      {
+        text: '<code>while condition:</code> повторяет блок, пока условие остаётся True. Забыть изменить то, от чего зависит условие, превращает цикл в бесконечный — частая ошибка новичков.',
+        examples: [
+          {label:'Просто', code:'count = 0\nwhile count < 3:\n    print(count)\n    count += 1', result:'0\n1\n2'},
+          {label:'На практике', kind:'real', code:'attempt = 1\nwhile attempt <= 3:\n    print(f"Attempt {attempt}")\n    attempt += 1', result:'Attempt 1\nAttempt 2\nAttempt 3'}
+        ]
+      },
+      {
+        text: '<code>+=</code> — сокращение для «прибавить и сохранить»: <code>total += x</code> — то же самое, что <code>total = total + x</code>. Создайте счётчик ДО цикла (например, <code>total = 0</code>), затем увеличивайте его внутри цикла.',
+        examples: [
+          {label:'Просто', code:'total = 0\ntotal += 5\nprint(total)', result:'5'},
+          {label:'На практике', kind:'real', code:'durations = [4, 7, 3]\ntotal = 0\nfor d in durations:\n    total += d\nprint(total)', result:'14'}
+        ]
+      },
+      {
+        text: '<code>break</code> немедленно останавливает весь цикл — полезно, когда искомое уже найдено, и остальное проверять не нужно.',
+        examples: [
+          {label:'Просто', code:'for i in range(5):\n    if i == 3:\n        break\n    print(i)', result:'0\n1\n2'},
+          {label:'На практике', kind:'real', code:'tests = ["login", "search", "checkout"]\nfor t in tests:\n    if t == "checkout":\n        print("Found:", t)\n        break', result:'Found: checkout'}
+        ]
+      },
+      {
+        text: '<code>continue</code> пропускает оставшуюся часть ТЕКУЩЕЙ итерации и сразу переходит к следующей — код после <code>continue</code> не выполнится в этом проходе, но сам цикл продолжается.',
+        examples: [
+          {label:'Просто', code:'for i in range(5):\n    if i == 2:\n        continue\n    print(i)', result:'0\n1\n3\n4'},
+          {label:'На практике', kind:'real', code:'results = ["pass", "fail", "pass"]\nfor r in results:\n    if r == "pass":\n        continue\n    print("Failed test found")', result:'Failed test found'}
+        ]
+      },
+      'Задачи ниже разных видов, плюс «Домашнее задание» в конце (не блокирует прогресс, но даёт опыт и XP).'
+    ],
+    tasks: {
+      'm3-t1': {
+        title: 'Считаем от 1 до 5',
+        goal: 'Напечатайте числа от 1 до 5, каждое на своей строке.',
+        hint: '<code>range(1, 6)</code> считает 1, 2, 3, 4, 5 — верхняя граница не включается, поэтому прибавьте 1 к последнему нужному числу.'
+      },
+      'm3-t2': {
+        title: 'Сумма длительностей тестов',
+        goal: 'При <code>durations = [4, 7, 3, 6, 2]</code> сложите их в цикле и напечатайте общую сумму одним числом.',
+        hint: 'Заведите счётчик до цикла: <code>total = 0</code>. Внутри <code>for d in durations:</code> прибавляйте каждое значение: <code>total += d</code>. Напечатайте <code>total</code> после окончания цикла.'
+      },
+      'm3-t3': {
+        title: 'Предскажите: range с шагом',
+        goal: 'Пока не запускайте. Прочитайте код и напишите, что он напечатает, затем проверьте себя.',
+        hint: '<code>range(2, 11, 2)</code> начинается с 2, останавливается перед 11 и шагает по 2: 2, 4, 6, 8, 10.'
+      },
+      'm3-t4': {
+        title: 'Исправьте: цикл никогда не останавливается',
+        goal: 'Этот код зависает навсегда — счётчик никогда не меняется. Прежде чем чинить, сформулируйте одним предложением, почему именно это условие никогда не станет False само по себе. Затем исправьте код так, чтобы он напечатал <b>1</b>, <b>2</b>, <b>3</b>, каждое на своей строке, и остановился.',
+        reasonPrompt: 'Почему условие этого цикла никогда не станет False?',
+        hint: 'Каждому циклу <code>while</code> нужно что-то, что меняется внутри него, иначе условие останется True навсегда. Добавьте <code>count += 1</code> внутрь тела цикла.'
+      },
+      'm3-t5': {
+        title: 'Только упавшие тесты',
+        goal: 'При <code>results = ["pass", "fail", "pass", "fail", "fail"]</code> напечатайте только элементы равные <b>fail</b>, по одному на строке.',
+        hint: 'Совместите цикл с условием: <code>for r in results:</code>, затем <code>if r == "fail":</code> напечатайте его.'
+      },
+      'm3-t6': {
+        title: 'Найти нужный тест (break)',
+        goal: 'В <code>tests = ["login", "search", "checkout", "logout"]</code> найдите <b>checkout</b> и напечатайте <b>Found: checkout</b> — затем прекратите поиск, не проверяя остальное.',
+        hint: 'Внутри <code>for t in tests:</code> добавьте <code>if t == "checkout":</code> — напечатайте сообщение, затем <code>break</code>, чтобы цикл сразу остановился.'
+      },
+      'm3-t7': {
+        title: 'Исправьте: ошибка на единицу',
+        goal: 'Это должно напечатать от 1 до 5, но останавливается на 4 — исправьте range так, чтобы напечатались все пять чисел.',
+        hint: '<code>range(start, stop)</code> никогда не включает <code>stop</code>. Чтобы включить 5, значение stop должно быть 6.'
+      },
+      'm3-t8': {
+        title: 'Предскажите: continue',
+        goal: 'Прочитайте код и напишите, что он напечатает, затем проверьте себя.',
+        hint: '<code>continue</code> пропускает оставшуюся часть ЭТОЙ итерации и переходит к следующей — <code>print</code> после него не выполнится для этого значения.'
+      },
+      'm3-t9': {
+        title: 'Подряд идущие успехи до первого провала',
+        goal: 'При <code>results = ["pass", "pass", "pass", "fail", "pass", "fail"]</code> посчитайте, сколько тестов прошло ПОДРЯД с самого начала, и напечатайте это число. Тест после первого провала не считается, даже если он прошёл.',
+        hint: 'Заведите счётчик с 0 и пройдитесь циклом по <code>results</code>, увеличивая его, пока видите <code>"pass"</code>. В момент, когда встретится что-то другое, счёт должен остановиться немедленно — подумайте, какое ключевое слово останавливает цикл сразу.'
+      },
+      'm3-t10': {
+        title: 'Отчёт о медленных ответах',
+        goal: 'При <code>times = [120, 340, 90, 410, 260, 500]</code> (время ответа в мс) посчитайте, сколько из них медленные (300 и больше), и напечатайте двухстрочный отчёт РОВНО так:<br><code>Slow: 3 of 6</code><br><code>Slow rate: 50.0%</code>',
+        hint: 'Пройдитесь циклом по <code>times</code>, считая в счётчик те, что <code>&gt;= 300</code>. Общее число — <code>len(times)</code>. Slow rate — это <code>slow / len(times) * 100</code> — та же схема, что в боссе модуля 1.'
+      },
+      'm3-hw1': {
+        title: 'Повторять до успеха',
+        goal: 'Нестабильному тесту нужно <code>attempts_needed = 4</code> попытки, прежде чем он пройдёт. Начиная с <code>attempt = 1</code>, печатайте номер каждой попытки, пока он меньше <code>attempts_needed</code>, увеличивая его на 1 каждый раз; после цикла напечатайте <b>Success on attempt 4</b>, используя итоговое значение <code>attempt</code>.',
+        hint: 'Используйте цикл while: напечатайте <code>attempt</code>, затем <code>attempt += 1</code>, пока <code>attempt &lt; attempts_needed</code>. После окончания цикла <code>attempt</code> равен <code>attempts_needed</code> — напечатайте финальное сообщение через f-строку.'
+      },
+      'm3-hw2': {
+        title: 'Предскажите: continue и break вместе',
+        goal: 'Прочитайте цикл с <code>continue</code> и <code>break</code> одновременно и напишите точный вывод, затем проверьте себя.',
+        hint: 'Когда <code>i</code> равен 2, <code>continue</code> пропускает печать и переходит к следующему числу. Когда <code>i</code> равен 4, <code>break</code> сразу останавливает цикл — 4 тоже никогда не печатается.'
+      },
+      'm3-hw3': {
+        title: 'Посчитать каждый тип результата',
+        goal: 'При <code>results = ["pass", "fail", "pass", "pass", "fail", "fail", "fail"]</code> посчитайте, сколько <b>pass</b> и сколько <b>fail</b>, затем напечатайте две строки РОВНО так:<br><code>Passed: 3</code><br><code>Failed: 4</code>',
+        hint: 'Два отдельных счётчика, оба начинаются с 0. Пройдитесь циклом по <code>results</code> один раз, и внутри цикла используйте <code>if</code> / <code>elif</code>, чтобы увеличивать нужный счётчик на 1.'
+      }
+    }
+  },
+  cp1: {
+    title: 'Контрольная точка: переменные, условия, циклы',
+    desc: 'без новой теории — каждая задача смешивает понятия из модулей 1-3',
+    theory: [
+      'Новых понятий здесь нет. Каждая задача ниже намеренно объединяет то, что было в последних трёх модулях (переменные, <code>if</code>/<code>elif</code>/<code>else</code>, <code>for</code>/<code>while</code>, <code>break</code>) так, как это делается в настоящем скрипте — больше ничего изолированного. Если задача кажется сложнее того, что вы только что делали, так и задумано: откройте теорию модулей 1-3 ещё раз, если что-то не складывается.'
+    ],
+    tasks: {
+      'cp1-t1': {
+        title: 'Fizz для кратных трём',
+        goal: 'Напечатайте числа от 1 до 15, по одному на строке — но для каждого числа, кратного 3, напечатайте <b>Fizz</b> вместо самого числа.',
+        hint: 'Цикл с <code>range(1, 16)</code>. Внутри проверьте <code>i % 3 == 0</code>, чтобы решить, что напечатать для этого числа.'
+      },
+      'cp1-t2': {
+        title: 'Суммарное время медленных ответов',
+        goal: 'При <code>times = [120, 340, 90, 410, 260, 500]</code> (время ответа в мс) сложите только те, что 300 или больше, и напечатайте сумму.',
+        hint: 'Тот же паттерн накопителя, что и раньше, но теперь вы суммируете сами медленные ЗНАЧЕНИЯ, а не считаете их количество.'
+      },
+      'cp1-t3': {
+        title: 'Опрашивать до готовности',
+        goal: 'Начиная с <code>attempt = 1</code>, смоделируйте опрос медленного сервиса: пока <code>attempt</code> меньше или равен 10, печатайте <b>Waiting... attempt N</b> и увеличивайте <code>attempt</code> на 1 — ЗА ИСКЛЮЧЕНИЕМ случая, когда <code>attempt</code> равен 4: тогда вместо этого напечатайте <b>Ready on attempt 4</b> и немедленно прекратите опрос.',
+        hint: 'Цикл <code>while</code> с <code>if</code>/<code>else</code> внутри. Ветка <code>if</code> (attempt == 4) должна напечатать своё сообщение и сразу остановить цикл — подумайте, какое ключевое слово делает это внутри <code>while</code>, а не только <code>for</code>.'
+      },
+      'cp1-t4': {
+        title: 'Отчёт о разборе тестового прогона',
+        goal: 'При <code>results = ["pass", "fail", "pass", "skip", "fail", "pass", "fail"]</code> посчитайте, сколько <b>pass</b>, <b>fail</b> и <b>skip</b>, затем напечатайте РОВНО три строки:<br><code>Passed: 3</code><br><code>Failed: 3</code><br><code>Skipped: 1</code>',
+        hint: 'Три счётчика, один цикл, цепочка <code>if</code>/<code>elif</code>/<code>elif</code>, решающая, какой счётчик увеличить для каждого результата. Именно это печатает CI-пайплайн после прогона тестов.'
+      }
+    }
+  },
+  m4: {
+    title: 'Функции',
+    desc: 'зачем они нужны, def, параметры, return',
+    theory: [
+      {
+        text: '<code>def</code> объявляет функцию — именованный кусок кода, который можно вызывать сколько угодно раз вместо того, чтобы копировать его снова и снова.',
+        examples: [
+          {label:'Просто', code:'def square(x):\n    return x * x\nprint(square(5))', result:'25'},
+          {label:'На практике', kind:'real', code:'def calc_total(price, qty):\n    return price * qty\nprint(calc_total(10, 3))', result:'30'}
+        ]
+      },
+      {
+        text: 'Параметры — это имена-заглушки внутри функции, которые получают значения (аргументы) в момент вызова — <code>calc_total(10, 3)</code> делает так, что <code>price</code> становится 10, а <code>qty</code> — 3 внутри функции, только для этого одного вызова.',
+        examples: [
+          {label:'Просто', code:'def greet(name):\n    return f"Hi, {name}"\nprint(greet("Sam"))', result:'Hi, Sam'},
+          {label:'На практике', kind:'real', code:'def is_valid_status(code):\n    return code == 200\nprint(is_valid_status(200))', result:'True'}
+        ]
+      },
+      {
+        text: '<code>return</code> — это не то же самое, что <code>print</code>. <code>print</code> просто показывает значение на экране, а <code>return</code> передаёт значение обратно туда, откуда функцию вызвали, чтобы использовать его дальше. Функция без <code>return</code> возвращает <code>None</code> — печать такого результата это явно покажет.',
+        examples: [
+          {label:'Просто', code:'def add(a, b):\n    return a + b\nprint(add(2, 3))', result:'5'},
+          {label:'На практике', kind:'real', code:'def broken(a, b):\n    print(a + b)\n\nresult = broken(2, 3)\nprint(result)', result:'5\nNone'}
+        ]
+      },
+      {
+        text: 'Внутри функции можно использовать <code>if</code>, циклы — всё, что вы уже знаете. Функция может вычислять по-разному в зависимости от условия, точно так же, как обычный скрипт.',
+        examples: [
+          {label:'Просто', code:'def abs_val(x):\n    if x < 0:\n        return -x\n    return x\nprint(abs_val(-5))', result:'5'},
+          {label:'На практике', kind:'real', code:'def apply_discount(price, is_member):\n    if is_member:\n        return price * 0.9\n    return price\nprint(apply_discount(100, True))', result:'90.0'}
+        ]
+      },
+      {
+        text: 'Переменная, созданная ВНУТРИ функции (например, присваиванием), существует только внутри неё — это называется локальной переменной. Даже если снаружи есть переменная с тем же именем, присваивание внутри функции создаёт отдельную, новую переменную и никогда не трогает внешнюю.',
+        examples: [
+          {label:'Просто', code:'def f():\n    x = 1\n    return x\nprint(f())', result:'1'},
+          {label:'На практике', kind:'real', code:'count = 0\n\ndef increment():\n    count = 1\n    return count\n\nincrement()\nprint(count)', result:'0'}
+        ]
+      },
+      {
+        text: 'В автоматизации функции — это способ не повторять один и тот же код проверки много раз: напишите его один раз, переиспользуйте в десятках тестов вместо копипаста.',
+        examples: [
+          {label:'На практике', kind:'real', code:'def is_valid_status(code):\n    return code == 200\nprint(is_valid_status(404))', result:'False'}
+        ]
+      },
+      'Задачи ниже разных видов, плюс «Домашнее задание» в конце.'
+    ],
+    tasks: {
+      'm4-t1': {
+        title: 'Поприветствовать тестировщика',
+        goal: 'Напишите функцию <code>greet_tester</code>, принимающую один параметр <code>name</code> и возвращающую строку <b>"Hello, NAME, ready to test?"</b> (через f-строку). Затем вызовите <code>greet_tester("Alex")</code> и напечатайте результат.',
+        hint: '<code>def greet_tester(name): return f"Hello, {name}, ready to test?"</code> — затем <code>print(greet_tester("Alex"))</code>.'
+      },
+      'm4-t2': {
+        title: 'Сумма корзины',
+        goal: 'Напишите функцию <code>calc_total(price, qty)</code>, возвращающую <code>price * qty</code>. Затем напечатайте <code>calc_total(25, 4)</code>.',
+        hint: '<code>def calc_total(price, qty): return price * qty</code> — вызовите её внутри <code>print(...)</code>.'
+      },
+      'm4-t3': {
+        title: 'Предскажите: параметры — это локальные копии',
+        goal: 'Пока не запускайте. Прочитайте код и напишите, что он напечатает, затем проверьте себя.',
+        hint: '<code>x</code> внутри <code>double</code> — отдельная локальная переменная: её изменение не меняет <code>n</code> снаружи функции.'
+      },
+      'm4-t4': {
+        title: 'Исправьте: печатает вместо возврата',
+        goal: 'Вызов <code>print(triple(5))</code> должен напечатать только <b>15</b>. Сейчас печатаются две строки (<code>15</code>, а затем <code>None</code>), потому что функция печатает сама, вместо того чтобы возвращать значение. Прежде чем чинить, сформулируйте одним предложением, почему внешний <code>print</code> получает <code>None</code>, хотя <code>15</code> всё же напечаталось. Исправьте функцию.',
+        reasonPrompt: 'Почему внешний <code>print</code> получает <code>None</code>?',
+        hint: 'Удалите строку <code>print(result)</code> внутри функции и замените её на <code>return result</code> — тогда внешний <code>print(triple(5))</code> покажет значение.'
+      },
+      'm4-t5': {
+        title: 'Применить скидку',
+        goal: 'Напишите функцию <code>apply_discount(price, is_member)</code>, которая возвращает <code>price * 0.9</code>, если <code>is_member</code> равно <code>True</code>, иначе возвращает <code>price</code> без изменений. Напечатайте <code>apply_discount(100, True)</code>, затем <code>apply_discount(100, False)</code>.',
+        hint: '<code>if is_member: return price * 0.9</code>, затем (вне if) <code>return price</code>. Учтите, что <code>100 * 0.9</code> становится float, поэтому печатается как <code>90.0</code>.'
+      },
+      'm4-t6': {
+        title: 'Одна функция внутри другой',
+        goal: 'Напишите две функции: <code>calc_subtotal(price, qty)</code>, возвращающую <code>price * qty</code>, и <code>add_tax(amount)</code>, возвращающую <code>amount * 1.2</code> (налог 20%). Затем напечатайте <code>add_tax(calc_subtotal(50, 2))</code> — вызов одной функции внутри другой.',
+        hint: 'Сначала определите обе функции. Результат <code>calc_subtotal(50, 2)</code> становится аргументом, передаваемым в <code>add_tax(...)</code>.'
+      },
+      'm4-t7': {
+        title: 'Исправьте: перепутаны аргументы',
+        goal: 'Это должно применить скидку 5 к цене 100 (ожидаемый результат: <b>95</b>). Печатается неверное число, потому что аргументы переданы в неправильном порядке. Исправьте вызов функции.',
+        hint: 'Функция определена как <code>apply_discount(price, discount)</code> — проверьте порядок двух чисел в вызове ниже.'
+      },
+      'm4-t8': {
+        title: 'Предскажите: локальная переменная затеняет внешнюю',
+        goal: 'Прочитайте код и напишите, что он напечатает, затем проверьте себя.',
+        hint: 'Присваивание <code>count</code> внутри <code>increment</code> создаёт НОВУЮ локальную переменную — она не меняет <code>count</code>, определённый снаружи функции.'
+      },
+      'm4-t9': {
+        title: 'Классифицировать скорость ответа',
+        goal: 'Напишите функцию <code>speed_label(response_time)</code>, возвращающую <b>"Fast"</b>, если <code>response_time</code> меньше 100, <b>"Normal"</b>, если меньше 300, иначе <b>"Slow"</b>. Затем напечатайте <code>speed_label(250)</code>.',
+        hint: 'Внутри функции можно использовать <code>if</code> / <code>elif</code> / <code>else</code> точно так же, как везде — единственное отличие: в каждой ветке вы <code>return</code>-ите метку, а не печатаете её.'
+      },
+      'm4-t10': {
+        title: 'Отчёт по сумме заказов',
+        goal: 'Напишите функцию <code>calc_total(price, qty)</code>, возвращающую <code>price * qty</code>. Используйте её, чтобы посчитать суммы трёх заказов — <code>calc_total(20, 2)</code>, <code>calc_total(45, 1)</code>, <code>calc_total(15, 3)</code> — сложите все три суммы в одно число <code>grand_total</code> и напечатайте РОВНО:<br><code>Order total: 130</code>',
+        hint: 'Сохраните каждый вызов в свою переменную (или сложите напрямую), затем напечатайте через f-строку: <code>print(f"Order total: {grand_total}")</code>.'
+      },
+      'm4-hw1': {
+        title: 'Отформатировать результат теста',
+        goal: 'Напишите функцию <code>format_result(name, passed)</code>, возвращающую <b>"NAME: PASS"</b>, если <code>passed</code> равно <code>True</code>, иначе <b>"NAME: FAIL"</b> (f-строки). Вызовите её с <code>("test_login", True)</code> и <code>("test_logout", False)</code>, напечатав каждый результат на своей строке.',
+        hint: '<code>if passed: return f"{name}: PASS"</code>, иначе <code>return f"{name}: FAIL"</code>. Вызовите функцию дважды, по одному разу на <code>print</code>.'
+      },
+      'm4-hw2': {
+        title: 'Предскажите: бонус не меняет оригинал',
+        goal: 'Прочитайте код и напишите, что он напечатает, затем проверьте себя.',
+        hint: '<code>score</code> внутри <code>add_bonus</code> — локальная копия <code>s</code>: её изменение не влияет на <code>s</code> снаружи.'
+      },
+      'm4-hw3': {
+        title: 'Считать через функцию',
+        goal: 'Напишите функцию <code>count_fails(results)</code>, которая принимает список, проходит по нему циклом со счётчиком и возвращает, сколько элементов равны <b>"fail"</b>. Вызовите её с <code>results = ["pass", "fail", "fail", "pass", "fail"]</code> и напечатайте возвращённое число.',
+        hint: 'Внутри функции: <code>count = 0</code>, затем <code>for r in results:</code> с <code>if r == "fail": count += 1</code>. Верните <code>count</code> после цикла.'
+      }
+    }
   }
 };
