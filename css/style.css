@@ -660,6 +660,47 @@
   }
   @keyframes briefingblk{ 50%{ opacity:0; } }
 
+  /* topbar — a real HUD strip, not a rounded-pill stats bar. Committed to
+     the dark arcade look permanently (the whole rest of the site already
+     is), and reacts to the same signal color as everything else. */
+  .topbar.arcade{
+    position:sticky; top:0; z-index:20;
+    background: var(--a-bg1); border-bottom:1px solid var(--a-edge); backdrop-filter:none;
+  }
+  .topbar.arcade .topbar-inner{
+    max-width:1180px; margin:0 auto; padding:11px 20px; display:flex; align-items:center; gap:22px; flex-wrap:wrap;
+  }
+  .topbar.arcade .brand{ appearance:none; border:none; background:none; padding:0; cursor:pointer; display:flex; align-items:center; gap:8px; margin-right:auto; }
+  .topbar.arcade .brand .mark{ font-family:'JetBrains Mono',monospace; color: var(--a-accent); font-weight:700; }
+  .topbar.arcade .brand h1{
+    font-family:'Press Start 2P',monospace; font-size:12px; font-weight:400; letter-spacing:.01em; color:#e8e8ec; margin:0;
+  }
+  .topbar.arcade .brand:hover h1{ color: var(--a-accent); }
+
+  .topbar.arcade .hud{ display:flex; align-items:center; gap:20px; font-family:'Press Start 2P',monospace; font-size:10px; }
+  .topbar.arcade .hud-cell{ display:flex; align-items:center; gap:7px; }
+  .topbar.arcade .hud-label{ color: var(--a-dim); letter-spacing:.03em; }
+  .topbar.arcade .hud-cell b{ color:#e8e8ec; font-variant-numeric:tabular-nums; font-weight:400; }
+
+  .topbar.arcade .hud-xpbar{
+    position:relative; width:88px; height:11px; background: var(--a-bg0); border:2px solid var(--a-edge); overflow:hidden;
+  }
+  .topbar.arcade .hud-xpbar > i{ display:block; height:100%; background: var(--a-accent); transition:width .4s ease; }
+  .topbar.arcade .hud-xpbar::after{
+    content:''; position:absolute; inset:0; pointer-events:none;
+    background: repeating-linear-gradient(90deg, transparent 0 7px, rgba(0,0,0,.6) 7px 9px);
+  }
+
+  .topbar.arcade .hud-streak b{ color: var(--a-danger2); }
+  .topbar.arcade .hud-flame{ font-size:12px; filter:saturate(1.2); }
+
+  @media (max-width:640px){
+    .topbar.arcade .hud{ gap:12px; }
+    .topbar.arcade .hud-xpbar{ width:52px; }
+    .topbar.arcade .hud-label{ display:none; }
+    .topbar.arcade .brand h1{ font-size:10px; }
+  }
+
   @media (max-width:520px){
     #view-module.arcade{ margin: 0 -14px; padding: 0 14px 32px; }
   }

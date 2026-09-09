@@ -8,17 +8,26 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Karla:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Press+Start+2P&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=20260909p">
+<link rel="stylesheet" href="css/style.css?v=20260909q">
 </head>
 <body>
 
-<div class="topbar">
+<div class="topbar arcade" data-signal="mint">
   <div class="topbar-inner">
     <button class="brand" id="brand-home" title="Back to title screen"><span class="mark">&gt;_</span><h1>AutoQuest</h1></button>
-    <div class="stat">Level <b id="stat-level">1</b></div>
-    <div class="xpbar"><i id="xpbar-fill" style="width:0%"></i></div>
-    <div class="stat"><b id="stat-xp">0</b>&nbsp;XP</div>
-    <div class="streak">🔥 <span id="stat-streak">0</span>-day streak</div>
+    <div class="hud">
+      <div class="hud-cell">
+        <span class="hud-label">LV</span><b id="stat-level">01</b>
+      </div>
+      <div class="hud-cell hud-xp">
+        <span class="hud-label">XP</span>
+        <div class="hud-xpbar"><i id="xpbar-fill" style="width:0%"></i></div>
+        <b id="stat-xp">0000</b>
+      </div>
+      <div class="hud-cell hud-streak">
+        <span class="hud-flame">🔥</span><b id="stat-streak">00</b>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -131,8 +140,8 @@
   </div>
 </div>
 
-<script src="js/interpreter.js?v=20260909p"></script>
-<script src="js/modules-data.js?v=20260909p"></script>
-<script src="js/app.js?v=20260909p"></script>
+<script src="js/interpreter.js?v=20260909q"></script>
+<script src="js/modules-data.js?v=20260909q"></script>
+<script src="js/app.js?v=20260909q"></script>
 </body>
 </html>

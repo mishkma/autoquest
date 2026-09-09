@@ -267,10 +267,12 @@
 
   function renderStats(){
     const lvl = computeLevel(state.xp);
-    document.getElementById('stat-level').textContent = lvl;
-    document.getElementById('stat-xp').textContent = state.xp;
+    // Zero-padded, arcade-score-style — real values underneath, just
+    // formatted the way a HUD counter reads (LV.01, 0090 XP), not truncated.
+    document.getElementById('stat-level').textContent = String(lvl).padStart(2,'0');
+    document.getElementById('stat-xp').textContent = String(state.xp).padStart(4,'0');
     document.getElementById('xpbar-fill').style.width = levelProgress(state.xp) + '%';
-    document.getElementById('stat-streak').textContent = state.streak || 0;
+    document.getElementById('stat-streak').textContent = String(state.streak || 0).padStart(2,'0');
   }
 
   /* ---------------- render: path ---------------- */
