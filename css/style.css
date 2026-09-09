@@ -281,7 +281,7 @@
   textarea.editor:focus{outline:2px solid var(--accent);outline-offset:-1px;}
 
   .editor-wrap{
-    display:flex;align-items:stretch;
+    display:flex;align-items:stretch;height:150px;
     background:var(--surface-2);border:1px solid var(--edge);border-radius:10px;
     overflow:hidden;
   }
@@ -551,11 +551,6 @@
     #view-path.arcade{ margin: 0 -14px; padding: 0 14px 32px; }
   }
 
-  /* module room — theory + task-card chrome only. The code editor itself
-     (.editor-wrap, textarea.editor, .editor-gutter, .editor-highlight,
-     .tok-*, autocomplete) is DELIBERATELY untouched here — its readability
-     matters more than matching the arcade palette, and it stays legible in
-     both light and dark system themes regardless of signal color. */
   #view-module.arcade{ background: var(--a-bg0); margin: 0 -20px; padding: 0 20px 40px; }
 
   #view-module.arcade .room-head .kicker{ font-family:'Press Start 2P',monospace; font-size:9px; color: var(--a-accent); }
@@ -609,9 +604,27 @@
   #view-module.arcade .task.done{ opacity:.8; }
   #view-module.arcade .task.done .task-title::after{ color:#3ecf6b; }
 
+  /* Code editor — background/border only, retinted to sit inside the arcade
+     room instead of the old light-UI surface-2 (navy-on-near-black used to
+     stand out badly). Text/token colors are pinned to fixed light values
+     here (not the --ink/--tok-* variables) because the arcade room is
+     always dark regardless of the visitor's OS light/dark setting — the
+     token/keyword logic and layout of .editor-highlight/.editor-gutter are
+     untouched, only color values change. */
+  #view-module.arcade .editor-wrap{ background: var(--a-bg0); border-color: var(--a-edge); }
+  #view-module.arcade .editor-gutter{ border-right-color: var(--a-edge); color: var(--a-dim); }
+  #view-module.arcade .editor-highlight{ color:#e8e8ec; }
+  #view-module.arcade .editor-wrap textarea.editor{ caret-color:#e8e8ec; }
+  #view-module.arcade .tok-keyword{ color:#c792ea; }
+  #view-module.arcade .tok-string{ color:#7fd8a6; }
+  #view-module.arcade .tok-number{ color:#f2b366; }
+  #view-module.arcade .tok-comment{ color:#75798a; }
+  #view-module.arcade .tok-builtin{ color:#82aaff; }
+  #view-module.arcade .err-line{ background: rgba(255,107,107,.16); }
+
   /* Editor HUD frame — decorative wrapper ONLY, added around .editor-wrap.
      Nothing here touches .editor-wrap/.editor-gutter/.editor-highlight/
-     textarea.editor/.tok-* — those keep their exact existing styling. */
+     textarea.editor/.tok-* layout — only the color overrides just above. */
   #view-module.arcade .editor-hud{ margin-bottom:0; }
   #view-module.arcade .editor-hudbar{
     display:flex; align-items:center; gap:8px; padding:8px 12px;
