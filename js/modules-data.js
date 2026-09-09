@@ -98,7 +98,8 @@ const MODULES = [
         },
         {
           id:'m1-t4', title:'Fix the typo (NameError)',
-          goal:'This code crashes with a NameError. Before you fix it, find the exact mismatch and put into one sentence (to yourself) why Python cannot find that name — that habit matters more than the fix itself. Then fix it so it prints: <b>5</b>',
+          goal:'This code crashes with a NameError. Before you fix it, find the exact mismatch and put into one sentence why Python cannot find that name — that habit matters more than the fix itself. Then fix it so it prints: <b>5</b>',
+          reasonPrompt:'Why can\'t Python find <code>cont</code>?',
           hint:'A NameError means Python does not know that name. Compare the variable created on the first line with the name used on the second — they must match exactly.',
           starter:
 `count = 5
@@ -277,6 +278,7 @@ else:
         {
           id:'m2-t4', title:'Fix: one equals',
           goal:'This code crashes because the condition uses a single <code>=</code>. Before fixing it, put into one sentence why a single <code>=</code> cannot go inside a condition — this is the kind of thing you would explain in a code review. Then fix it so it prints: <b>Five</b>',
+          reasonPrompt:'Why can\'t a single <code>=</code> go inside a condition?',
           hint:'Inside a condition you must COMPARE with <code>==</code> (two equals). One <code>=</code> means "assign", which is not allowed in an <code>if</code>.',
           starter:
 `x = 5
@@ -511,6 +513,7 @@ total = 0
         {
           id:'m3-t4', title:'Fix: the loop never stops',
           goal:'This code hangs forever — the counter never changes. Before fixing it, put into one sentence why this specific loop can never become False on its own. Then fix it so it prints <b>1</b>, <b>2</b>, <b>3</b>, each on its own line, then stops.',
+          reasonPrompt:'Why does this loop\'s condition never become False?',
           hint:'Every <code>while</code> loop needs something that changes inside it, or the condition stays True forever. Add <code>count += 1</code> inside the loop body.',
           starter:
 `count = 1
@@ -828,6 +831,7 @@ print(result)
         {
           id:'m4-t4', title:'Fix: prints instead of returns',
           goal:'Calling <code>print(triple(5))</code> should print only <b>15</b>. Right now it prints two lines (<code>15</code> and then <code>None</code>) because the function prints internally instead of returning. Before fixing it, put into one sentence why the outer <code>print</code> gets <code>None</code> even though <code>15</code> did get printed. Fix the function.',
+          reasonPrompt:'Why does the outer <code>print</code> get <code>None</code>?',
           hint:'Remove the <code>print(result)</code> line inside the function and replace it with <code>return result</code> — then the outer <code>print(triple(5))</code> will show the value.',
           starter:
 `def triple(x):
@@ -1084,6 +1088,7 @@ print(cart)
         {
           id:'m5-t5', title:'Fix: missing key crashes',
           goal:'This code crashes with a <b>KeyError</b> because <code>"discount"</code> is not in <code>settings</code>. Before fixing it, put into one sentence why square-bracket access has no way to fail gracefully here. Fix it to safely read <code>"discount"</code> with a default value of <b>0</b>, and print the result.',
+          reasonPrompt:'Why can\'t <code>settings["discount"]</code> fail gracefully?',
           hint:'Use <code>settings.get("discount", 0)</code> instead of <code>settings["discount"]</code> — <code>.get</code> lets you provide a default instead of crashing when the key is missing.',
           starter:
 `settings = {"currency": "USD", "tax_rate": 20}
@@ -1351,8 +1356,8 @@ print(x + y)
         },
         {
           id:'m6-t7', kind:'checklist', title:'Turn the folder into a git repository',
-          goal:'Inside <code>autoquest-practice</code>, run <code>git init</code>, then <code>git add hello.py</code>, then <code>git commit -m "first commit"</code>. Confirm it worked by running <code>git log</code> — you should see your commit listed. Mark this done once you see it.',
-          hint:'If <code>git commit</code> asks you to configure <code>user.name</code>/<code>user.email</code> first, that is normal for a brand new machine — follow the exact command it prints, then try the commit again.'
+          goal:'Inside <code>autoquest-practice</code>, run <code>git init</code>. BEFORE committing, run <code>git config user.email</code> to see what email git will use here — if it shows a work email and this is a personal project, fix it just for this folder with <code>git config user.email "you@example.com"</code> (no <code>--global</code>). Then <code>git add hello.py</code> and <code>git commit -m "first commit"</code>. Confirm it worked with <code>git log</code>. Mark this done once you see your commit listed under the email you actually wanted.',
+          hint:'Git often auto-fills your identity from machine-wide settings — on a work laptop that is frequently your work email, even for a personal repo. Checking BEFORE the first commit is much easier than fixing it in already-pushed history later.'
         },
         {
           id:'m6-t8', kind:'checklist', title:'Push to GitHub',

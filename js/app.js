@@ -8,7 +8,7 @@
   /* ---------------- error dictionary ---------------- */
 
   const ERROR_HINTS = {
-    SyntaxError: 'Syntax error — Python could not parse the structure of the code. Common causes: an unclosed quote or bracket, or a missing colon after <code>if</code>/<code>while</code>/<code>for</code>.',
+    SyntaxError: 'Syntax error — Python could not parse the structure of the code. Common causes: text typed without quotes around it (Python tries to read it as code, not as a string), an unclosed quote or bracket, or a missing colon after <code>if</code>/<code>while</code>/<code>for</code>.',
     IndentationError: 'An indentation problem. In Python, the indent at the start of a line is part of the code, not formatting. All lines of the same block must start with the same indent (usually 4 spaces).',
     NameError: 'Python does not know that name — most likely a typo in the variable name, or it is used before it was created.',
     TypeError: 'Incompatible data types — for example, trying to add a number and a string directly. Check that every value is the right type (or try an f-string).',
@@ -356,9 +356,14 @@
             <textarea class="editor" id="code-${t.id}" spellcheck="false" wrap="off"></textarea>
           </div>
         </div>
+        ${t.reasonPrompt ? `
+        <div class="reason-field">
+          <label class="field-label" for="reason-${t.id}">${t.reasonPrompt}</label>
+          <input type="text" class="reason-input" id="reason-${t.id}" placeholder="One sentence, just for you — not graded, but Check stays locked until you write something">
+        </div>` : ''}
         <div class="rowbtns" style="margin-top:12px;">
           <button class="btn" data-run="${t.id}">▶ Run</button>
-          <button class="btn primary" data-check="${t.id}">✓ Check</button>
+          <button class="btn primary" data-check="${t.id}" ${t.reasonPrompt ? 'disabled' : ''}>✓ Check</button>
           <button class="btn" data-hint="${t.id}">💡 Hint</button>
           <button class="btn" data-reset="${t.id}">↺ Reset code</button>
         </div>
@@ -415,8 +420,23 @@
       if(ac.editor === editor) acPosition(editor);
     });
     editor.addEventListener('blur', () => { if(ac.editor === editor) acClose(); });
+
+    const checkBtn = room.querySelector(`[data-check="${t.id}"]`);
+    // A fix-the-bug task can ask for a one-line reason before Check unlocks —
+    // not graded on content, just a forced pause before jumping to the fix.
+    if(t.reasonPrompt){
+      const reasonEl = room.querySelector(`#reason-${t.id}`);
+      const saved = savedReason(t.id);
+      if(saved) reasonEl.value = saved;
+      checkBtn.disabled = !reasonEl.value.trim();
+      reasonEl.addEventListener('input', () => {
+        saveReason(t.id, reasonEl.value);
+        checkBtn.disabled = !reasonEl.value.trim();
+      });
+    }
+
     room.querySelector(`[data-run="${t.id}"]`).addEventListener('click', () => runOnly(t));
-    room.querySelector(`[data-check="${t.id}"]`).addEventListener('click', () => runCheck(t, m));
+    checkBtn.addEventListener('click', () => runCheck(t, m));
     room.querySelector(`[data-hint="${t.id}"]`).addEventListener('click', () => {
       document.getElementById(`hint-${t.id}`).classList.toggle('show');
     });
@@ -687,6 +707,12 @@
   }
   function saveCode(id, code){
     try{ localStorage.setItem('autoquest-code-'+id, code); }catch(e){}
+  }
+  function savedReason(id){
+    try{ return localStorage.getItem('autoquest-reason-'+id); }catch(e){ return null; }
+  }
+  function saveReason(id, text){
+    try{ localStorage.setItem('autoquest-reason-'+id, text); }catch(e){}
   }
 
   function showConsole(id, r){

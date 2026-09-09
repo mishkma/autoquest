@@ -130,6 +130,7 @@
   .kicker{font-family:'JetBrains Mono';font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);}
   .hero h2{font-size:clamp(24px,4vw,32px);font-weight:800;letter-spacing:-.01em;margin-top:6px;max-width:26ch;}
   .hero p{color:var(--ink-dim);max-width:56ch;margin-top:10px;font-size:15px;}
+  .hero .storage-note{color:var(--muted);font-size:12.5px;margin-top:12px;max-width:56ch;}
 
   /* quest path */
   .path{position:relative;padding:36px 0 12px;}
@@ -258,6 +259,14 @@
   .btn:disabled{opacity:.5;cursor:default;transform:none;}
 
   label.field-label{display:block;font-size:12.5px;font-weight:700;color:var(--ink-dim);margin-bottom:6px;}
+
+  .reason-field{margin-top:12px;}
+  .reason-input{
+    width:100%;background:var(--xp-soft);border:1px solid var(--edge);border-radius:10px;
+    padding:9px 12px;color:var(--ink);font-size:13.5px;font-family:inherit;
+  }
+  .reason-input::placeholder{color:var(--muted);}
+  .reason-input:focus{outline:2px solid var(--xp);outline-offset:-1px;}
 
   textarea.editor{
     width:100%;min-height:150px;resize:vertical;tab-size:4;
