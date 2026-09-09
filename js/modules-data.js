@@ -1509,7 +1509,118 @@ print(next(gen))
         }
       ]
     },
-    {id:'m9', num:9, phase:'Automated tests in Python', title:'Pytest', desc:'running tests, assert, fixtures, parametrization'},
+    {
+      id:'m9', num:9, phase:'Automated tests in Python', title:'Pytest',
+      desc:'running tests, assert, fixtures, parametrization',
+      theory:[
+        'Pytest is a TEST RUNNER: a program that finds and executes your test functions and reports which passed and which failed. A test is just a function whose name starts with <code>test_</code>, living in a file whose name starts with <code>test_</code>. Running <code>pytest</code> in a terminal inside that folder finds every one of them automatically — no need to call them yourself.',
+        '<code>assert</code> is the real version of the ok/fail check this ENTIRE course has been simulating with its own <code>matchEn(...)</code> helper: <code>assert cart.total() == 70</code> does nothing if true, and raises an <code>AssertionError</code> if false — pytest catches that and reports the test as failed, showing you exactly what was compared.',
+        'Install with <code>pip install pytest</code> — this is the first package from outside the standard library you have installed (Module 8 was all built-in; <code>requests</code> in Module 11 will be the same kind of install).',
+        'A <b>fixture</b> is a function decorated with <code>@pytest.fixture</code> that sets something up once and hands it to any test that asks for it by naming it as a parameter. If five tests all need a pre-filled <code>Cart</code>, a fixture builds it once per test run instead of five tests each repeating the same setup code.',
+        '<code>@pytest.mark.parametrize("price,expected", [(100, True), (50, False)])</code> runs the SAME test function once per row of data, instead of writing near-identical test functions for slightly different inputs. This is how a real suite covers many cases without copy-pasting a whole test each time.',
+        'Reading a pytest failure is a real skill, not scary noise: it shows you the exact assert line, and often the actual values on both sides — <code>assert 71 == 70</code> tells you plainly that your code produced 71 when the test expected 70. Get comfortable reading this now; it is what every red run looks like from here on.'
+      ],
+      tasks:[
+        {
+          id:'m9-t1', kind:'checklist', title:'Install pytest',
+          goal:'Run <code>pip install pytest</code>, then confirm it worked with <code>pytest --version</code> — it should print a version number. Mark this done once you see it.',
+          hint:'If <code>pip</code> is not found, try <code>python -m pip install pytest</code> instead — same result, more explicit about which Python it installs into.'
+        },
+        {
+          id:'m9-t2', kind:'checklist', title:'Your first passing test',
+          goal:'Create a file <code>test_basic.py</code> with a function <code>test_addition()</code> that does <code>assert 2 + 2 == 4</code>. Run <code>pytest test_basic.py</code> in a terminal in that folder. Confirm the summary line says <b>1 passed</b>.',
+          hint:'The file name and the function name both matter — pytest only discovers functions starting with <code>test_</code> inside files starting with <code>test_</code>.'
+        },
+        {
+          id:'m9-t3', kind:'checklist', title:'Read a real failure on purpose',
+          goal:'In a new file <code>test_fail.py</code>, write <code>def test_wrong(): assert 2 + 2 == 5</code>. Run <code>pytest test_fail.py</code> and read the output — find the line showing what was actually compared. Confirm you can point to where it says <b>1 failed</b> and the line showing the wrong assertion.',
+          hint:'You are not fixing anything here — this task is purely about reading a real failure calmly, so the next one you see for real does not feel like an emergency.'
+        },
+        {
+          id:'m9-t4', kind:'predict', offline:true, title:'Predict: a passing assert does nothing',
+          goal:'Read the code and predict the exact output, then check yourself in real Python.',
+          hint:'When the condition after <code>assert</code> is true, absolutely nothing visible happens — execution just continues to the next line, exactly like an <code>if</code> whose condition was False and skipped its block.',
+          code:
+`x = 5
+assert x == 5
+print("passed")
+`,
+          expected: 'passed'
+        },
+        {
+          id:'m9-t5', kind:'checklist', title:'Test a real Cart class',
+          goal:'In <code>test_cart.py</code>, write the <code>Cart</code> class from Module 7 (<code>__init__</code>, <code>add_item</code>, <code>total</code>), then a function <code>test_cart_total()</code> that creates a cart, adds items priced 25 and 45, and asserts the total equals 70. Run <code>pytest test_cart.py</code> — confirm <b>1 passed</b>.',
+          hint:'The class and the test function can live in the same file for now — splitting them into separate files comes later, once the reason for it (reuse across many test files) actually matters.'
+        },
+        {
+          id:'m9-t6', kind:'checklist', title:'A fixture for the cart',
+          goal:'Rewrite the previous file using a fixture: <code>@pytest.fixture def cart(): ...</code> that builds and returns a <code>Cart</code> with the same two items, then TWO test functions — <code>test_cart_total(cart)</code> asserting the total, and <code>test_cart_has_two_items(cart)</code> asserting <code>len(cart.items) == 2</code>. Run pytest — confirm <b>2 passed</b>.',
+          hint:'Both test functions take <code>cart</code> as a parameter with that exact name — pytest matches it to the fixture function by name automatically, you never call the fixture yourself.'
+        },
+        {
+          id:'m9-t7', kind:'predict', offline:true, title:'Predict: assert on parsed JSON',
+          goal:'Read the code and predict the exact output, then check yourself in real Python.',
+          hint:'<code>json.loads(...)</code> gives you a real dict — <code>data["status"]</code> works exactly like every dict access you have done since Module 5, and the assert either passes silently or blows up.',
+          code:
+`import json
+data = json.loads('{"status": "pass"}')
+assert data["status"] == "pass"
+print("ok")
+`,
+          expected: 'ok'
+        },
+        {
+          id:'m9-t8', kind:'checklist', title:'Parametrize one test over multiple cases',
+          goal:'Write <code>@pytest.mark.parametrize("price,expected", [(100, True), (50, False)])</code> above <code>def test_free_shipping(price, expected): assert (price >= 100) == expected</code>. Run pytest with <code>-v</code> (<code>pytest test_file.py -v</code>) — confirm you see TWO separate test results, both passing, one per row of data.',
+          hint:'<code>-v</code> (verbose) makes pytest print one line per individual case instead of just a summary count — you should see the price value show up in each test\'s name.'
+        },
+        {
+          id:'m9-t9', kind:'checklist', title:'A failing test finds a real bug',
+          goal:'Run the <code>Cart</code> class and <code>test_cart_total</code> test below EXACTLY as given — it fails. Read the failure output to see what value <code>total()</code> actually produced, find the bug in the CLASS (not the test), fix it, and re-run until you see <b>1 passed</b>.',
+          hint:'The failure output shows something like <code>assert 71 == 70</code> — one extra unit came from somewhere in <code>total()</code> that has nothing to do with the items themselves.',
+          starter:
+`class Cart:
+    def __init__(self):
+        self.items = []
+    def add_item(self, name, price):
+        self.items.append({"name": name, "price": price})
+    def total(self):
+        total = 1
+        for item in self.items:
+            total += item["price"]
+        return total
+
+def test_cart_total():
+    cart = Cart()
+    cart.add_item("Mouse", 25)
+    cart.add_item("Keyboard", 45)
+    assert cart.total() == 70
+`
+        },
+        {
+          id:'m9-t10', kind:'checklist', boss:true, title:'A small real test suite',
+          goal:'In one file, bring together everything from this module: the <code>Cart</code> class (from Module 7, with <code>add_item</code>, <code>total</code>, <code>free_shipping_eligible</code>), a <code>@pytest.fixture</code> providing a pre-filled cart, and at least THREE test functions using that fixture — one checking the total, one checking the item count, one checking free-shipping eligibility. Run <code>pytest -v</code> — confirm all of them show <b>PASSED</b>.',
+          hint:'This is the exact shape a real test file for this class would take in a real project — nothing about the mechanics changes once the class gets more complex, only how many tests you write against it.'
+        }
+      ],
+      homework:[
+        {
+          id:'m9-hw1', kind:'checklist', title:'Run a subset of tests by name',
+          goal:'In a file with at least two differently-named test functions, run only one of them with <code>pytest test_file.py -k test_name_here</code> (replace with the real function name). Confirm the summary shows only 1 test ran, not all of them.',
+          hint:'<code>-k</code> matches by substring, not exact name — useful when you want to re-run just the one test you are currently fixing without waiting for the whole suite.'
+        },
+        {
+          id:'m9-hw2', kind:'checklist', title:'A custom assert message',
+          goal:'Write a test that deliberately fails, with a custom message: <code>assert 1 == 2, "one is never two"</code>. Run it and confirm your custom message <b>"one is never two"</b> shows up in the failure output, alongside pytest\'s own comparison details.',
+          hint:'The text after the comma only shows up when the assertion actually fails — it never appears on a passing test, so it costs nothing to add for the cases you expect might break.'
+        },
+        {
+          id:'m9-hw3', kind:'checklist', title:'Split the class from its test',
+          goal:'Create <code>cart.py</code> containing just the <code>Cart</code> class (no tests). In <code>test_cart.py</code>, add <code>from cart import Cart</code> at the top, then write your fixture and tests using that imported class instead of redefining it. Run pytest — confirm it still passes, now reading the class from a separate file.',
+          hint:'Both files need to be in the same folder for a plain <code>from cart import Cart</code> to find it — this is the smallest possible version of the project structure a real test suite uses.'
+        }
+      ]
+    },
     {id:'m10', num:10, phase:'Automated tests in Python', title:'Mocks and stubs', desc:'faking dependencies: mock, stub — when and why'},
     {id:'m11', num:11, phase:'Automation tooling', title:'API testing', desc:'checking requests and responses with requests'},
     {id:'m12', num:12, phase:'Automation tooling', title:'Databases', desc:'checking data in a DB straight from tests'},
