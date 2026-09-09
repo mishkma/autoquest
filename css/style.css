@@ -417,6 +417,28 @@
     --a-bg0:#080f12; --a-bg1:#070c0e; --a-edge:#182833;
   }
 
+  /* Cabinet side rails — purely decorative circuit-trace panels filling the
+     dead space either side of the centered .wrap column on wide viewports
+     (#view-path/#view-module only fill .wrap's own 920px width, not the
+     full browser window, so anything wider than ~1180px leaves flat empty
+     margin next to it). position:fixed so they frame the "screen" the way a
+     real cabinet's side panels would — they don't need to track content
+     height or scroll with it. Living inside #view-path/#view-module means
+     their native `hidden` attribute (display:none) hides these too, no
+     extra JS needed. currentColor + color:var(--a-accent) retints them with
+     Signal Color like everything else under .arcade. Hidden below 1180px:
+     under that there's no real gap left to decorate, and they'd start
+     overlapping the content column instead. Deliberately just the traces —
+     LEDs/chips/bug-easter-eggs were pitched and dropped to keep this quiet. */
+  .cab-rail{
+    position:fixed; top:0; bottom:0; width:160px; color: var(--a-accent);
+    opacity:.5; pointer-events:none; z-index:0;
+  }
+  .cab-rail.left{ left:0; }
+  .cab-rail.right{ right:0; transform:scaleX(-1); }
+  .cab-rail svg{ width:100%; height:100%; display:block; }
+  @media (max-width:1180px){ .cab-rail{ display:none; } }
+
   .arcade-screen{
     position:relative; max-width:640px; margin:0 auto; border:5px solid #000;
     box-shadow: inset 0 0 0 2px var(--a-edge), 0 20px 50px -24px rgba(0,0,0,.7);
