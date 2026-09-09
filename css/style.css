@@ -306,7 +306,15 @@
     position:relative;width:100%;min-height:148px;
     background:transparent;border:none;border-radius:0;
     color:transparent;caret-color:var(--ink);
-    resize:none;overflow-y:auto;overflow-x:hidden;
+    resize:vertical;overflow-y:auto;overflow-x:hidden;
+    /* resize:vertical here needs app.js's per-frame editor-scroll loop to
+       also copy this textarea's live rendered height onto .editor-wrap
+       (see bindTask in app.js) — .editor-wrap's own height is what its
+       flex-stretched .editor-gutter/.editor-code children (and, inside
+       .editor-code, the absolutely-positioned .editor-highlight) actually
+       size themselves against, so dragging this handle without that sync
+       would leave the gutter/highlight still fixed at their old height
+       while only the real textarea grew. */
     /* overflow-x MUST stay hidden here: leaving it unset makes it compute to
        `auto` (a CSS quirk — when one axis is a scrolling value, `visible` on
        the other axis is forced to `auto` too), and with white-space:pre +
@@ -482,12 +490,19 @@
   /* boss encounter header — sits above the real task card, purely decorative */
   .boss-header{ margin-bottom:14px; }
   /* Was max-width:none (fill the room's own column exactly) back when that
-     column was 920px — at the current 1180px it left a large flat black
-     area to the right of the icons/track, since nothing inside this
-     flex-column content stretches to fill width. Capped instead of removed:
-     this is a decorative encounter screen, not the content column itself. */
-  .boss-header .arcade-screen{ max-width:900px; }
-  .boss-header .arcade-content{ padding: 18px 20px 18px 54px; gap:16px; }
+     column was 920px — at 1180px that left a large flat empty area to the
+     right of the icons/track, since nothing inside this flex-column
+     content stretches to fill width (capping it at 900px first, then
+     narrower, still left the same gap — the box was simply wider than its
+     own content). Sized to what the content (icons + the 340px-capped
+     health track) actually needs instead of an arbitrary fraction of the
+     room width. Left padding dropped from 54px to match the right side:
+     that 54px was reserved for an .arcade-gutter line-number column like
+     the title/victory screens have, but renderBossHeader() never renders
+     one here — with nothing drawn in it, it just read as a bare black
+     strip down the left edge. */
+  .boss-header .arcade-screen{ max-width:560px; }
+  .boss-header .arcade-content{ padding: 18px 20px; gap:16px; }
   .boss-name{ font-family:'Press Start 2P',monospace; font-size:12px; color:var(--a-danger); letter-spacing:.03em; }
   .boss-track{ margin-top:8px; height:9px; background:#1a0d0d; border:2px solid #3a1414; max-width:340px; }
   .boss-track i{ display:block; height:100%; width:68%; background: linear-gradient(90deg,var(--a-danger),var(--a-danger2)); }
@@ -531,6 +546,29 @@
      untouched: every module still renders, phase grouping still renders,
      this is CSS-only against the exact same DOM renderPath() already builds. */
   #view-path.arcade{ background: var(--a-bg0); margin: 0 -20px; padding: 0 20px 40px; }
+  /* Fill the dead margin on wide viewports (#view-path/#view-module only
+     fill .wrap's own 1180px width, not the browser window) by extending
+     the SAME faint code-editor line texture already used behind the title
+     screen (.arcade-linebg) — not a new illustration. A previous attempt
+     here (circuit-trace side rails, see CLAUDE.md "Известный класс
+     багов") read as visual noise and was reverted; reusing an already-
+     approved motif is deliberately the lower-risk choice this time.
+     Pure ::before/::after, no extra markup needed. Hidden below ~1440px,
+     scaled up from the old 1180px breakpoint to match .wrap's new 1180px
+     width (was 920px when that threshold was picked). */
+  #view-path.arcade::before, #view-path.arcade::after,
+  #view-module.arcade::before, #view-module.arcade::after{
+    content:''; position:fixed; top:0; bottom:0;
+    width:calc(50vw - 590px - 16px); max-width:640px;
+    background: repeating-linear-gradient(0deg, var(--a-line) 0 24px, transparent 24px 25px);
+    pointer-events:none; z-index:0;
+  }
+  #view-path.arcade::before, #view-module.arcade::before{ left:0; border-right:1px solid var(--a-edge); }
+  #view-path.arcade::after, #view-module.arcade::after{ right:0; border-left:1px solid var(--a-edge); }
+  @media (max-width:1440px){
+    #view-path.arcade::before, #view-path.arcade::after,
+    #view-module.arcade::before, #view-module.arcade::after{ display:none; }
+  }
   #view-path.arcade .hero{ position:relative; }
   #view-path.arcade .hero .kicker{ font-family:'Press Start 2P',monospace; font-size:9px; color:var(--a-accent); letter-spacing:.06em; }
   #view-path.arcade .hero h2{
@@ -597,6 +635,14 @@
   #view-module.arcade .task-goal{ background: var(--a-bg0); border-color: var(--a-edge); color: var(--a-dim); }
   #view-module.arcade .task-goal b{ color:#e8e8ec; }
   #view-module.arcade .field-label{ color: var(--a-dim); }
+  /* .code-preview (predict tasks' read-only snippet) and the predict-task
+     guess textarea both still used the site's own light/dark-mode navy
+     (--surface-2) — never retinted like .editor-wrap's textarea was, so a
+     predict task's boxes visibly clashed with a coding task's near-black
+     editor right next to it in the same module. Matched to the same
+     --a-bg0/--a-edge the real editor uses. */
+  #view-module.arcade .code-preview{ background: var(--a-bg0); border-color: var(--a-edge); color:#e8e8ec; }
+  #view-module.arcade textarea.editor{ background: var(--a-bg0); border-color: var(--a-edge); color:#e8e8ec; caret-color:#e8e8ec; }
 
   #view-module.arcade .chip{ background: var(--a-bg0); border-color: var(--a-edge); color: var(--a-dim); }
   #view-module.arcade .chip.good{ background: rgba(60,255,140,.12); color:#3ecf6b; border-color:transparent; }

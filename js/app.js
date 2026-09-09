@@ -634,11 +634,22 @@
     // event firing at all — there's no window where the three can drift.
     // Self-terminates once the task's DOM is torn down (room re-rendered),
     // so it doesn't keep spinning forever for editors nobody can see.
+    //
+    // Also copies the textarea's own live height onto .editor-wrap every
+    // frame — the textarea got resize:vertical, and .editor-wrap's height
+    // is what its flex-stretched gutter/highlight actually size against
+    // (see the CSS comment on .editor-wrap textarea.editor), so dragging
+    // the resize handle needs this to keep them matching, exactly the
+    // "if resize is ever added, sync .editor-wrap's height via JS" this
+    // codebase already flagged as a future requirement.
+    const wrap = editor.closest('.editor-wrap');
     (function pollEditorScroll(){
       if(!editor.isConnected) return;
       const st = editor.scrollTop;
       if(gutter.scrollTop !== st) gutter.scrollTop = st;
       if(hl.scrollTop !== st) hl.scrollTop = st;
+      const h = editor.offsetHeight + 'px';
+      if(wrap && wrap.style.height !== h) wrap.style.height = h;
       requestAnimationFrame(pollEditorScroll);
     })();
     editor.addEventListener('scroll', () => { if(ac.editor === editor) acPosition(editor); });
