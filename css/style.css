@@ -162,6 +162,12 @@
   .node-boss{ width:56px; height:56px; align-self:center; opacity:.85; }
   .node-boss svg{ width:100%; height:100%; filter: drop-shadow(0 0 6px rgba(255,80,110,.3)); }
   .node[data-locked="true"] .node-boss{ opacity:.25; filter:grayscale(1); }
+  /* Cleared module's boss (renderBossVisual's own `defeated` pose — rotated
+     flat, X eyes) still needs to read as "handled", distinct from a
+     LOCKED module's boss (unrelated state, dimmed+greyscale above) — a
+     lighter touch than that, just enough to say "already dealt with". */
+  .node-boss.defeated{ opacity:.6; }
+  .node-boss.defeated svg{ filter: drop-shadow(0 0 6px rgba(255,80,110,.15)) saturate(.6); }
   .badge{
     position:relative;z-index:1;
     width:56px;height:56px;border-radius:16px;
@@ -440,6 +446,11 @@
     --a-dim:#5c8ea4; --a-dim2:#37596b; --a-gutternum:#1c3040;
     --a-bg0:#080f12; --a-bg1:#070c0e; --a-edge:#182833;
   }
+  .arcade[data-signal="rose"]{
+    --a-accent:#ff6fae; --a-glow:rgba(255,90,160,.16); --a-line:rgba(255,90,160,.05);
+    --a-dim:#a4607e; --a-dim2:#6b3a52; --a-gutternum:#3a1d2c;
+    --a-bg0:#100910; --a-bg1:#0a070a; --a-edge:#2a1a24;
+  }
 
   .arcade-screen{
     position:relative; max-width:640px; margin:0 auto; border:5px solid #000;
@@ -474,8 +485,15 @@
   .arcade-tagline{ font-size:12.5px; color:var(--a-dim); margin-top:10px; }
   .arcade-tagline .cm{ color:var(--a-dim2); }
 
-  .arcade-herowrap{ display:flex; justify-content:center; }
+  .arcade-herowrap{ display:flex; flex-direction:column; align-items:center; gap:8px; }
   .arcade-hero{ width:104px; filter: drop-shadow(0 0 12px var(--a-glow)); }
+  /* Name of the character tied to the current Signal Color (see
+     CHARACTER_NAMES in app.js) — plain text under the portrait, same
+     small-caps HUD-label treatment used elsewhere, not a new UI language. */
+  .character-name{
+    font-family:'Press Start 2P',monospace; font-size:9px; color: var(--a-accent);
+    letter-spacing:.06em; text-shadow:0 0 10px var(--a-glow);
+  }
   .arcade-hero .outline{ stroke:var(--a-accent); }
   .arcade-hero .eye{ fill:var(--a-accent); }
 

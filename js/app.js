@@ -27,7 +27,7 @@
   // Purely cosmetic per-viewer choice — retints .arcade elements via
   // data-signal, stored separately from real progress. Never affects
   // task content, difficulty, or the rest of the site's own theme.
-  const SIGNALS = ['mint','amber','violet','cyan'];
+  const SIGNALS = ['mint','amber','violet','cyan','rose'];
   function getSignal(){
     try{ const s = localStorage.getItem('autoquest-signal'); return SIGNALS.includes(s) ? s : 'mint'; }catch(e){ return 'mint'; }
   }
@@ -35,14 +35,60 @@
     try{ localStorage.setItem('autoquest-signal', s); }catch(e){}
   }
 
-  const HERO_SVG = `
-    <path class="outline" d="M50 8 C28 8 18 28 20 48 L18 60 L30 56 L28 70 L50 66 L72 70 L70 56 L82 60 L80 48 C82 28 72 8 50 8Z" fill="#101815" stroke-width="2"/>
-    <ellipse cx="50" cy="44" rx="24" ry="20" fill="#0b1210"/>
-    <circle class="eye" cx="41" cy="44" r="3.6"/>
-    <circle class="eye" cx="59" cy="44" r="3.6"/>
+  // One named character per Signal Color (9 September 2026) — until now
+  // Signal Color only recolored one single silhouette; the user asked for
+  // an actual distinct character per color, shown wherever the hero already
+  // appears (title screen, path intro, boss encounter). Kept in the same
+  // visual family on purpose (this project tried and rejected detailed
+  // character/face art — see "Визуальная концепция" in CLAUDE.md): every
+  // character shares the exact same body/arms/legs paths from the old
+  // HERO_SVG, only the HEAD differs, so they read as one cast, not five
+  // unrelated designs. HERO_BODY_SVG below is that shared, unchanged body.
+  // Names go through tr() (charMint/charAmber/... in js/i18n.js) rather
+  // than living here as plain strings — the user asked for these
+  // characters the same session localization shipped, and a name is UI
+  // chrome like a button label, not course content, so it gets the same
+  // EN/RU treatment (Patch/Патч, Trace/Трейс, ...) instead of staying
+  // English-only like module/task text does.
+  const CHARACTER_KEYS = { mint:'charMint', amber:'charAmber', violet:'charViolet', cyan:'charCyan', rose:'charRose' };
+  const HERO_BODY_SVG = `
     <path class="outline" d="M34 78 L30 150 L44 150 L48 96 L52 96 L56 150 L70 150 L66 78 Z" fill="#101815" stroke-width="2"/>
     <rect class="outline" x="8" y="76" width="16" height="46" rx="4" fill="#0b1210" stroke-width="2"/>
     <rect class="outline" x="76" y="76" width="16" height="46" rx="4" fill="#0b1210" stroke-width="2"/>`;
+  const HERO_HEADS = {
+    // Patch (mint) — the original hood, two round eyes.
+    mint: `
+      <path class="outline" d="M50 8 C28 8 18 28 20 48 L18 60 L30 56 L28 70 L50 66 L72 70 L70 56 L82 60 L80 48 C82 28 72 8 50 8Z" fill="#101815" stroke-width="2"/>
+      <ellipse cx="50" cy="44" rx="24" ry="20" fill="#0b1210"/>
+      <circle class="eye" cx="41" cy="44" r="3.6"/>
+      <circle class="eye" cx="59" cy="44" r="3.6"/>`,
+    // Trace (amber) — same hood, a single horizontal visor slit instead of
+    // two eyes — "tracing" a line across the screen.
+    amber: `
+      <path class="outline" d="M50 8 C28 8 18 28 20 48 L18 60 L30 56 L28 70 L50 66 L72 70 L70 56 L82 60 L80 48 C82 28 72 8 50 8Z" fill="#101815" stroke-width="2"/>
+      <ellipse cx="50" cy="44" rx="24" ry="20" fill="#0b1210"/>
+      <rect class="eye" x="33" y="41" width="34" height="6" rx="3"/>`,
+    // Null (violet) — a faceted hexagon head instead of a rounded hood.
+    violet: `
+      <path class="outline" d="M50 8 L76 24 L76 56 L50 72 L24 56 L24 24 Z" fill="#101815" stroke-width="2"/>
+      <circle class="eye" cx="41" cy="42" r="3.2"/>
+      <circle class="eye" cx="59" cy="42" r="3.2"/>`,
+    // Ping (cyan) — the hood plus a short antenna, one blinking "signal" dot.
+    cyan: `
+      <line x1="50" y1="8" x2="50" y2="0" stroke="#0b1210" stroke-width="3"/>
+      <circle cx="50" cy="0" r="3.4" class="eye"/>
+      <path class="outline" d="M50 8 C28 8 18 28 20 48 L18 60 L30 56 L28 70 L50 66 L72 70 L70 56 L82 60 L80 48 C82 28 72 8 50 8Z" fill="#101815" stroke-width="2"/>
+      <ellipse cx="50" cy="44" rx="24" ry="20" fill="#0b1210"/>
+      <circle class="eye" cx="41" cy="44" r="3.6"/>
+      <circle class="eye" cx="59" cy="44" r="3.6"/>`,
+    // Byte (rose) — a small rounded-square head, one centered cyclops eye.
+    rose: `
+      <rect class="outline" x="26" y="14" width="48" height="42" rx="14" fill="#101815" stroke-width="2"/>
+      <circle class="eye" cx="50" cy="34" r="5.2"/>`
+  };
+  function heroSvgFor(signal){
+    return (HERO_HEADS[signal] || HERO_HEADS.mint) + HERO_BODY_SVG;
+  }
 
   // A short SYSTEM briefing on entering a module — built entirely from the
   // module's own real data (desc, task count, the boss task's actual title
@@ -145,7 +191,12 @@
     m15: {spikes:6, jitter:.2, rot:0, eyes:'pair', accent:'strings'},
     m16: {spikes:13, jitter:.25, rot:0, eyes:'triangle'}
   };
-  function renderBossVisual(moduleId){
+  // defeated: the module's boss task is already cleared (state.completed).
+  // Same silhouette (still recognizably THIS module's boss, not swapped
+  // for generic "dead" art), but knocked onto its side (rotated + squashed
+  // flatter) with X eyes instead of its normal ones and lower opacity — a
+  // cheap, purely-CSS-transform "K.O." rather than new art per boss.
+  function renderBossVisual(moduleId, defeated){
     const look = BOSS_LOOK[moduleId] || BOSS_LOOK.m1;
     const seed = hashStr(moduleId);
     const path = bossBlobPath(look.spikes, look.jitter, look.rot, seed);
@@ -171,17 +222,23 @@
     if(look.accent === 'spiral'){
       extra += `<path d="M100 100 m0 -10 a10 10 0 1 1 -8 16 a5 5 0 1 1 3 -8" fill="none" stroke="#ff6b6b" stroke-width="2" opacity=".7"/>`;
     }
-    const eyes = (BOSS_EYE_PATTERNS[look.eyes] || []).map(e => `<circle cx="${e.cx}" cy="${e.cy}" r="${e.r}" fill="#ff6b6b"/>`).join('');
-    return `
-      <svg viewBox="0 0 200 200">
+    const eyes = (BOSS_EYE_PATTERNS[look.eyes] || []).map(e => defeated
+      ? `<g stroke="#ff6b6b" stroke-width="2"><line x1="${e.cx-3.2}" y1="${e.cy-3.2}" x2="${e.cx+3.2}" y2="${e.cy+3.2}"/><line x1="${e.cx-3.2}" y1="${e.cy+3.2}" x2="${e.cx+3.2}" y2="${e.cy-3.2}"/></g>`
+      : `<circle cx="${e.cx}" cy="${e.cy}" r="${e.r}" fill="#ff6b6b"/>`
+    ).join('');
+    const body = `
         <path d="${path}" fill="none" stroke="#ff6b6b" stroke-width="13" stroke-linejoin="round"/>
         ${look.eyes !== 'none' && look.accent !== 'stack' && look.accent !== 'crosshair' ? `<circle cx="100" cy="100" r="7" fill="#2a0a0a"/>` : ''}
         ${eyes}
-        ${extra}
+        ${extra}`;
+    return `
+      <svg viewBox="0 0 200 200">
+        ${defeated ? `<g transform="rotate(65 100 100) scale(1,0.65)" opacity=".55">${body}</g>` : body}
       </svg>`;
   }
 
   function renderBossHeader(t, m){
+    const defeated = !!state.completed[t.id];
     return `
       <div class="boss-header">
         <div class="arcade arcade-screen" data-signal="${getSignal()}">
@@ -192,17 +249,31 @@
               <div class="arcade-hud-right">${m.checkpoint ? tr('checkpointLabel').toUpperCase() : tr('moduleLabel').toUpperCase() + ' ' + m.num}</div>
             </div>
             <div>
-              <div class="boss-tag">${tr('bossTag')}</div>
+              <div class="boss-tag">${defeated ? tr('bossTagDefeated') : tr('bossTag')}</div>
               <div class="boss-name">${escapeHtml(taskField(t, m, 'title')).toUpperCase()}</div>
-              <div class="boss-track"><i></i></div>
+              <div class="boss-track"><i style="${defeated ? 'width:4%' : ''}"></i></div>
             </div>
             <div class="boss-arena">
-              <svg class="boss-hero" viewBox="0 0 100 160">${HERO_SVG}</svg>
-              <div class="boss-ring">${renderBossVisual(m.id)}</div>
+              <svg class="boss-hero" viewBox="0 0 100 160">${heroSvgFor(getSignal())}</svg>
+              <div class="boss-ring">${renderBossVisual(m.id, defeated)}</div>
             </div>
           </div>
         </div>
       </div>`;
+  }
+
+  // Re-renders the boss encounter block in place right after its task is
+  // marked done — runCheck()/runPredictCheck()/the checklist handler only
+  // ever patch the specific task card + stats + progress, not the whole
+  // room, so without this the boss-header sitting above the task kept
+  // showing its "not defeated" pose until the visitor left the module and
+  // came back (state.completed was already true, just nothing had told
+  // renderBossHeader to run again with it). Called right alongside
+  // showVictory() at each of its 3 call sites, so the header updates while
+  // that overlay is still showing, not only after Continue is dismissed.
+  function refreshBossHeader(t, m){
+    const old = document.querySelector('.boss-header');
+    if(old) old.outerHTML = renderBossHeader(t, m);
   }
 
   function showVictory(t, m){
@@ -236,6 +307,19 @@
   function applySignalEverywhere(){
     const s = getSignal();
     document.querySelectorAll('.arcade').forEach(el => { el.dataset.signal = s; });
+    // The character (head shape + name) tied to the chosen Signal Color —
+    // redrawn into the two STATIC svg placeholders left in index.html
+    // (#title-hero-svg, #path-hero-svg) every time the signal changes, not
+    // just once on load. The third spot the hero appears (boss encounter)
+    // is already generated fresh by renderBossHeader() itself each time,
+    // so it doesn't need updating here.
+    const svg = heroSvgFor(s);
+    const titleHero = document.getElementById('title-hero-svg');
+    if(titleHero) titleHero.innerHTML = svg;
+    const pathHero = document.getElementById('path-hero-svg');
+    if(pathHero) pathHero.innerHTML = svg;
+    const nameEl = document.getElementById('character-name');
+    if(nameEl) nameEl.textContent = tr(CHARACTER_KEYS[s] || CHARACTER_KEYS.mint);
   }
 
   function initTitleScreen(){
@@ -503,7 +587,7 @@
       // sitting right there in m.tasks, not a made-up decoration.
       const bossTask = m.tasks && m.tasks.find(x => x.boss);
       const bossPreview = bossTask
-        ? `<div class="node-boss">${renderBossVisual(m.id)}</div>`
+        ? `<div class="node-boss${state.completed[bossTask.id] ? ' defeated' : ''}">${renderBossVisual(m.id, !!state.completed[bossTask.id])}</div>`
         : '';
 
       node.innerHTML = `
@@ -721,7 +805,7 @@
         btn.textContent = tr('done');
         renderStats();
         if(m) updateRoomProgress(m);
-        if(t.boss && m) showVictory(t, m);
+        if(t.boss && m){ refreshBossHeader(t, m); showVictory(t, m); }
       });
       room.querySelector(`[data-hint="${t.id}"]`).addEventListener('click', () => {
         document.getElementById(`hint-${t.id}`).classList.toggle('show');
@@ -1137,7 +1221,7 @@
       document.getElementById(`task-${t.id}`).classList.add('done');
       renderStats();
       if(m) updateRoomProgress(m);
-      if(t.boss && m) showVictory(t, m);
+      if(t.boss && m){ refreshBossHeader(t, m); showVictory(t, m); }
     }
   }
 
@@ -1174,7 +1258,7 @@
       document.getElementById(`task-${t.id}`).classList.add('done');
       renderStats();
       if(m) updateRoomProgress(m);
-      if(t.boss && m) showVictory(t, m);
+      if(t.boss && m){ refreshBossHeader(t, m); showVictory(t, m); }
     } else {
       resEl.innerHTML = `${tr('predictWrongTitle')}${tr('predictWrongBody', {actual: escapeHtml(actual).replace(/\n/g,'<br>')})}`;
     }
@@ -1207,6 +1291,11 @@
     });
     const cta = document.getElementById('title-cta');
     if(cta && cta.dataset.state) cta.textContent = tr(cta.dataset.state === 'continue' ? 'titleContinue' : 'titleNewGame');
+    // Character name isn't behind [data-i18n] (it's set from JS, not a
+    // static tag) — re-resolve it too so switching language updates
+    // "Patch" -> "Патч" without needing to also touch Signal Color.
+    const nameEl = document.getElementById('character-name');
+    if(nameEl) nameEl.textContent = tr(CHARACTER_KEYS[getSignal()] || CHARACTER_KEYS.mint);
     if(!document.getElementById('view-path').hidden) renderPath();
     if(currentModuleId && !document.getElementById('view-module').hidden) openModule(currentModuleId, true);
   }
