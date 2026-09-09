@@ -105,6 +105,30 @@
 
   .wrap{max-width:1180px;margin:0 auto;padding:0 20px 80px;}
 
+  /* Animated screen transitions (9 Sept 2026, user request) — see
+     switchView()/goToInner() in app.js for the JS side. Applies to the 5
+     mutually-exclusive top-level screens: #view-title, #site-wrap (the
+     title<->everything-else transition), and #view-path/#view-module/
+     #view-stats/#view-settings (transitions between the 4 sections living
+     inside #site-wrap). `.view-enter-fwd`/`.view-enter-back` are the START
+     state a screen is given right before it's un-hidden, removed on the
+     very next frame so the browser actually animates FROM that state TO
+     rest; `.view-leave` is added to the outgoing screen and only opacity
+     fades (no slide) so forward and backward motion reads as the newly
+     arriving screen's direction, not a mirrored pair of overlapping
+     slides. `prefers-reduced-motion` collapses all of it to an instant cut
+     — same end state, no animation, matching how the rest of the site
+     already treats scroll-to-top as `behavior:'smooth'` conditionally
+     (browsers already honor that media query for scrollTo automatically;
+     transitions need it spelled out explicitly since they're plain CSS). */
+  #view-title, #site-wrap, .view{ transition: opacity .32s ease, transform .32s ease; }
+  .view-enter-fwd{ opacity:0; transform: translateY(14px) scale(.98); }
+  .view-enter-back{ opacity:0; transform: translateY(-14px) scale(.98); }
+  .view-leave{ opacity:0; }
+  @media (prefers-reduced-motion: reduce){
+    #view-title, #site-wrap, .view{ transition:none; }
+  }
+
   /* topbar */
   .topbar{
     position:sticky; top:0; z-index:20;
@@ -300,7 +324,12 @@
     padding:12px 14px;color:var(--ink);font-size:13.5px;line-height:1.6;
     font-family:'JetBrains Mono',monospace;white-space:pre;
   }
-  textarea.editor:focus{outline:2px solid var(--accent);outline-offset:-1px;}
+  /* No focus outline on the code/answer textareas (9 Sept 2026, user
+     request) — was a plain 2px border in the site's base accent color,
+     unrelated to the arcade Signal Color theme it sits inside on
+     #view-module, and read as a visual glitch rather than a deliberate
+     focus state. */
+  textarea.editor:focus{outline:none;}
 
   .editor-wrap{
     display:flex;align-items:stretch;height:150px;
@@ -654,8 +683,14 @@
   .hero-decor{ display:none; }
   @media (min-width:900px){
     .hero-decor{
-      display:block; position:absolute; top:-10px; right:12px; width:150px; height:240px;
-      opacity:.16; pointer-events:none;
+      /* Was pinned to top:-10px — sat near the top of a taller .hero block
+         (kicker+h2+2 paragraphs), leaving a visibly empty gap underneath it
+         that read as an arrow-worthy layout bug (9 Sept 2026 user report:
+         "этого чудика куда-то по центру"). Vertically centered on .hero's
+         own height instead, so it sits level with the text block as a
+         whole rather than anchored to just its first line. */
+      display:block; position:absolute; top:50%; right:12px; width:150px; height:240px;
+      transform:translateY(-50%); opacity:.16; pointer-events:none;
     }
   }
   #view-path.arcade .hero-decor .outline{ stroke: var(--a-accent); }
@@ -704,10 +739,74 @@
 
   #view-module.arcade{ background: var(--a-bg0); margin: 0 -20px; padding: 0 20px 40px; }
 
-  #view-module.arcade .room-head .kicker{ font-family:'Press Start 2P',monospace; font-size:9px; color: var(--a-accent); }
-  #view-module.arcade .room-head h2{ color:#e8e8ec; }
-  #view-module.arcade .backbtn{ color: var(--a-dim); }
-  #view-module.arcade .backbtn:hover{ color:#e8e8ec; }
+  #view-module.arcade .room-head .kicker,
+  #view-stats.arcade .room-head .kicker,
+  #view-settings.arcade .room-head .kicker{ font-family:'Press Start 2P',monospace; font-size:9px; color: var(--a-accent); }
+  #view-module.arcade .room-head h2,
+  #view-stats.arcade .room-head h2,
+  #view-settings.arcade .room-head h2{ color:#e8e8ec; }
+  #view-module.arcade .backbtn,
+  #view-stats.arcade .backbtn,
+  #view-settings.arcade .backbtn{ color: var(--a-dim); }
+  #view-module.arcade .backbtn:hover,
+  #view-stats.arcade .backbtn:hover,
+  #view-settings.arcade .backbtn:hover{ color:#e8e8ec; }
+
+  /* Stats page (9 Sept 2026) */
+  .stats-tiles{ display:flex; gap:14px; flex-wrap:wrap; margin:18px 0 24px; }
+  #view-stats.arcade .stats-tile{
+    background: var(--a-bg0); border:1px solid var(--a-edge); padding:14px 18px; flex:1; min-width:130px;
+  }
+  #view-stats.arcade .stats-tile .k{ font-size:10px; color: var(--a-dim); text-transform:uppercase; letter-spacing:.06em; }
+  #view-stats.arcade .stats-tile .v{
+    font-family:'Press Start 2P',monospace; font-size:18px; color: var(--a-accent); margin-top:6px;
+  }
+  #view-stats.arcade .stats-history-head{
+    font-family:'Press Start 2P',monospace; font-size:10px; color: var(--a-dim); letter-spacing:.05em; margin-bottom:8px;
+  }
+  #view-stats.arcade .stats-history{ display:flex; flex-direction:column; gap:1px; background: var(--a-edge); border:1px solid var(--a-edge); }
+  #view-stats.arcade .stats-row{
+    display:grid; grid-template-columns:36px 1fr 100px; gap:12px; align-items:center;
+    background: var(--a-bg0); padding:10px 14px; font-size:13px; color:#e8e8ec;
+  }
+  #view-stats.arcade .stats-row.locked{ opacity:.4; }
+  #view-stats.arcade .stats-row .num{ font-family:'Press Start 2P',monospace; font-size:9px; color: var(--a-dim2); }
+  #view-stats.arcade .stats-row .phase{ font-size:11px; color: var(--a-dim); margin-top:2px; }
+  #view-stats.arcade .stats-row .status{
+    font-family:'Press Start 2P',monospace; font-size:8px; text-align:right; letter-spacing:.03em;
+  }
+  #view-stats.arcade .stats-row .status.done{ color:#3ecf6b; }
+  #view-stats.arcade .stats-row .status.available{ color: var(--a-accent); }
+  #view-stats.arcade .stats-row .status.locked{ color: var(--a-dim2); }
+  @media (max-width:520px){
+    #view-stats.arcade .stats-row{ grid-template-columns:28px 1fr; }
+    #view-stats.arcade .stats-row .status{ grid-column:2; text-align:left; margin-top:4px; }
+  }
+
+  /* Settings page (9 Sept 2026) */
+  #view-settings.arcade .settings-row{
+    display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap;
+    padding:16px 0; border-bottom:1px solid var(--a-edge);
+  }
+  #view-settings.arcade .settings-row:last-child{ border-bottom:none; }
+  #view-settings.arcade .settings-label .t{ font-size:14px; color:#e8e8ec; }
+  #view-settings.arcade .settings-label .d{ font-size:11px; color: var(--a-dim); margin-top:2px; }
+  #view-settings.arcade .settings-swatches{ display:flex; gap:8px; }
+  #view-settings.arcade .settings-sw{
+    width:24px; height:24px; border-radius:50%; border:2px solid transparent; cursor:pointer; appearance:none; padding:0;
+  }
+  #view-settings.arcade .settings-sw.active{ border-color:#e8e8ec; }
+  #view-settings.arcade .settings-dangerbtn{
+    font-family:'Press Start 2P',monospace; font-size:9px; padding:10px 16px;
+    background:transparent; border:1px solid var(--a-danger); color: var(--a-danger); cursor:pointer; appearance:none;
+  }
+  #view-settings.arcade .settings-dangerbtn:hover{ background: rgba(255,107,107,.1); }
+  #view-settings.arcade .segbtn{ display:flex; border:1px solid var(--a-edge); }
+  #view-settings.arcade .segbtn button{
+    background:transparent; border:none; color: var(--a-dim); cursor:pointer; appearance:none;
+    font-family:'Press Start 2P',monospace; font-size:9px; padding:9px 16px;
+  }
+  #view-settings.arcade .segbtn button.active{ background: var(--a-bg0); color: var(--a-accent); }
 
   #view-module.arcade .card{ background: var(--a-bg1); border-color: var(--a-edge); box-shadow:none; }
   /* Task cards read as plain recolored light-UI cards next to the more
@@ -744,6 +843,21 @@
      --a-bg0/--a-edge the real editor uses. */
   #view-module.arcade .code-preview{ background: var(--a-bg0); border-color: var(--a-edge); color:#e8e8ec; }
   #view-module.arcade textarea.editor{ background: var(--a-bg0); border-color: var(--a-edge); color:#e8e8ec; caret-color:#e8e8ec; }
+  /* Regression found 9 Sept 2026 (user report: "перестали подсвечиваться
+     переменные и операторы другим цветом") — the rule right above was
+     meant only for the predict-task guess textarea (which has no syntax
+     overlay under it, so its own text needs to be visible), but it
+     targets `textarea.editor` with no further scoping, and the REAL code
+     editor's textarea shares that exact same class — so it was also
+     getting `color:#e8e8ec`, opaque, instead of the base rule's
+     `color:transparent` that lets .editor-highlight's token-colored text
+     show through it. Text was never actually gone; it was just an opaque
+     copy sitting on top of the highlighted one, hiding it completely.
+     Restored transparency here specifically for the wrapped (real editor)
+     case — higher selector specificity than the rule above (extra
+     `.editor-wrap` class) wins regardless of source order, so this one
+     rule is enough without touching the predict-guess textarea's rule. */
+  #view-module.arcade .editor-wrap textarea.editor{ color:transparent; }
 
   #view-module.arcade .chip{ background: var(--a-bg0); border-color: var(--a-edge); color: var(--a-dim); }
   #view-module.arcade .chip.good{ background: rgba(60,255,140,.12); color:#3ecf6b; border-color:transparent; }
@@ -895,6 +1009,17 @@
 
   .topbar.arcade .hud-streak b{ color: var(--a-danger2); }
   .topbar.arcade .hud-flame{ font-size:12px; filter:saturate(1.2); }
+
+  /* Stats/Settings nav (9 Sept 2026) — same small-caps HUD-button treatment
+     as the language switch right next to it, not a new visual language. */
+  .topbar-nav{ display:flex; gap:8px; }
+  .topbar.arcade .topbar-navbtn{
+    font-family:'Press Start 2P',monospace; font-size:8px; letter-spacing:.03em;
+    padding:7px 10px; background:transparent; border:1px solid var(--a-edge); color: var(--a-dim);
+    cursor:pointer; appearance:none;
+  }
+  .topbar.arcade .topbar-navbtn:hover{ color:#e8e8ec; border-color: var(--a-accent); }
+  @media (max-width:720px){ .topbar.arcade .topbar-navbtn{ padding:7px 8px; font-size:7px; } }
 
   /* EN/RU language switch — segmented pair, same building block used in the
      topbar (small) and on the title screen (.lang-switch-title, larger).

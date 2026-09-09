@@ -405,6 +405,88 @@
     overlay.hidden = false;
   }
 
+  // Animated screen transitions (9 Sept 2026, user request: "переработать
+  // переходы по страницам") — every top-level screen switch used to be an
+  // instant `hidden = true/false` toggle with no visual continuity at all.
+  // switchView() replaces that one pair of toggles with a fade + a small
+  // vertical slide (14px, 320ms): `showEl` starts offset and transparent,
+  // is un-hidden, then animates to its resting position on the next frame;
+  // `hideEl` just fades out and is only actually `hidden` once its fade has
+  // finished (so it stays laid out and visible, mid-fade, right up to that
+  // point — CSS can't transition an element that's already display:none).
+  // `direction` only changes which way `showEl` slides in from ('back'
+  // slides down from above, anything else — 'fwd' — slides up from below)
+  // so going deeper into the site and backing out of it read as opposite
+  // motions, not the same animation played twice. A stale timer on the
+  // SAME hideEl is cleared first — otherwise two quick nav clicks in a row
+  // could have an earlier call's delayed `hidden = true` fire after a
+  // later call already changed what that element should be doing.
+  // Shared counter stamped onto whichever element is CURRENTLY being shown
+  // by any switchView() call — see the race-condition comment inside the
+  // scheduled hide below for why this exists.
+  let viewGenCounter = 0;
+  function switchView(hideEl, showEl, direction){
+    if(!showEl || hideEl === showEl){ if(showEl) showEl.hidden = false; return; }
+    if(!hideEl || hideEl.hidden){ showEl.hidden = false; return; }
+    const enterCls = direction === 'back' ? 'view-enter-back' : 'view-enter-fwd';
+    showEl.classList.add(enterCls);
+    showEl.hidden = false;
+    void showEl.offsetWidth; // force a style flush WITH the enter class applied — this is what makes the
+    // immediately-following class removal (below) register as a real state
+    // change the browser transitions from, without needing to wait for a
+    // requestAnimationFrame callback. An earlier version used rAF here to
+    // remove the class on "next frame" — found broken during verification
+    // (9 Sept 2026): rAF simply never fired in this session's automation
+    // browser tab, leaving the entering screen permanently stuck at
+    // opacity:0 with the enter-class transform never cleared. Since a
+    // backgrounded real browser tab also pauses rAF, the same stuck-screen
+    // bug could hit a real visitor who switches tabs mid-navigation — not
+    // just a tooling artifact worth working around, an actual robustness
+    // gap. The offsetWidth-forced-reflow pattern needs no callback at all.
+    showEl.classList.remove(enterCls);
+    // Stamping showEl here (not just hideEl below) is what fixes a rapid
+    // back-and-forth navigation race found while testing this feature
+    // (9 Sept 2026): open a module then immediately hit "back" — path is
+    // still mid-fade-out from the FIRST transition (its hide is on a timer,
+    // not instant) when the SECOND transition re-shows it. The stale timer
+    // from transition 1 was never told path got re-claimed, so ~170ms
+    // later it fired anyway and hid the screen the visitor was now
+    // actually looking at — both path and module ended up hidden at once,
+    // a blank page. Stamping the shared counter on every element a
+    // switchView call actually wants visible lets the OTHER half's
+    // scheduled hide (below) recognize it's been outdated and skip itself.
+    showEl.dataset.viewGen = String(++viewGenCounter);
+    hideEl.classList.add('view-leave');
+    const myGen = String(++viewGenCounter);
+    hideEl.dataset.viewGen = myGen;
+    clearTimeout(hideEl._viewLeaveTimer);
+    hideEl._viewLeaveTimer = setTimeout(() => {
+      // Only hide if nothing re-showed this exact element since THIS
+      // transition scheduled the hide (see the comment above).
+      if(hideEl.dataset.viewGen === myGen){
+        hideEl.hidden = true;
+        hideEl.classList.remove('view-leave');
+      }
+    }, 320);
+  }
+
+  // Which of the 4 mutually-exclusive sections inside #site-wrap is
+  // currently showing — path/module/stats/settings all live at this one
+  // level (title screen is a level above, handled separately by the
+  // title-cta/brand-home handlers below).
+  function currentInnerView(){
+    if(!document.getElementById('view-module').hidden) return 'module';
+    if(!document.getElementById('view-stats').hidden) return 'stats';
+    if(!document.getElementById('view-settings').hidden) return 'settings';
+    return 'path';
+  }
+  const INNER_VIEW_IDS = {path:'view-path', module:'view-module', stats:'view-stats', settings:'view-settings'};
+  function goToInner(target, direction){
+    const from = currentInnerView();
+    if(from === target) return;
+    switchView(document.getElementById(INNER_VIEW_IDS[from]), document.getElementById(INNER_VIEW_IDS[target]), direction);
+  }
+
   // Every top-level .arcade container (title, path/world-map, victory) shares
   // the same persisted signal color — applied here whenever it changes, not
   // just on the screen the swatch happens to live on.
@@ -442,9 +524,6 @@
     const cta = document.getElementById('title-cta');
     if(cta){
       cta.addEventListener('click', () => {
-        document.getElementById('view-title').hidden = true;
-        document.getElementById('site-wrap').hidden = false;
-        document.getElementById('view-path').hidden = false;
         // Defensive: title -> path should always land on a clean path
         // screen. Without this, Title -> open a module -> click the
         // brand/logo (which only hides #site-wrap, not #view-module
@@ -453,7 +532,14 @@
         // both rendered on the same page at once (found by the user,
         // 9 September 2026). Belt-and-suspenders with the brand-home fix
         // right below, which is the actual place that state goes stale.
+        // Set BEFORE the animated switchView below, not after — #site-wrap
+        // itself is what's animating in here, its children should already
+        // be in their resting state (no separate inner transition) the
+        // moment it becomes visible.
         document.getElementById('view-module').hidden = true;
+        document.getElementById('view-stats').hidden = true;
+        document.getElementById('view-settings').hidden = true;
+        document.getElementById('view-path').hidden = false;
         currentModuleId = null;
         // The path list was last rendered whenever initState() first ran
         // (page load, always in whatever language was current then) or the
@@ -462,14 +548,13 @@
         // neither of those re-ran it, so it can be stale here. Cheap to
         // just always re-render on the way in rather than track that.
         renderPath();
+        switchView(document.getElementById('view-title'), document.getElementById('site-wrap'), 'fwd');
         window.scrollTo({top:0, behavior:'smooth'});
       });
     }
     const brandBtn = document.getElementById('brand-home');
     if(brandBtn){
       brandBtn.addEventListener('click', () => {
-        document.getElementById('site-wrap').hidden = true;
-        document.getElementById('view-title').hidden = false;
         // Root cause of the "path and an old module both visible" bug:
         // this only ever hid the outer #site-wrap, leaving whichever of
         // #view-path/#view-module was showing underneath still marked
@@ -478,8 +563,11 @@
         // handler un-hid #site-wrap again on the next "Continue click".
         // Reset to the same clean state the back-to-path button leaves.
         document.getElementById('view-module').hidden = true;
+        document.getElementById('view-stats').hidden = true;
+        document.getElementById('view-settings').hidden = true;
         document.getElementById('view-path').hidden = true;
         currentModuleId = null;
+        switchView(document.getElementById('site-wrap'), document.getElementById('view-title'), 'back');
         window.scrollTo({top:0, behavior:'smooth'});
       });
     }
@@ -487,6 +575,140 @@
     if(continueBtn){
       continueBtn.addEventListener('click', () => {
         document.getElementById('victory-overlay').hidden = true;
+      });
+    }
+  }
+
+  // Stats and Settings pages (9 Sept 2026, user request — new pages
+  // alongside the transition rework above). The topbar's own nav buttons
+  // are visible even on the title screen (the topbar is sticky and always
+  // rendered), so a click there has to handle both "already inside
+  // #site-wrap, just switch which inner view is showing" AND "still on
+  // the title screen, need the title->site-wrap transition too" —
+  // goToTopLevelPage() below covers both starting points with one
+  // function instead of duplicating the same landing logic per button.
+  function goToTopLevelPage(target){
+    const titleVisible = !document.getElementById('view-title').hidden;
+    if(titleVisible){
+      document.getElementById('view-path').hidden = true;
+      document.getElementById('view-module').hidden = true;
+      document.getElementById('view-stats').hidden = (target !== 'stats');
+      document.getElementById('view-settings').hidden = (target !== 'settings');
+      currentModuleId = null;
+      switchView(document.getElementById('view-title'), document.getElementById('site-wrap'), 'fwd');
+    } else {
+      goToInner(target, 'fwd');
+    }
+    if(target === 'stats') renderStatsPage();
+    if(target === 'settings') renderSettingsPage();
+    window.scrollTo({top:0, behavior:'smooth'});
+  }
+
+  function initTopbarNav(){
+    const statsBtn = document.getElementById('nav-stats');
+    if(statsBtn) statsBtn.addEventListener('click', () => goToTopLevelPage('stats'));
+    const settingsBtn = document.getElementById('nav-settings');
+    if(settingsBtn) settingsBtn.addEventListener('click', () => goToTopLevelPage('settings'));
+    const backStats = document.getElementById('btn-back-stats');
+    if(backStats) backStats.addEventListener('click', () => { goToInner('path', 'back'); window.scrollTo({top:0, behavior:'smooth'}); });
+    const backSettings = document.getElementById('btn-back-settings');
+    if(backSettings) backSettings.addEventListener('click', () => { goToInner('path', 'back'); window.scrollTo({top:0, behavior:'smooth'}); });
+  }
+
+  // Real per-module status/unlock rules live in renderPath() — mirrored
+  // here rather than shared via a helper because renderPath's version is
+  // entangled with building the DOM nodes themselves, and the stats page
+  // only needs the 3 labels (done/available/locked) plus a done/total
+  // count, not the node markup.
+  function renderStatsPage(){
+    const room = document.getElementById('stats-room');
+    if(!room) return;
+    const lvl = computeLevel(state.xp);
+    const doneModules = MODULES.filter(m => m.tasks && m.tasks.every(t => state.completed[t.id])).length;
+    const rows = MODULES.map((m, idx) => {
+      let status = moduleStatus(m);
+      const unlocked = prevModuleDone(idx);
+      if(!m.tasks && !unlocked) status = 'locked';
+      if(!m.tasks && unlocked) status = 'available';
+      const doneCount = m.tasks ? m.tasks.filter(t => state.completed[t.id]).length : 0;
+      const totalCount = m.tasks ? m.tasks.length : null;
+      const statusLabel = status === 'done' ? tr('statsStatusDone') : (unlocked ? tr('statsStatusAvail') : tr('statsStatusLocked'));
+      return `
+        <div class="stats-row ${status === 'locked' ? 'locked' : ''}">
+          <div class="num">${String(m.num).padStart(2,'0')}</div>
+          <div class="body">
+            <div class="t">${escapeHtml(mField(m, 'title'))}</div>
+            <div class="phase">${phaseName(m.phase)}${totalCount ? ' · ' + tr('chipTasks', {done: doneCount, total: totalCount}) : ''}</div>
+          </div>
+          <div class="status ${status}">${statusLabel}</div>
+        </div>`;
+    }).join('');
+    room.innerHTML = `
+      <div class="room-head"><h2>${tr('statsHeading')}</h2></div>
+      <div class="stats-tiles">
+        <div class="stats-tile"><div class="k">${tr('statsLevel')}</div><div class="v">LV.${String(lvl).padStart(2,'0')}</div></div>
+        <div class="stats-tile"><div class="k">${tr('statsXp')}</div><div class="v">${String(state.xp).padStart(4,'0')}</div></div>
+        <div class="stats-tile"><div class="k">${tr('statsStreak')}</div><div class="v">🔥 ${String(state.streak || 0).padStart(2,'0')}</div></div>
+        <div class="stats-tile"><div class="k">${tr('statsCleared')}</div><div class="v">${doneModules} / ${MODULES.length}</div></div>
+      </div>
+      <div class="stats-history-head">${tr('statsHistoryHeading')}</div>
+      <div class="stats-history">${rows}</div>`;
+  }
+
+  function renderSettingsPage(){
+    const room = document.getElementById('settings-room');
+    if(!room) return;
+    const swatchesHtml = SIGNALS.map(s => `<button type="button" class="settings-sw ${s===getSignal()?'active':''}" data-signal="${s}" style="--c:var(--a-accent)"></button>`).join('');
+    room.innerHTML = `
+      <div class="room-head"><h2>${tr('settingsHeading')}</h2></div>
+      <div class="settings-row">
+        <div class="settings-label"><div class="t">${tr('titleSignalColor')}</div><div class="d">${tr('settingsSignalDesc')}</div></div>
+        <div class="settings-swatches" id="settings-swatches">${swatchesHtml}</div>
+      </div>
+      <div class="settings-row">
+        <div class="settings-label"><div class="t">${tr('settingsLangLabel')}</div><div class="d">${tr('settingsLangDesc')}</div></div>
+        <div class="segbtn" id="settings-langseg">
+          <button type="button" data-lang="en" class="${getLang()==='en'?'active':''}">EN</button>
+          <button type="button" data-lang="ru" class="${getLang()==='ru'?'active':''}">RU</button>
+        </div>
+      </div>
+      <div class="settings-row">
+        <div class="settings-label"><div class="t">${tr('settingsResetLabel')}</div><div class="d">${tr('settingsResetDesc')}</div></div>
+        <button type="button" class="settings-dangerbtn" id="settings-reset-btn">${tr('settingsResetBtn')}</button>
+      </div>`;
+    // Real per-color swatch backgrounds — set via inline style rather than
+    // baked into a CSS class per signal, same reason SIGNAL_HEX exists
+    // nowhere else in the codebase: the 5 hexes already live in exactly one
+    // place, the title screen's own swatch markup in index.html, and
+    // duplicating them into a lookup table just to color these dots risked
+    // the two silently drifting apart on a future palette tweak.
+    const SIGNAL_HEX = {mint:'#8ff0a8', amber:'#f2c94c', violet:'#c78ff0', cyan:'#6bc8f0', rose:'#ff6fae'};
+    room.querySelectorAll('.settings-sw').forEach(btn => {
+      btn.style.background = SIGNAL_HEX[btn.dataset.signal];
+      btn.addEventListener('click', () => {
+        setSignal(btn.dataset.signal);
+        applySignalEverywhere();
+        room.querySelectorAll('.settings-sw').forEach(b => b.classList.toggle('active', b === btn));
+      });
+    });
+    room.querySelectorAll('#settings-langseg button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if(btn.dataset.lang === getLang()) return;
+        setLang(btn.dataset.lang);
+        applyLangEverywhere();
+        renderSettingsPage();
+      });
+    });
+    const resetBtn = document.getElementById('settings-reset-btn');
+    if(resetBtn){
+      resetBtn.addEventListener('click', () => {
+        if(!window.confirm(tr('settingsResetConfirm'))) return;
+        state = {xp:0, completed:{}, streak:0, lastOpen:null};
+        persist();
+        renderStats();
+        renderPath();
+        renderSettingsPage();
+        updateTitleCta(false);
       });
     }
   }
@@ -727,8 +949,16 @@
   function openModule(id, preserveScroll){
     currentModuleId = id;
     const m = MODULES.find(x=>x.id===id);
-    document.getElementById('view-path').hidden = true;
-    document.getElementById('view-module').hidden = false;
+    // preserveScroll is a re-render of the module the visitor is already
+    // looking at (a language switch), not real navigation — skip the
+    // transition then, goToInner() already no-ops if 'module' is already
+    // showing so this only matters for the timing, not correctness.
+    if(!preserveScroll){
+      goToInner('module', 'fwd');
+    } else {
+      document.getElementById('view-path').hidden = true;
+      document.getElementById('view-module').hidden = false;
+    }
     const room = document.getElementById('module-room');
 
     if(!m.tasks){
@@ -1372,9 +1602,8 @@
 
   document.getElementById('btn-back').addEventListener('click', () => {
     currentModuleId = null;
-    document.getElementById('view-module').hidden = true;
-    document.getElementById('view-path').hidden = false;
     renderPath();
+    goToInner('path', 'back');
     window.scrollTo({top:0, behavior:'smooth'});
   });
 
@@ -1402,6 +1631,8 @@
     if(nameEl) nameEl.textContent = tr(CHARACTER_KEYS[getSignal()] || CHARACTER_KEYS.mint);
     if(!document.getElementById('view-path').hidden) renderPath();
     if(currentModuleId && !document.getElementById('view-module').hidden) openModule(currentModuleId, true);
+    if(!document.getElementById('view-stats').hidden) renderStatsPage();
+    if(!document.getElementById('view-settings').hidden) renderSettingsPage();
   }
 
   function initLangSwitch(){
@@ -1417,5 +1648,6 @@
 
   initLangSwitch();
   initTitleScreen();
+  initTopbarNav();
   initState();
 })();

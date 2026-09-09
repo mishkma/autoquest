@@ -32,6 +32,19 @@ var I18N = {
     // topbar / brand
     brandBackTitle: 'Back to title screen',
     hudLv: 'LV', hudXp: 'XP',
+    navStats: 'STATS', navSettings: 'SETTINGS',
+    // stats page
+    statsHeading: 'PROGRESS STATS',
+    statsLevel: 'LEVEL', statsXp: 'TOTAL XP', statsStreak: 'STREAK', statsCleared: 'CLEARED',
+    statsHistoryHeading: 'MODULE HISTORY',
+    statsStatusDone: 'DONE', statsStatusAvail: 'AVAILABLE', statsStatusLocked: 'LOCKED',
+    // settings page
+    settingsHeading: 'SETTINGS',
+    settingsSignalDesc: 'Cosmetic accent across the whole site',
+    settingsLangLabel: 'LANGUAGE', settingsLangDesc: 'UI chrome and course content',
+    settingsResetLabel: 'Reset progress', settingsResetDesc: 'Start the course over on this device',
+    settingsResetBtn: 'RESET',
+    settingsResetConfirm: 'Reset ALL progress on this device? This cannot be undone.',
     // title screen
     titleStages: 'STAGES',
     titleTagline: 'python, one real bug at a time',
@@ -115,6 +128,17 @@ var I18N = {
   ru: {
     brandBackTitle: 'Вернуться на титульный экран',
     hudLv: 'УР', hudXp: 'ОП',
+    navStats: 'СТАТИСТИКА', navSettings: 'НАСТРОЙКИ',
+    statsHeading: 'СТАТИСТИКА ПРОГРЕССА',
+    statsLevel: 'УРОВЕНЬ', statsXp: 'ВСЕГО ОП', statsStreak: 'СЕРИЯ', statsCleared: 'ПРОЙДЕНО',
+    statsHistoryHeading: 'ИСТОРИЯ МОДУЛЕЙ',
+    statsStatusDone: 'ПРОЙДЕН', statsStatusAvail: 'ДОСТУПЕН', statsStatusLocked: 'ЗАКРЫТ',
+    settingsHeading: 'НАСТРОЙКИ',
+    settingsSignalDesc: 'Косметический акцент по всему сайту',
+    settingsLangLabel: 'ЯЗЫК', settingsLangDesc: 'UI-хром и контент курса',
+    settingsResetLabel: 'Сбросить прогресс', settingsResetDesc: 'Начать курс заново на этом устройстве',
+    settingsResetBtn: 'СБРОСИТЬ',
+    settingsResetConfirm: 'Сбросить ВЕСЬ прогресс на этом устройстве? Это нельзя отменить.',
     titleStages: 'УРОВНЕЙ',
     titleTagline: 'python, один настоящий баг за раз',
     titleSignalColor: 'ЦВЕТ СИГНАЛА',
