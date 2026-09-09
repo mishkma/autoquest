@@ -485,11 +485,21 @@
         </div>
         <div class="task-title">${t.title}</div>
         <div class="task-goal">${t.goal}</div>
-        <div class="editor-wrap">
-          <div class="editor-gutter" id="gutter-${t.id}" aria-hidden="true">1</div>
-          <div class="editor-code">
-            <pre class="editor-highlight" id="hl-${t.id}" aria-hidden="true"><code></code></pre>
-            <textarea class="editor" id="code-${t.id}" spellcheck="false" wrap="off"></textarea>
+        <div class="editor-hud">
+          <div class="editor-hudbar">
+            <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+            <span class="editor-hudlabel">${t.id}.py</span>
+            <span class="editor-hudlive"><i></i>READY</span>
+          </div>
+          <div class="editor-hudframe">
+            <span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span>
+            <div class="editor-wrap">
+              <div class="editor-gutter" id="gutter-${t.id}" aria-hidden="true">1</div>
+              <div class="editor-code">
+                <pre class="editor-highlight" id="hl-${t.id}" aria-hidden="true"><code></code></pre>
+                <textarea class="editor" id="code-${t.id}" spellcheck="false" wrap="off"></textarea>
+              </div>
+            </div>
           </div>
         </div>
         ${t.reasonPrompt ? `

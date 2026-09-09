@@ -609,6 +609,39 @@
   #view-module.arcade .task.done{ opacity:.8; }
   #view-module.arcade .task.done .task-title::after{ color:#3ecf6b; }
 
+  /* Editor HUD frame — decorative wrapper ONLY, added around .editor-wrap.
+     Nothing here touches .editor-wrap/.editor-gutter/.editor-highlight/
+     textarea.editor/.tok-* — those keep their exact existing styling. */
+  #view-module.arcade .editor-hud{ margin-bottom:0; }
+  #view-module.arcade .editor-hudbar{
+    display:flex; align-items:center; gap:8px; padding:8px 12px;
+    background: var(--a-bg0); border:1px solid var(--a-edge); border-bottom:none; border-radius:10px 10px 0 0;
+  }
+  #view-module.arcade .editor-hudbar .dot{ width:9px; height:9px; border-radius:50%; flex:0 0 auto; }
+  #view-module.arcade .editor-hudbar .dot.r{ background:#ff6b6b; }
+  #view-module.arcade .editor-hudbar .dot.y{ background:#f2c94c; }
+  #view-module.arcade .editor-hudbar .dot.g{ background: var(--a-accent); }
+  #view-module.arcade .editor-hudlabel{
+    margin-left:6px; font-family:'Press Start 2P',monospace; font-size:8px; color: var(--a-dim); letter-spacing:.03em;
+  }
+  #view-module.arcade .editor-hudlive{
+    margin-left:auto; font-family:'Press Start 2P',monospace; font-size:7.5px; color: var(--a-accent);
+    display:flex; align-items:center; gap:5px;
+  }
+  #view-module.arcade .editor-hudlive i{ width:6px; height:6px; border-radius:50%; background: var(--a-accent); box-shadow:0 0 6px var(--a-accent); }
+
+  #view-module.arcade .editor-hudframe{
+    position:relative; padding:10px; border:1px solid var(--a-edge); border-top:none; border-radius:0 0 10px 10px;
+    background: var(--a-bg0);
+  }
+  /* inset 6px so the bracket corners sit fully inside the frame, never
+     touching (and clipped by) the frame's own edge or border-radius */
+  #view-module.arcade .editor-hudframe .corner{ position:absolute; width:14px; height:14px; border:2px solid var(--a-accent); pointer-events:none; }
+  #view-module.arcade .editor-hudframe .corner.tl{ top:6px; left:6px; border-right:none; border-bottom:none; }
+  #view-module.arcade .editor-hudframe .corner.tr{ top:6px; right:6px; border-left:none; border-bottom:none; }
+  #view-module.arcade .editor-hudframe .corner.bl{ bottom:6px; left:6px; border-right:none; border-top:none; }
+  #view-module.arcade .editor-hudframe .corner.br{ bottom:6px; right:6px; border-left:none; border-top:none; }
+
   @media (max-width:520px){
     #view-module.arcade{ margin: 0 -14px; padding: 0 14px 32px; }
   }
