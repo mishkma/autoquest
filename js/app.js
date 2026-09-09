@@ -163,14 +163,30 @@
     let s = seed % 2147483647; if(s <= 0) s += 2147483646;
     return function(){ s = (s * 16807) % 2147483647; return (s - 1) / 2147483646; };
   }
+  // Builds the jagged vertex ring, then traces it with quadratic curves
+  // through each edge's midpoint (a standard "smooth blob" trick: each
+  // vertex becomes a curve CONTROL point rather than a point ON the path,
+  // so the outline bulges toward every spike without ever hitting a raw
+  // corner). 9 Sept 2026 polish pass ("боссов тоже покрасивее") — straight
+  // segments between the same seeded vertices read as a crude zigzag;
+  // curving through them keeps every silhouette exactly as
+  // distinct/seeded as before (same spikes/jitter/rot/seed -> same
+  // vertices) while looking like a designed creature outline instead of
+  // a wireframe dump.
   function bossBlobPath(spikes, jitter, rotDeg, seed){
     const rand = seededRand(seed), cx = 100, cy = 100, baseR = 78;
-    let d = '';
+    const pts = [];
     for(let i = 0; i < spikes; i++){
       const angle = (Math.PI * 2 * i / spikes) + (rotDeg * Math.PI / 180);
       const r = baseR * (1 + (rand() * 2 - 1) * jitter);
-      const x = cx + Math.cos(angle) * r, y = cy + Math.sin(angle) * r;
-      d += (i === 0 ? 'M' : 'L') + x.toFixed(1) + ' ' + y.toFixed(1) + ' ';
+      pts.push({x: cx + Math.cos(angle) * r, y: cy + Math.sin(angle) * r});
+    }
+    const mid = (a, b) => ({x: (a.x + b.x) / 2, y: (a.y + b.y) / 2});
+    const m0 = mid(pts[pts.length - 1], pts[0]);
+    let d = `M${m0.x.toFixed(1)} ${m0.y.toFixed(1)} `;
+    for(let i = 0; i < pts.length; i++){
+      const m = mid(pts[i], pts[(i + 1) % pts.length]);
+      d += `Q${pts[i].x.toFixed(1)} ${pts[i].y.toFixed(1)} ${m.x.toFixed(1)} ${m.y.toFixed(1)} `;
     }
     return d + 'Z';
   }
@@ -232,12 +248,32 @@
     if(look.accent === 'spiral'){
       extra += `<path d="M100 100 m0 -10 a10 10 0 1 1 -8 16 a5 5 0 1 1 3 -8" fill="none" stroke="#ff6b6b" stroke-width="2" opacity=".7"/>`;
     }
+    // Glowing eyes instead of flat dots — a pale near-white core (readable
+    // against the fill added below) with a soft, larger, low-opacity halo
+    // of the same red behind it. Still just 2 circles per eye, no new
+    // asset weight, but reads as "lit from within" rather than a sticker.
     const eyes = (BOSS_EYE_PATTERNS[look.eyes] || []).map(e => defeated
       ? `<g stroke="#ff6b6b" stroke-width="2"><line x1="${e.cx-3.2}" y1="${e.cy-3.2}" x2="${e.cx+3.2}" y2="${e.cy+3.2}"/><line x1="${e.cx-3.2}" y1="${e.cy+3.2}" x2="${e.cx+3.2}" y2="${e.cy-3.2}"/></g>`
-      : `<circle cx="${e.cx}" cy="${e.cy}" r="${e.r}" fill="#ff6b6b"/>`
+      : `<circle cx="${e.cx}" cy="${e.cy}" r="${e.r+2.6}" fill="#ff6b6b" opacity=".35"/><circle cx="${e.cx}" cy="${e.cy}" r="${e.r}" fill="#ffd9d3"/>`
     ).join('');
+    // Radial gradient gives the silhouette actual volume instead of being
+    // a hollow outline (the 9 Sept 2026 "make the bosses prettier" pass) —
+    // lighter coral core fading to a dark maroon edge, same red family the
+    // rest of the boss art already uses (eyes/accents), just shaded. id is
+    // unique per module+state because #view-path renders many of these
+    // <svg> elements on screen at once — a shared id would make every
+    // instance point at whichever <radialGradient> happens to be first
+    // in the DOM.
+    const gradId = `bossGrad-${moduleId}${defeated ? '-d' : ''}`;
     const body = `
-        <path d="${path}" fill="none" stroke="#ff6b6b" stroke-width="13" stroke-linejoin="round"/>
+        <defs>
+          <radialGradient id="${gradId}" cx="40%" cy="35%" r="65%">
+            <stop offset="0%" stop-color="#ffab9e"/>
+            <stop offset="55%" stop-color="#ff6b6b"/>
+            <stop offset="100%" stop-color="#7a1f1f"/>
+          </radialGradient>
+        </defs>
+        <path d="${path}" fill="url(#${gradId})" fill-opacity=".6" stroke="#ff6b6b" stroke-width="6" stroke-linejoin="round"/>
         ${look.eyes !== 'none' && look.accent !== 'stack' && look.accent !== 'crosshair' ? `<circle cx="100" cy="100" r="7" fill="#2a0a0a"/>` : ''}
         ${eyes}
         ${extra}`;
