@@ -481,7 +481,12 @@
 
   /* boss encounter header — sits above the real task card, purely decorative */
   .boss-header{ margin-bottom:14px; }
-  .boss-header .arcade-screen{ max-width:none; }
+  /* Was max-width:none (fill the room's own column exactly) back when that
+     column was 920px — at the current 1180px it left a large flat black
+     area to the right of the icons/track, since nothing inside this
+     flex-column content stretches to fill width. Capped instead of removed:
+     this is a decorative encounter screen, not the content column itself. */
+  .boss-header .arcade-screen{ max-width:900px; }
   .boss-header .arcade-content{ padding: 18px 20px 18px 54px; gap:16px; }
   .boss-name{ font-family:'Press Start 2P',monospace; font-size:12px; color:var(--a-danger); letter-spacing:.03em; }
   .boss-track{ margin-top:8px; height:9px; background:#1a0d0d; border:2px solid #3a1414; max-width:340px; }

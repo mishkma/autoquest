@@ -409,7 +409,11 @@
   // told to run again). Cleared when navigating back to the path.
   let currentModuleId = null;
 
-  function openModule(id){
+  // preserveScroll: true when re-rendering the SAME module the visitor is
+  // already looking at (a language switch) rather than actually navigating
+  // to it — jumping back to the top on every language toggle was reported
+  // as annoying, and there's no navigation happening to justify it.
+  function openModule(id, preserveScroll){
     currentModuleId = id;
     const m = MODULES.find(x=>x.id===id);
     document.getElementById('view-path').hidden = true;
@@ -426,7 +430,7 @@
           <div class="display">${tr('soonTitle')}</div>
           <p>${tr('soonDesc')}</p>
         </div>`;
-      window.scrollTo({top:0, behavior:'smooth'});
+      if(!preserveScroll) window.scrollTo({top:0, behavior:'smooth'});
       return;
     }
 
@@ -467,7 +471,7 @@
     if(m.homework){ m.homework.forEach(t => bindTask(room, t, m)); }
 
     updateRoomProgress(m);
-    window.scrollTo({top:0, behavior:'smooth'});
+    if(!preserveScroll) window.scrollTo({top:0, behavior:'smooth'});
   }
 
   // Theory items are either a plain string (rendered as-is, old format) or
@@ -1048,7 +1052,7 @@
     const cta = document.getElementById('title-cta');
     if(cta && cta.dataset.state) cta.textContent = tr(cta.dataset.state === 'continue' ? 'titleContinue' : 'titleNewGame');
     if(!document.getElementById('view-path').hidden) renderPath();
-    if(currentModuleId && !document.getElementById('view-module').hidden) openModule(currentModuleId);
+    if(currentModuleId && !document.getElementById('view-module').hidden) openModule(currentModuleId, true);
   }
 
   function initLangSwitch(){
