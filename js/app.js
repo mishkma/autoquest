@@ -731,7 +731,10 @@
     const room = document.getElementById('stats-room');
     if(!room) return;
     const lvl = computeLevel(state.xp);
-    const doneModules = MODULES.filter(m => m.tasks && m.tasks.every(t => state.completed[t.id])).length;
+    const doneModulesOnly = MODULES.filter(m => !m.checkpoint && m.tasks && m.tasks.every(t => state.completed[t.id])).length;
+    const totalModulesOnly = MODULES.filter(m => !m.checkpoint).length;
+    const doneCheckpointsOnly = MODULES.filter(m => m.checkpoint && m.tasks && m.tasks.every(t => state.completed[t.id])).length;
+    const totalCheckpointsOnly = MODULES.filter(m => m.checkpoint).length;
     const rows = MODULES.map((m, idx) => {
       let status = moduleStatus(m);
       const unlocked = prevModuleDone(idx);
@@ -756,7 +759,8 @@
         <div class="stats-tile"><div class="k">${tr('statsLevel')}</div><div class="v">LV.${String(lvl).padStart(2,'0')}</div></div>
         <div class="stats-tile"><div class="k">${tr('statsXp')}</div><div class="v">${String(state.xp).padStart(4,'0')}</div></div>
         <div class="stats-tile"><div class="k">${tr('statsStreak')}</div><div class="v">🔥 ${String(state.streak || 0).padStart(2,'0')}</div></div>
-        <div class="stats-tile"><div class="k">${tr('statsCleared')}</div><div class="v">${doneModules} / ${MODULES.length}</div></div>
+        <div class="stats-tile"><div class="k">${tr('statsModulesLabel')}</div><div class="v">${doneModulesOnly} / ${totalModulesOnly}</div></div>
+        <div class="stats-tile"><div class="k">${tr('statsCheckpointsLabel')}</div><div class="v">${doneCheckpointsOnly} / ${totalCheckpointsOnly}</div></div>
       </div>
       <div class="stats-history-head">${tr('statsHistoryHeading')}</div>
       <div class="stats-history">${rows}</div>`;

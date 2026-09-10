@@ -1,0 +1,417 @@
+<title>HUD Explained</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Karla:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+  /* ============ tokens — lifted verbatim from AutoQuest's own .arcade
+     signal-color system (css/style.css), mint is default. This mockup
+     commits to the single dark arcade world on purpose, same as the real
+     site's title/path/module screens — no light theme to design against. */
+  :root{
+    --a-accent:#8ff0a8; --a-glow:rgba(60,255,140,.16); --a-line:rgba(60,255,140,.045);
+    --a-dim:#6f9e7c; --a-dim2:#4a6b52; --a-gutternum:#22381f;
+    --a-bg0:#0b0f0c; --a-bg1:#080a09; --a-edge:#1f2a22;
+    --a-danger:#ff6b6b; --a-danger2:#ffa24c;
+    --ink:#e8e8ec; --ink-dim:#9aa2ac; --page-bg:#07090a; --panel-bg:#0d1210;
+  }
+  [data-signal="amber"]{ --a-accent:#f2c94c; --a-glow:rgba(255,190,60,.16); --a-line:rgba(255,190,60,.05); --a-dim:#a4915a; --a-dim2:#6b5c34; --a-gutternum:#3a3020; --a-bg0:#0f0d0a; --a-bg1:#0a0907; --a-edge:#2a2318; }
+  [data-signal="violet"]{ --a-accent:#c78ff0; --a-glow:rgba(180,110,255,.16); --a-line:rgba(180,110,255,.05); --a-dim:#8f7aa8; --a-dim2:#5c4a70; --a-gutternum:#2c2038; --a-bg0:#0d0a10; --a-bg1:#0a080c; --a-edge:#241a2e; }
+  [data-signal="cyan"]{ --a-accent:#6bc8f0; --a-glow:rgba(60,190,255,.16); --a-line:rgba(60,190,255,.05); --a-dim:#5c8ea4; --a-dim2:#37596b; --a-gutternum:#1c3040; --a-bg0:#080f12; --a-bg1:#070c0e; --a-edge:#182833; }
+  [data-signal="rose"]{ --a-accent:#ff6fae; --a-glow:rgba(255,90,160,.16); --a-line:rgba(255,90,160,.05); --a-dim:#a4607e; --a-dim2:#6b3a52; --a-gutternum:#3a1d2c; --a-bg0:#100910; --a-bg1:#0a070a; --a-edge:#2a1a24; }
+
+  *{box-sizing:border-box;}
+  body{ margin:0; background:var(--page-bg); color:var(--ink); font-family:'Karla',ui-sans-serif,system-ui,sans-serif; line-height:1.55; }
+  .mono{ font-family:'JetBrains Mono',ui-monospace,monospace; }
+  .px{ font-family:'Press Start 2P',monospace; }
+  h1,h2,h3{ font-family:'Manrope',ui-sans-serif,sans-serif; text-wrap:balance; margin:0; }
+  code{ font-family:'JetBrains Mono',monospace; background:var(--a-bg1); border:1px solid var(--a-edge); padding:1px 5px; border-radius:3px; font-size:.92em; color:var(--a-accent); }
+
+  /* ---------- page frame ---------- */
+  .page{ max-width:980px; margin:0 auto; padding:28px 20px 80px; }
+  .intro{ padding-bottom:22px; border-bottom:1px solid var(--a-edge); margin-bottom:26px; }
+  .eyebrow{ font-family:'JetBrains Mono',monospace; font-size:12px; letter-spacing:.1em; text-transform:uppercase; color:var(--a-accent); margin-bottom:10px; }
+  .intro h1{ font-size:26px; color:var(--ink); }
+  .intro p{ color:var(--ink-dim); max-width:62ch; margin-top:10px; font-size:14.5px; }
+
+  /* ---------- controls ---------- */
+  .controls{ display:flex; gap:22px; flex-wrap:wrap; align-items:flex-end; margin-bottom:26px; }
+  .ctrl-group .lbl{ font-family:'JetBrains Mono',monospace; font-size:10.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-dim); margin-bottom:8px; }
+  .signal-row{ display:flex; gap:9px; }
+  .sw{ width:26px; height:26px; border-radius:50%; border:2px solid transparent; cursor:pointer; appearance:none; padding:0; background:var(--c); box-shadow:0 0 0 1px var(--a-edge) inset; }
+  .sw.active{ border-color:#fff; }
+  .segrow{ display:flex; border:1px solid var(--a-edge); border-radius:8px; overflow:hidden; }
+  .segrow button{
+    font-family:'JetBrains Mono',monospace; font-size:12.5px; padding:9px 16px; background:var(--a-bg1); border:none;
+    border-right:1px solid var(--a-edge); color:var(--ink-dim); cursor:pointer;
+  }
+  .segrow button:last-child{ border-right:none; }
+  .segrow button.active{ background:var(--a-bg0); color:var(--a-accent); }
+  .segrow button:hover:not(.active){ color:var(--ink); }
+
+  /* ---------- live topbar stage ---------- */
+  .stage-label{ font-family:'JetBrains Mono',monospace; font-size:10.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-dim); margin-bottom:10px; }
+  .stage{
+    position:relative; border:1px solid var(--a-edge); border-radius:10px; overflow:visible; margin-bottom:10px;
+    background:
+      linear-gradient(var(--a-line),var(--a-line)) 0 0/100% 25px,
+      var(--panel-bg);
+  }
+  .topbar{ position:relative; background:var(--a-bg1); border-bottom:1px solid var(--a-edge); border-radius:10px 10px 0 0; }
+  .topbar-inner{ padding:13px 20px; display:flex; align-items:center; gap:22px; flex-wrap:wrap; }
+  .brand{ display:flex; align-items:center; gap:8px; margin-right:auto; }
+  .brand .mark{ font-family:'JetBrains Mono',monospace; color:var(--a-accent); font-weight:700; }
+  .brand h2{ font-family:'Press Start 2P',monospace; font-size:12px; font-weight:400; color:#e8e8ec; }
+
+  .hud{ display:flex; align-items:center; gap:20px; font-family:'Press Start 2P',monospace; font-size:10px; position:relative; }
+  .hud-cell{ display:flex; align-items:center; gap:7px; position:relative; }
+  .hud-label{ color:var(--a-dim); letter-spacing:.03em; }
+  .hud-cell b{ color:#e8e8ec; font-variant-numeric:tabular-nums; font-weight:400; }
+  .hud-xpbar{ position:relative; width:88px; height:11px; background:var(--a-bg0); border:2px solid var(--a-edge); overflow:hidden; }
+  .hud-xpbar>i{ display:block; height:100%; width:34%; background:var(--a-accent); }
+  .hud-xpbar::after{ content:''; position:absolute; inset:0; pointer-events:none; background:repeating-linear-gradient(90deg,transparent 0 7px,rgba(0,0,0,.6) 7px 9px); }
+  .hud-streak b{ color:var(--a-danger2); }
+  .hud-flame{ font-size:12px; }
+
+  .navbtn{ font-family:'Press Start 2P',monospace; font-size:8px; letter-spacing:.03em; padding:7px 10px; background:transparent; border:1px solid var(--a-edge); color:var(--a-dim); }
+
+  .stage-body{ padding:46px 20px 40px; text-align:center; }
+  .stage-hint{ font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--a-dim); }
+  .stage-hint b{ color:var(--a-accent); font-weight:600; }
+
+  /* icon glyphs used by option B, pixel-crisp like .briefing-icon */
+  .hud-icon{ width:11px; height:11px; shape-rendering:crispEdges; }
+  .hud-icon rect{ fill:currentColor; }
+  .hud-cell.lv .hud-icon{ color:var(--a-accent); }
+  .hud-cell.xp .hud-icon{ color:var(--a-accent); }
+
+  /* info affordance (options A & B) */
+  .infodot{
+    width:13px; height:13px; border-radius:50%; border:1px solid var(--a-dim); color:var(--a-dim);
+    font-family:'JetBrains Mono',monospace; font-size:9px; line-height:11px; text-align:center;
+    cursor:pointer; background:transparent; padding:0; flex:0 0 auto;
+  }
+  .infodot:hover{ border-color:var(--a-accent); color:var(--a-accent); }
+
+  /* corner-bracket popup card — reuses AutoQuest's own
+     .reset-confirm-panel motif (corner brackets, 1px border, --a-bg1)
+     instead of a browser-native tooltip/popover. */
+  .hud-pop{
+    position:absolute; top:calc(100% + 12px); z-index:30; width:198px;
+    background:var(--a-bg1); border:1px solid var(--a-accent);
+    padding:14px 13px 12px; box-shadow:0 16px 34px -16px rgba(0,0,0,.8);
+    font-family:'JetBrains Mono',monospace; font-size:11.5px; line-height:1.55; color:var(--ink);
+    text-align:left; opacity:0; transform:translateY(-4px); pointer-events:none; transition:opacity .12s ease, transform .12s ease;
+  }
+  .hud-pop.left{ left:0; } .hud-pop.center{ left:50%; transform:translate(-50%,-4px); }
+  .hud-pop.open{ opacity:1; transform:translateY(0); pointer-events:auto; }
+  .hud-pop.center.open{ transform:translate(-50%,0); }
+  .hud-pop .pt{ font-family:'Press Start 2P',monospace; font-size:8.5px; color:var(--a-accent); letter-spacing:.03em; margin-bottom:7px; display:block; }
+  .hud-pop .corner{ position:absolute; width:11px; height:11px; border:2px solid var(--a-accent); opacity:.85; pointer-events:none; }
+  .hud-pop .corner.tl{ top:6px; left:6px; border-right:none; border-bottom:none; }
+  .hud-pop .corner.tr{ top:6px; right:6px; border-left:none; border-bottom:none; }
+  .hud-pop .corner.bl{ bottom:6px; left:6px; border-right:none; border-top:none; }
+  .hud-pop .corner.br{ bottom:6px; right:6px; border-left:none; border-top:none; }
+
+  /* option C — one-time onboarding strip, same voice/frame as the real
+     in-module SYSTEM briefing (.briefing in css/style.css) */
+  .briefing{
+    display:flex; gap:10px; align-items:baseline; flex-wrap:wrap; row-gap:6px;
+    background:var(--a-bg1); border:1px solid var(--a-edge); border-radius:10px;
+    padding:14px 16px; margin:0 20px 16px; font-size:13px; line-height:1.65; color:#cfe8d6;
+    position:relative;
+  }
+  .briefing[hidden]{ display:none; }
+  .briefing-who{ font-family:'Press Start 2P',monospace; font-size:10px; color:var(--a-accent); flex:0 0 auto; }
+  .briefing b{ color:var(--a-accent); font-weight:600; }
+  .briefing-x{
+    position:absolute; top:8px; right:10px; background:none; border:none; color:var(--a-dim);
+    font-family:'JetBrains Mono',monospace; font-size:13px; cursor:pointer; padding:2px 5px;
+  }
+  .briefing-x:hover{ color:var(--a-accent); }
+  .replay-row{ text-align:center; padding:0 20px 6px; }
+  .replay-btn{
+    font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--a-dim); background:none; border:1px dashed var(--a-edge);
+    padding:6px 12px; border-radius:6px; cursor:pointer;
+  }
+  .replay-btn:hover{ color:var(--a-accent); border-color:var(--a-accent); }
+
+  /* ---------- write-up ---------- */
+  .writeup{ margin-top:8px; }
+  .opt-panel{ display:none; }
+  .opt-panel.active{ display:block; }
+  .opt-head{ display:flex; align-items:baseline; gap:12px; margin:34px 0 6px; }
+  .opt-head .n{ font-family:'Press Start 2P',monospace; font-size:11px; color:var(--a-accent); }
+  .opt-head h3{ font-size:19px; }
+  .opt-approach{ color:var(--ink-dim); font-size:14.5px; max-width:66ch; margin-bottom:16px; }
+  .kv-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:14px; margin-bottom:6px; }
+  .kv{ border:1px solid var(--a-edge); border-radius:8px; padding:13px 14px; background:var(--panel-bg); }
+  .kv .k{ font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.06em; text-transform:uppercase; color:var(--a-accent); margin-bottom:6px; }
+  .kv .v{ font-size:13.5px; color:var(--ink-dim); }
+  .kv .v ul{ margin:0; padding-left:18px; }
+  .kv .v li{ margin-bottom:4px; }
+
+  .reco{
+    margin-top:40px; border:1px solid var(--a-accent); border-radius:10px; padding:20px 22px; background:var(--a-bg1);
+  }
+  .reco .eyebrow{ margin-bottom:8px; }
+  .reco p{ color:var(--ink-dim); font-size:14.5px; max-width:68ch; }
+  .reco p+p{ margin-top:10px; }
+
+  .oq{ margin-top:30px; }
+  .oq h3{ font-size:15px; color:var(--ink); margin-bottom:10px; }
+  .oq ul{ margin:0; padding-left:20px; color:var(--ink-dim); font-size:13.5px; }
+  .oq li{ margin-bottom:7px; }
+
+  @media (max-width:640px){
+    .hud{ gap:12px; }
+    .hud-xpbar{ width:56px; }
+    .stage-body{ padding:40px 14px 32px; }
+  }
+</style>
+
+<div class="page" data-signal="mint" id="root">
+
+  <div class="intro">
+    <div class="eyebrow">AutoQuest · design concept</div>
+    <h1>Explaining the topbar HUD</h1>
+    <p>Three ways to make <code>LV 01</code> / the XP bar / <span style="white-space:nowrap">🔥 streak</span> make sense to a brand-new student, without falling back to a native browser tooltip. All three run on the real HUD markup and the real Signal Color tokens — pick a color and an option below to try it live.</p>
+  </div>
+
+  <div class="controls">
+    <div class="ctrl-group">
+      <div class="lbl">Signal color</div>
+      <div class="signal-row" id="signalRow">
+        <button class="sw active" data-signal="mint" style="--c:#8ff0a8"></button>
+        <button class="sw" data-signal="amber" style="--c:#f2c94c"></button>
+        <button class="sw" data-signal="violet" style="--c:#c78ff0"></button>
+        <button class="sw" data-signal="cyan" style="--c:#6bc8f0"></button>
+        <button class="sw" data-signal="rose" style="--c:#ff6fae"></button>
+      </div>
+    </div>
+    <div class="ctrl-group">
+      <div class="lbl">Option</div>
+      <div class="segrow" id="optRow">
+        <button class="active" data-opt="a">A · Tap-to-reveal card</button>
+        <button data-opt="b">B · Icon-first HUD</button>
+        <button data-opt="c">C · One-time briefing</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="stage-label">Live topbar — try it</div>
+  <div class="stage">
+    <div class="topbar">
+      <div class="topbar-inner">
+        <div class="brand"><span class="mark">&gt;_</span><h2>AutoQuest</h2></div>
+
+        <!-- Option A: plain compact HUD, each cell taps open a detail card -->
+        <div class="hud" id="hudA" style="display:none">
+          <div class="hud-cell lv" data-pop="lv"><span class="hud-label">LV</span><b>01</b></div>
+          <div class="hud-cell xp" data-pop="xp"><span class="hud-label">XP</span><div class="hud-xpbar"><i></i></div><b>0340</b></div>
+          <div class="hud-cell hud-streak" data-pop="streak"><span class="hud-flame">🔥</span><b>02</b></div>
+        </div>
+
+        <!-- Option B: icon glyph replaces/joins the text label so meaning
+             reads from shape, not just letters; small ⓘ opens the same
+             detail card on demand -->
+        <div class="hud" id="hudB" style="display:none">
+          <div class="hud-cell lv">
+            <svg class="hud-icon" viewBox="0 0 12 12"><rect x="5" y="0" width="2" height="2"/><rect x="3" y="2" width="2" height="2"/><rect x="7" y="2" width="2" height="2"/><rect x="1" y="4" width="2" height="2"/><rect x="9" y="4" width="2" height="2"/><rect x="1" y="6" width="10" height="2"/><rect x="1" y="8" width="10" height="2"/></svg>
+            <b>01</b>
+            <button class="infodot" data-pop="lv">?</button>
+          </div>
+          <div class="hud-cell xp">
+            <svg class="hud-icon" viewBox="0 0 12 12"><rect x="6" y="0" width="2" height="4"/><rect x="4" y="4" width="6" height="2"/><rect x="4" y="6" width="2" height="4"/><rect x="2" y="6" width="2" height="2"/></svg>
+            <div class="hud-xpbar"><i></i></div><b>0340</b>
+            <button class="infodot" data-pop="xp">?</button>
+          </div>
+          <div class="hud-cell hud-streak"><span class="hud-flame">🔥</span><b>02</b><button class="infodot" data-pop="streak">?</button></div>
+        </div>
+
+        <!-- Option C: plain compact HUD, identical at rest to A/B without
+             the info affordance — the explaining happens once, up front,
+             in the briefing strip below -->
+        <div class="hud" id="hudC" style="display:none">
+          <div class="hud-cell"><span class="hud-label">LV</span><b>01</b></div>
+          <div class="hud-cell xp"><span class="hud-label">XP</span><div class="hud-xpbar"><i></i></div><b>0340</b></div>
+          <div class="hud-cell hud-streak"><span class="hud-flame">🔥</span><b>02</b></div>
+        </div>
+
+        <div class="navbtn">STATS</div>
+      </div>
+
+      <!-- shared detail popup, used by A and B -->
+      <div class="hud-pop" id="hudPop">
+        <span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span>
+        <span class="pt" id="popTitle">LEVEL</span>
+        <span id="popBody">Rises automatically as your total XP crosses each threshold. A higher level doesn't unlock anything by itself — it's a running record of how much of the course you've cleared.</span>
+      </div>
+    </div>
+
+    <div class="briefing" id="briefing">
+      <span class="briefing-who">SYSTEM &gt;</span>
+      <span>Reading your HUD: <b>LV</b> rises as you earn <b>XP</b> from completed tasks, and <b>🔥</b> counts consecutive days with at least one task done. That's the whole panel — no hidden meters.<span class="briefing-cursor" style="display:inline-block;width:7px;height:12px;background:var(--a-accent);vertical-align:-2px;margin-left:3px;"></span></span>
+      <button class="briefing-x" id="briefingX" title="Dismiss — won't show again">×</button>
+    </div>
+    <div class="replay-row" id="replayRow" style="display:none">
+      <button class="replay-btn" id="replayBtn">↺ replay first-visit briefing (demo only)</button>
+    </div>
+
+    <div class="stage-body">
+      <div class="stage-hint" id="stageHint">Click <b>LV</b>, the XP bar, or <b>🔥</b> above to open its explanation.</div>
+    </div>
+  </div>
+
+  <div class="writeup">
+
+    <div class="opt-panel active" data-panel="a">
+      <div class="opt-head"><span class="n">A</span><h3>Tap-to-reveal card</h3></div>
+      <p class="opt-approach">The HUD stays exactly as compact as it is today. Clicking any cell opens a small corner-bracket card directly under it — the same panel language AutoQuest already uses for the reset-progress confirmation, just re-purposed as information instead of a warning. Closes on a second click or click-away.</p>
+      <div class="kv-grid">
+        <div class="kv"><div class="k">States</div><div class="v"><ul><li>Rest — identical to today's compact HUD</li><li>Open — one card at a time, closes the previous on a new tap</li><li>EN/RU — card text swaps with the language switch</li></ul></div></div>
+        <div class="kv"><div class="k">Fits because</div><div class="v">Reuses an already-approved motif (corner brackets, <code>--a-bg1</code>) instead of inventing new chrome — same reasoning that closed the side-margin and boss-header "empty space" issues.</div></div>
+        <div class="kv"><div class="k">Trade-off</div><div class="v">Doesn't solve "understand without interacting" on its own — a first-time visitor still has to discover that the HUD is clickable at all. Works on tap as well as click, so it's the one option with a real mobile path later.</div></div>
+      </div>
+    </div>
+
+    <div class="opt-panel" data-panel="b">
+      <div class="opt-head"><span class="n">B</span><h3>Icon-first HUD</h3></div>
+      <p class="opt-approach">Each cell gets a tiny pixel glyph (a level-up chevron stack, a spark for XP) standing next to the number, so the category reads from shape before anyone reads the abbreviation — closer to how a real arcade HUD (health icon, coin icon) works. A small <code>?</code> next to each cell still opens the same detail card from Option A for anyone who wants the exact rule.</p>
+      <div class="kv-grid">
+        <div class="kv"><div class="k">States</div><div class="v"><ul><li>Rest — icon + number, no text label needed, <code>?</code> visible but quiet</li><li>Open — same detail card as A</li></ul></div></div>
+        <div class="kv"><div class="k">Fits because</div><div class="v">Directly answers the requirement that the HUD should be readable "at a glance" rather than only on hover/tap — the icon carries meaning even if nobody ever opens a card.</div></div>
+        <div class="kv"><div class="k">Trade-off</div><div class="v">New icon vocabulary has to be learned once too — just a faster, shape-based version of that same learning curve. Slightly busier HUD than today's, and 🔥 already does this job for streak, so only LV/XP gain new glyphs.</div></div>
+      </div>
+    </div>
+
+    <div class="opt-panel" data-panel="c">
+      <div class="opt-head"><span class="n">C</span><h3>One-time briefing</h3></div>
+      <p class="opt-approach">The HUD itself never changes and carries no info affordance at all. Instead, the very first time someone reaches the topbar, a dismissible strip in the game-master's own <code>SYSTEM &gt;</code> voice (identical framing to the real per-module briefing) explains all three readings in one line. Dismissing it — or simply not re-showing it after the first session — means it never comes back.</p>
+      <div class="kv-grid">
+        <div class="kv"><div class="k">States</div><div class="v"><ul><li>First visit — briefing shown, dismissible</li><li>Every later visit — briefing gone, HUD stays maximally compact</li></ul></div></div>
+        <div class="kv"><div class="k">Fits because</div><div class="v">Teaches once, in the voice the course already uses to explain new things (module entry, boss encounters), then gets out of the way — no permanent UI tax on returning students.</div></div>
+        <div class="kv"><div class="k">Trade-off</div><div class="v">If someone dismisses it too fast, or forgets by module 8, there's no way back in short of a settings toggle — the least forgiving option of the three, and the only one that needs a stored "seen it" flag.</div></div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="reco">
+    <div class="eyebrow">Recommendation</div>
+    <p><b style="color:var(--ink)">A + B combined:</b> ship the icon glyphs from B (answers "readable without interacting" directly) with the tap-to-reveal card from A wired to the same cells, instead of the <code>?</code> button — so the HUD looks slightly richer at rest, and tapping any cell (not just a small dot) gives the full rule for anyone who wants it. C's onboarding voice is worth keeping in reserve for something bigger later (e.g. the first time XP or a streak actually changes) rather than spent here.</p>
+    <p>All three drop the native <code>title</code> tooltip shipped in the last pass — none of them depend on hover, which was the actual problem with that version.</p>
+  </div>
+
+  <div class="oq">
+    <h3>Open questions</h3>
+    <ul>
+      <li>Touch/mobile reveal — explicitly deferred per the approved requirements; A/B's tap-based card is the option that already has a path there once someone picks it up.</li>
+      <li>Exact glyph shapes for LV/XP in option B are placeholders here (chevron-stack / spark) — worth a quick second pass once a direction is chosen, same care as the per-signal boss silhouettes.</li>
+      <li>Should the detail card's copy match the three tooltip strings already shipped in <code>i18n.js</code> (<code>hudLvTitle</code>/<code>hudXpTitle</code>/<code>hudStreakTitle</code>), or does moving to a card change how much can be said (a card can hold a full sentence more comfortably than a tooltip)?</li>
+    </ul>
+  </div>
+
+</div>
+
+<script>
+(function(){
+  const root = document.getElementById('root');
+  const signalRow = document.getElementById('signalRow');
+  const optRow = document.getElementById('optRow');
+  const pop = document.getElementById('hudPop');
+  const popTitle = document.getElementById('popTitle');
+  const popBody = document.getElementById('popBody');
+  const briefing = document.getElementById('briefing');
+  const briefingX = document.getElementById('briefingX');
+  const replayRow = document.getElementById('replayRow');
+  const replayBtn = document.getElementById('replayBtn');
+  const stageHint = document.getElementById('stageHint');
+  const hudEls = { a: document.getElementById('hudA'), b: document.getElementById('hudB'), c: document.getElementById('hudC') };
+  const panels = document.querySelectorAll('.opt-panel');
+
+  const COPY = {
+    lv:     { title:'LEVEL', body:"Rises automatically as your total XP crosses each threshold. A higher level doesn't unlock anything by itself — it's a running record of how much of the course you've cleared." },
+    xp:     { title:'XP', body:'Experience earned by finishing tasks and challenges. Boss tasks and homework award more than a regular step.' },
+    streak: { title:'DAY STREAK', body:'Consecutive days with at least one task completed. Skip a day and it resets to zero — it does not track total days active.' }
+  };
+
+  let currentOpt = 'a';
+
+  function setSignal(sig){
+    root.setAttribute('data-signal', sig);
+    [...signalRow.children].forEach(b => b.classList.toggle('active', b.dataset.signal === sig));
+  }
+  signalRow.addEventListener('click', e => {
+    const b = e.target.closest('.sw'); if(!b) return;
+    setSignal(b.dataset.signal);
+  });
+
+  function closePop(){ pop.classList.remove('open'); pop.dataset.openFor = ''; }
+
+  function openPopFor(cellEl, key){
+    const c = COPY[key]; if(!c) return;
+    popTitle.textContent = c.title;
+    popBody.textContent = c.body;
+    const topbarInner = cellEl.closest('.topbar');
+    const cellRect = cellEl.getBoundingClientRect();
+    const barRect = topbarInner.getBoundingClientRect();
+    pop.classList.remove('left','center');
+    const left = cellRect.left - barRect.left;
+    pop.style.left = Math.max(12, Math.min(left, barRect.width - 210)) + 'px';
+    pop.classList.add('open');
+    pop.dataset.openFor = key;
+  }
+
+  function wireHud(hudEl){
+    hudEl.addEventListener('click', e => {
+      const trigger = e.target.closest('[data-pop]');
+      if(!trigger){ return; }
+      const key = trigger.dataset.pop;
+      if(pop.dataset.openFor === key){ closePop(); }
+      else { openPopFor(trigger, key); }
+    });
+  }
+  wireHud(hudEls.a); wireHud(hudEls.b);
+  document.addEventListener('click', e => {
+    if(!e.target.closest('.hud') && !e.target.closest('.hud-pop')) closePop();
+  });
+
+  function setOption(opt){
+    currentOpt = opt;
+    closePop();
+    Object.entries(hudEls).forEach(([k, el]) => el.style.display = (k === opt) ? 'flex' : 'none');
+    [...optRow.children].forEach(b => b.classList.toggle('active', b.dataset.opt === opt));
+    panels.forEach(p => p.classList.toggle('active', p.dataset.panel === opt));
+
+    if(opt === 'c'){
+      briefing.hidden = briefingDismissed;
+      replayRow.style.display = briefingDismissed ? 'block' : 'none';
+      stageHint.innerHTML = 'The HUD itself has no info affordance in this option — everything lives in the one-time briefing above.';
+    } else {
+      briefing.hidden = true;
+      replayRow.style.display = 'none';
+      stageHint.innerHTML = opt === 'a'
+        ? 'Click <b>LV</b>, the XP bar, or <b>🔥</b> above to open its explanation.'
+        : 'Icons carry the meaning at rest — click the small <b>?</b> for the full rule.';
+    }
+  }
+  optRow.addEventListener('click', e => {
+    const b = e.target.closest('button[data-opt]'); if(!b) return;
+    setOption(b.dataset.opt);
+  });
+
+  let briefingDismissed = false;
+  briefingX.addEventListener('click', () => {
+    briefingDismissed = true;
+    briefing.hidden = true;
+    replayRow.style.display = 'block';
+  });
+  replayBtn.addEventListener('click', () => {
+    briefingDismissed = false;
+    briefing.hidden = false;
+    replayRow.style.display = 'none';
+  });
+
+  setOption('a');
+})();
+</script>

@@ -38,7 +38,7 @@ var I18N = {
     navStats: 'STATS', navSettings: 'SETTINGS',
     // stats page
     statsHeading: 'PROGRESS STATS',
-    statsLevel: 'LEVEL', statsXp: 'TOTAL XP', statsStreak: 'STREAK', statsCleared: 'CLEARED',
+    statsLevel: 'LEVEL', statsXp: 'TOTAL XP', statsStreak: 'STREAK', statsModulesLabel: 'MODULES', statsCheckpointsLabel: 'CHECKPOINTS',
     statsHistoryHeading: 'MODULE HISTORY',
     statsStatusDone: 'DONE', statsStatusAvail: 'AVAILABLE', statsStatusLocked: 'LOCKED',
     // settings page
@@ -143,7 +143,7 @@ var I18N = {
     hudStreakTitle: 'Серия дней — сколько дней подряд выполнено хотя бы одно задание',
     navStats: 'СТАТИСТИКА', navSettings: 'НАСТРОЙКИ',
     statsHeading: 'СТАТИСТИКА ПРОГРЕССА',
-    statsLevel: 'УРОВЕНЬ', statsXp: 'ВСЕГО ОП', statsStreak: 'СЕРИЯ', statsCleared: 'ПРОЙДЕНО',
+    statsLevel: 'УРОВЕНЬ', statsXp: 'ВСЕГО ОП', statsStreak: 'СЕРИЯ', statsModulesLabel: 'МОДУЛИ', statsCheckpointsLabel: 'ЧЕКПОИНТЫ',
     statsHistoryHeading: 'ИСТОРИЯ МОДУЛЕЙ',
     statsStatusDone: 'ПРОЙДЕН', statsStatusAvail: 'ДОСТУПЕН', statsStatusLocked: 'ЗАКРЫТ',
     settingsHeading: 'НАСТРОЙКИ',
