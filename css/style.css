@@ -103,7 +103,7 @@
   button{font-family:inherit;}
   ::selection{background:var(--accent);color:var(--accent-ink);}
 
-  .wrap{max-width:1180px;margin:0 auto;padding:0 20px 80px;}
+  .wrap{max-width:920px;margin:0 auto;padding:0 20px 80px;}
 
   /* Animated screen transitions (9 Sept 2026, user request) — see
      switchView()/goToInner() in app.js for the JS side. Applies to the 5
@@ -137,7 +137,7 @@
     border-bottom:1px solid var(--edge);
   }
   .topbar-inner{
-    max-width:1180px;margin:0 auto;padding:14px 20px;
+    max-width:920px;margin:0 auto;padding:14px 20px;
     display:flex;align-items:center;gap:16px;flex-wrap:wrap;
   }
   .brand{
@@ -1053,7 +1053,7 @@
     background: var(--a-bg1); border-bottom:1px solid var(--a-edge); backdrop-filter:none;
   }
   .topbar.arcade .topbar-inner{
-    max-width:1180px; margin:0 auto; padding:11px 20px; display:flex; align-items:center; gap:22px; flex-wrap:wrap;
+    max-width:920px; margin:0 auto; padding:11px 20px; display:flex; align-items:center; gap:22px; flex-wrap:wrap;
   }
   .topbar.arcade .brand{ appearance:none; border:none; background:none; padding:0; cursor:pointer; display:flex; align-items:center; gap:8px; margin-right:auto; }
   .topbar.arcade .brand .mark{ font-family:'JetBrains Mono',monospace; color: var(--a-accent); font-weight:700; }
