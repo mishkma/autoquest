@@ -539,28 +539,30 @@
     box-shadow: inset 0 0 0 2px var(--a-edge), 0 20px 50px -24px rgba(0,0,0,.7);
     background: var(--a-bg0); overflow:hidden;
   }
-  #view-title{ padding:0; }
-  /* Stretch the title screen to fill the viewport (10 Sept 2026) — on tall/
-     wide monitors .arcade-content used to size purely to its own content
-     height (flex column, gap 22px), leaving raw body background showing
-     below .arcade-floor all the way to the window's bottom edge. min-height
-     (not height) so short viewports still just grow with content instead of
-     clipping; 100dvh listed after 100vh so it wins where supported (avoids
-     the classic 100vh mobile browser-chrome jump — see CLAUDE.md's "flex-
-     container-without-height" bug class, same family of issue, different
-     cause). display:flex + column turns .arcade-content/.arcade-floor into
-     stacked flex children filling that height instead of a plain block that
-     stops at its content. Scoped to #view-title .arcade-screen only — do NOT
-     widen this to the bare .arcade-screen class, the boss header and victory
-     overlay have their own scoped max-width/sizing rules this must not touch. */
+  /* Fill the viewport height at the OUTER container, not by stretching the
+     card's own content (10 Sept 2026, second pass — see ROADMAP.md). First
+     attempt forced #view-title .arcade-screen{min-height:100vh} +
+     .arcade-content{flex:1;justify-content:center}, which did stop the raw
+     --ground body color from showing below the card, but on tall/wide
+     monitors it also vertically stretched the card's own modest content
+     (logo/hero/swatches/CTA) across the full viewport height — user reported
+     this reads as "too much" empty space, disproportionate rather than
+     adaptive. Fix: #view-title itself (the flex host) centers a
+     naturally-sized .arcade-screen within the viewport — comfortable, equal
+     breathing room above/below on tall screens, and the card's internal
+     proportions stay the same regardless of window height. 100dvh listed
+     after 100vh so it wins where supported (avoids the classic 100vh mobile
+     browser-chrome jump — see CLAUDE.md's "flex-container-without-height" bug
+     class, same family of issue, different cause). */
+  #view-title{
+    padding:0; min-height:100vh; min-height:100dvh;
+    display:flex; align-items:center; justify-content:center;
+  }
   #view-title .arcade-screen{
-    max-width:none; border-left:none; border-right:none;
-    min-height:100vh; min-height:100dvh;
-    display:flex; flex-direction:column;
+    width:100%; max-width:none; border-left:none; border-right:none;
   }
   #view-title .arcade-content{
     max-width:680px; margin:0 auto; padding-top:32px; padding-bottom:36px;
-    flex:1; justify-content:center;
   }
 
   .arcade-backdrop{ position:absolute; inset:0; z-index:0; }
@@ -714,7 +716,17 @@
   /* world map — the path view retinted under the arcade signal, structure
      untouched: every module still renders, phase grouping still renders,
      this is CSS-only against the exact same DOM renderPath() already builds. */
-  #view-path.arcade{ background: var(--a-bg0); margin: 0 -20px; padding: 0 20px 40px; }
+  /* min-height (not height) so the correct dark arcade background always
+     extends to at least the full viewport, regardless of how long the
+     rendered content is (10 Sept 2026) — with a short module list (little
+     saved progress, or just a tall/short-content viewport) the background
+     used to stop exactly at the last node, and the plain body --ground
+     color (a visibly different, lighter navy) showed through below it as a
+     jarring mismatched rectangle down to the window's bottom edge. This is
+     a normal top-down document flow (unlike #view-title above) — no flex/
+     centering here, content simply lays out as it always did, the extra
+     height is just more of the same background color underneath it. */
+  #view-path.arcade{ background: var(--a-bg0); margin: 0 -20px; padding: 0 20px 40px; min-height:100vh; min-height:100dvh; box-sizing:border-box; }
   /* Fill the dead margin on wide viewports (#view-path/#view-module only
      fill .wrap's own 920px width, not the browser window) by extending
      the SAME faint code-editor line texture already used behind the title
@@ -809,7 +821,8 @@
     #view-path.arcade{ margin: 0 -14px; padding: 0 14px 32px; }
   }
 
-  #view-module.arcade{ background: var(--a-bg0); margin: 0 -20px; padding: 0 20px 40px; }
+  /* Same fix as #view-path.arcade above — see comment there. */
+  #view-module.arcade{ background: var(--a-bg0); margin: 0 -20px; padding: 0 20px 40px; min-height:100vh; min-height:100dvh; box-sizing:border-box; }
 
   #view-module.arcade .room-head .kicker,
   #view-stats.arcade .room-head .kicker,
