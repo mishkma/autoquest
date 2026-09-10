@@ -408,132 +408,132 @@
   // Animated screen transitions (9 Sept 2026, user request: "переработать
   // переходы по страницам") — every top-level screen switch used to be an
   // instant `hidden = true/false` toggle with no visual continuity at all.
-  // switchView() replaces that one pair of toggles with a fade + a small
-  // vertical slide (14px, 320ms): `showEl` starts offset and transparent,
-  // is un-hidden, then animates to its resting position on the next frame;
-  // `hideEl` just fades out and is only actually `hidden` once its fade has
-  // finished (so it stays laid out and visible, mid-fade, right up to that
-  // point — CSS can't transition an element that's already display:none).
-  // `direction` only changes which way `showEl` slides in from ('back'
-  // slides down from above, anything else — 'fwd' — slides up from below)
-  // so going deeper into the site and backing out of it read as opposite
-  // motions, not the same animation played twice. A stale timer on the
-  // SAME hideEl is cleared first — otherwise two quick nav clicks in a row
-  // could have an earlier call's delayed `hidden = true` fire after a
-  // later call already changed what that element should be doing.
-  // Shared counter stamped onto whichever element is CURRENTLY being shown
-  // by any switchView() call — see the race-condition comment inside the
-  // scheduled hide below for why this exists.
-  let viewGenCounter = 0;
+  //
+  // Originally a true crossfade: `showEl` started fading/sliding in at the
+  // same time `hideEl` started fading out, both genuinely `hidden=false`
+  // and overlapping on screen for the whole 320ms. Two bugs came out of
+  // that overlap window (both reported 10 Sept 2026, "переходы
+  // подтормаживают" / "какая-то линия появляется"):
+  // 1. Neither screen had ever been positioned, so for that whole window
+  //    they simply stacked in normal block flow instead of overlapping —
+  //    showEl rendered BELOW hideEl's full height, not on top of it (fixed
+  //    once, in an earlier round, by pinning hideEl to position:fixed at
+  //    its own captured rect while it faded).
+  // 2. Even correctly overlapping in the same screen space, a genuine
+  //    crossfade between two DIFFERENT layouts (Title's centered narrow
+  //    card vs. the path list's full-width rows, especially) puts
+  //    unrelated borders/buttons/text from both screens on top of each
+  //    other for a moment — e.g. Title's own "Continue" button rectangle
+  //    landing almost exactly on the path list's Module-1 card border,
+  //    reading as a bright doubled outline / stray line. Confirmed via a
+  //    frame-by-frame GIF the user recorded — no amount of z-index or
+  //    positioning fixes it, since it's not a layering bug, it's two real,
+  //    different screens both legitimately partially visible at once.
+  // Fixed by making the transition SEQUENTIAL instead of simultaneous:
+  // hideEl fades all the way out FIRST (still pinned to position:fixed at
+  // its own rect while doing so, so it doesn't disturb layout), and only
+  // once it's fully hidden does showEl get its enter class/un-hide/fade-in
+  // — there is now no moment where both are simultaneously not-hidden, so
+  // nothing from one can ever visually land on top of the other. Costs
+  // perceived speed (roughly 320ms+320ms back to back instead of one
+  // 320ms crossfade) in exchange for guaranteeing zero overlap — the
+  // user's explicit priority ("главное - чтобы ничего не накладывалось").
+  // `direction` only changes which way showEl slides in from ('back'
+  // slides down from above, anything else — 'fwd' — slides up from below).
   function switchView(hideEl, showEl, direction){
-    if(!showEl || hideEl === showEl){ if(showEl) showEl.hidden = false; return; }
-    if(!hideEl || hideEl.hidden){ showEl.hidden = false; return; }
-    // showEl may itself still be mid-leave from an earlier, still-pending
-    // switchView call (rapid back-and-forth navigation, faster than one
-    // 320ms fade) — it would still be carrying the position:fixed lock
-    // from the block below, applied to whichever element was leaving at
-    // the time. Clear it unconditionally before showing: a stale fixed
-    // position/size from a previous leave would otherwise pin it in the
-    // wrong place instead of letting it render in normal flow again.
+    if(!showEl) return;
+    // Whatever showEl was doing before this call — including still being
+    // mid-leave from an earlier, not-yet-completed switchView() (rapid
+    // back-and-forth navigation, faster than one 320ms fade) — stop it and
+    // strip its leave-state before deciding anything else below. Without
+    // this, a stale pending hide-timer on showEl could still fire later
+    // and immediately re-hide the very screen this call is trying to
+    // bring back, and a stale position:fixed pin from its own earlier
+    // leave would render it in the wrong place instead of normal flow.
+    clearTimeout(showEl._viewLeaveTimer);
+    showEl.classList.remove('view-leave');
     showEl.style.position = '';
     showEl.style.top = '';
     showEl.style.left = '';
     showEl.style.width = '';
+
+    if(hideEl === showEl){ showEl.hidden = false; return; }
+
     const enterCls = direction === 'back' ? 'view-enter-back' : 'view-enter-fwd';
-    showEl.classList.add(enterCls);
-    showEl.hidden = false;
-    void showEl.offsetWidth; // force a style flush WITH the enter class applied — this is what makes the
-    // immediately-following class removal (below) register as a real state
-    // change the browser transitions from, without needing to wait for a
-    // requestAnimationFrame callback. An earlier version used rAF here to
-    // remove the class on "next frame" — found broken during verification
-    // (9 Sept 2026): rAF simply never fired in this session's automation
-    // browser tab, leaving the entering screen permanently stuck at
-    // opacity:0 with the enter-class transform never cleared. Since a
-    // backgrounded real browser tab also pauses rAF, the same stuck-screen
-    // bug could hit a real visitor who switches tabs mid-navigation — not
-    // just a tooling artifact worth working around, an actual robustness
-    // gap. The offsetWidth-forced-reflow pattern needs no callback at all.
-    showEl.classList.remove(enterCls);
-    // Stamping showEl here (not just hideEl below) is what fixes a rapid
-    // back-and-forth navigation race found while testing this feature
-    // (9 Sept 2026): open a module then immediately hit "back" — path is
-    // still mid-fade-out from the FIRST transition (its hide is on a timer,
-    // not instant) when the SECOND transition re-shows it. The stale timer
-    // from transition 1 was never told path got re-claimed, so ~170ms
-    // later it fired anyway and hid the screen the visitor was now
-    // actually looking at — both path and module ended up hidden at once,
-    // a blank page. Stamping the shared counter on every element a
-    // switchView call actually wants visible lets the OTHER half's
-    // scheduled hide (below) recognize it's been outdated and skip itself.
-    showEl.dataset.viewGen = String(++viewGenCounter);
-    // Take the leaving screen OUT of normal document flow before fading it
-    // — without this, both hideEl and showEl are simultaneously
-    // `hidden=false` for the whole 320ms fade (hideEl's actual `hidden`
-    // flip happens on the timer below), and since neither has ever been
-    // positioned, they just stack one after another in ordinary block
-    // flow: showEl doesn't overlap hideEl, it gets pushed BELOW it for
-    // the entire transition. Reported 10 Sept 2026 ("появляется половина
-    // прорисованной страницы, а через миллисекунду остальное
-    // дотягивается") — most obvious on Title<->path (very different
-    // content/height makes the stacking obvious) but structurally present
-    // on every switchView() call, including the path/module/stats/
-    // settings swaps inside #site-wrap, just less visually jarring there
-    // since those screens look more alike. Wasn't caught earlier because
-    // scrollToTopDeferred (and, briefly, plain non-deferred smooth
-    // scrolling) left the viewport somewhere other than the very top of
-    // this taller-than-usual combined stack during the brief window it
-    // existed; scrollToTopNow's synchronous instant scroll-to-top (see
-    // its own comment) put the viewport exactly where the stacking is
-    // most visible, exposing it.
-    // Fix: snapshot hideEl's own current on-screen box BEFORE removing it
-    // from flow, then pin it there with position:fixed + explicit
-    // top/left/width — this is what guarantees zero visual jump (a bare
-    // `position:absolute` with no offsets falls back to a "static
-    // position" the spec doesn't pin down precisely across engines, and
-    // finding a correctly-positioned ancestor for `position:absolute`
-    // would mean touching body's or #site-wrap's own positioning). Once
-    // truly hidden again (timer below), every inline style set here is
-    // removed so the element returns to plain normal-flow layout the
-    // next time it's shown — this lock is only ever active during its
-    // own 320ms fade-out.
+    function revealShowEl(){
+      showEl.classList.add(enterCls);
+      showEl.hidden = false;
+      void showEl.offsetWidth; // force a style flush WITH the enter class applied — this is what makes the
+      // immediately-following class removal register as a real state
+      // change the browser transitions from, without needing to wait for a
+      // requestAnimationFrame callback. An earlier version used rAF here
+      // to remove the class on "next frame" — found broken during
+      // verification (9 Sept 2026): rAF simply never fired in this
+      // session's automation browser tab, leaving the entering screen
+      // permanently stuck at opacity:0 with the enter-class transform
+      // never cleared. Since a backgrounded real browser tab also pauses
+      // rAF, the same stuck-screen bug could hit a real visitor who
+      // switches tabs mid-navigation — not just a tooling artifact worth
+      // working around, an actual robustness gap. The offsetWidth-forced-
+      // reflow pattern needs no callback at all.
+      showEl.classList.remove(enterCls);
+    }
+
+    if(!hideEl || hideEl.hidden){
+      // Nothing was actually visible to fade out (either there's no
+      // previous screen, or it's a stale reference that already finished
+      // hiding — e.g. the rapid-reversal case above) — just reveal.
+      revealShowEl();
+      return;
+    }
+
+    // Pin the leaving screen to its own current on-screen box with
+    // position:fixed before fading it — keeps it out of normal document
+    // flow (so it can't push/be pushed by anything) without any visual
+    // jump. A bare position:absolute with no offsets relies on each
+    // engine's own "static position" fallback, not worth risking here.
     const hideRect = hideEl.getBoundingClientRect();
     hideEl.style.position = 'fixed';
     hideEl.style.top = hideRect.top + 'px';
     hideEl.style.left = hideRect.left + 'px';
     hideEl.style.width = hideRect.width + 'px';
     hideEl.classList.add('view-leave');
-    const myGen = String(++viewGenCounter);
-    hideEl.dataset.viewGen = myGen;
     clearTimeout(hideEl._viewLeaveTimer);
     hideEl._viewLeaveTimer = setTimeout(() => {
-      // Only hide if nothing re-showed this exact element since THIS
-      // transition scheduled the hide (see the comment above).
-      if(hideEl.dataset.viewGen === myGen){
-        hideEl.hidden = true;
-        hideEl.classList.remove('view-leave');
-        hideEl.style.position = '';
-        hideEl.style.top = '';
-        hideEl.style.left = '';
-        hideEl.style.width = '';
-      }
+      hideEl.hidden = true;
+      hideEl.classList.remove('view-leave');
+      hideEl.style.position = '';
+      hideEl.style.top = '';
+      hideEl.style.left = '';
+      hideEl.style.width = '';
+      revealShowEl(); // only now, once hideEl is genuinely gone — no overlap window
     }, 320);
   }
 
   // Which of the 4 mutually-exclusive sections inside #site-wrap is
-  // currently showing — path/module/stats/settings all live at this one
-  // level (title screen is a level above, handled separately by the
-  // title-cta/brand-home handlers below).
-  function currentInnerView(){
-    if(!document.getElementById('view-module').hidden) return 'module';
-    if(!document.getElementById('view-stats').hidden) return 'stats';
-    if(!document.getElementById('view-settings').hidden) return 'settings';
-    return 'path';
-  }
+  // currently showing (or being navigated to) — path/module/stats/
+  // settings all live at this one level (title screen is a level above,
+  // handled separately by the title-cta/brand-home handlers below).
+  // Tracked explicitly rather than inferred from each element's `.hidden`
+  // (as it used to be, checking `!document.getElementById(...).hidden`)
+  // because switchView() became sequential (10 Sept 2026, see its own
+  // comment — fading the leaving screen out BEFORE revealing the next
+  // one, to stop the two screens' unrelated content overlapping mid-
+  // transition): for that ~320ms leave phase, the OLD screen is still
+  // genuinely `hidden=false` (still fading) while the NEW one is still
+  // `hidden=true` (not revealed yet) — inferring "current" from `.hidden`
+  // during that window kept reporting the screen that was on its way OUT,
+  // so a rapid interrupting nav call back to that same screen saw
+  // `from === target` and silently no-opped instead of cancelling the
+  // in-flight leave (found while testing this exact sequential-fade
+  // change). Set the instant navigation is REQUESTED, not once it
+  // visually finishes, so it always reflects intent, not animation state.
+  let currentInnerViewName = 'path';
   const INNER_VIEW_IDS = {path:'view-path', module:'view-module', stats:'view-stats', settings:'view-settings'};
   function goToInner(target, direction){
-    const from = currentInnerView();
+    const from = currentInnerViewName;
     if(from === target) return;
+    currentInnerViewName = target;
     switchView(document.getElementById(INNER_VIEW_IDS[from]), document.getElementById(INNER_VIEW_IDS[target]), direction);
   }
 
@@ -642,6 +642,7 @@
         document.getElementById('view-settings').hidden = true;
         document.getElementById('view-path').hidden = false;
         currentModuleId = null;
+        currentInnerViewName = 'path';
         // Start the transition FIRST, re-render the path list after — same
         // fix as openModule() got for "переходы подтормаживают" (10 Sept
         // 2026). renderPath() (16 module cards + boss SVGs) profiled at
@@ -672,6 +673,7 @@
         document.getElementById('view-settings').hidden = true;
         document.getElementById('view-path').hidden = true;
         currentModuleId = null;
+        currentInnerViewName = 'path';
         switchView(document.getElementById('site-wrap'), document.getElementById('view-title'), 'back');
       });
     }
@@ -700,6 +702,7 @@
       document.getElementById('view-stats').hidden = (target !== 'stats');
       document.getElementById('view-settings').hidden = (target !== 'settings');
       currentModuleId = null;
+      currentInnerViewName = target;
       switchView(document.getElementById('view-title'), document.getElementById('site-wrap'), 'fwd');
     } else {
       goToInner(target, 'fwd');
