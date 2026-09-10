@@ -1782,7 +1782,13 @@
     const btn = document.getElementById('music-toggle');
     if(!btn || !window.Music) return;
     const on = window.Music.isEnabled();
-    btn.textContent = on ? '🔊' : '🔇';
+    // btn.textContent = ... would wipe ALL of #music-toggle's children —
+    // since the popup card is now appended INSIDE this same button (see
+    // openMusicCard()'s comment on why), that used to delete the open
+    // card itself the instant mute was toggled, closing it. Targets the
+    // dedicated <span class="icon"> instead, leaving any open card alone.
+    const icon = btn.querySelector('.icon');
+    if(icon) icon.textContent = on ? '🔊' : '🔇';
     btn.setAttribute('aria-pressed', String(on));
   }
   function syncMusicCard(card){
