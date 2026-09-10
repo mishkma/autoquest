@@ -487,6 +487,23 @@
     switchView(document.getElementById(INNER_VIEW_IDS[from]), document.getElementById(INNER_VIEW_IDS[target]), direction);
   }
 
+  // Every navigation that scrolls back to top does so right after a heavy
+  // DOM rebuild (renderPath()'s 16 module cards, openModule()'s theory +
+  // up to 13 task-card editors, etc.) — calling window.scrollTo() forces
+  // the browser to flush a full layout pass right then to know the page's
+  // new scrollable extent, on top of whatever the render itself just cost.
+  // Profiled 10 Sept 2026 ("переходы подтормаживают"): ~46ms on a fast
+  // dev machine for a single module open, entirely inside this one call.
+  // That layout flush is unavoidable (the DOM genuinely changed), but it
+  // doesn't need to happen inside the SAME synchronous tick that also
+  // just started the CSS fade/slide transition — deferring it lets the
+  // browser paint the transition's first frame before paying that cost,
+  // instead of the whole screen sitting frozen an extra ~46ms before any
+  // motion is visible at all.
+  function scrollToTopDeferred(){
+    setTimeout(() => window.scrollTo({top:0, behavior:'smooth'}), 0);
+  }
+
   // Every top-level .arcade container (title, path/world-map, victory) shares
   // the same persisted signal color — applied here whenever it changes, not
   // just on the screen the swatch happens to live on.
@@ -564,7 +581,7 @@
         // just always re-render on the way in rather than track that.
         renderPath();
         switchView(document.getElementById('view-title'), document.getElementById('site-wrap'), 'fwd');
-        window.scrollTo({top:0, behavior:'smooth'});
+        scrollToTopDeferred();
       });
     }
     const brandBtn = document.getElementById('brand-home');
@@ -583,7 +600,7 @@
         document.getElementById('view-path').hidden = true;
         currentModuleId = null;
         switchView(document.getElementById('site-wrap'), document.getElementById('view-title'), 'back');
-        window.scrollTo({top:0, behavior:'smooth'});
+        scrollToTopDeferred();
       });
     }
     const continueBtn = document.getElementById('victory-continue');
@@ -616,7 +633,7 @@
     }
     if(target === 'stats') renderStatsPage();
     if(target === 'settings') renderSettingsPage();
-    window.scrollTo({top:0, behavior:'smooth'});
+    scrollToTopDeferred();
   }
 
   function initTopbarNav(){
@@ -625,9 +642,9 @@
     const settingsBtn = document.getElementById('nav-settings');
     if(settingsBtn) settingsBtn.addEventListener('click', () => goToTopLevelPage('settings'));
     const backStats = document.getElementById('btn-back-stats');
-    if(backStats) backStats.addEventListener('click', () => { goToInner('path', 'back'); window.scrollTo({top:0, behavior:'smooth'}); });
+    if(backStats) backStats.addEventListener('click', () => { goToInner('path', 'back'); scrollToTopDeferred(); });
     const backSettings = document.getElementById('btn-back-settings');
-    if(backSettings) backSettings.addEventListener('click', () => { goToInner('path', 'back'); window.scrollTo({top:0, behavior:'smooth'}); });
+    if(backSettings) backSettings.addEventListener('click', () => { goToInner('path', 'back'); scrollToTopDeferred(); });
   }
 
   // Real per-module status/unlock rules live in renderPath() — mirrored
@@ -1054,7 +1071,7 @@
           <div class="display">${tr('soonTitle')}</div>
           <p>${tr('soonDesc')}</p>
         </div>`;
-      if(!preserveScroll) window.scrollTo({top:0, behavior:'smooth'});
+      if(!preserveScroll) scrollToTopDeferred();
       return;
     }
 
@@ -1095,7 +1112,7 @@
     if(m.homework){ m.homework.forEach(t => bindTask(room, t, m)); }
 
     updateRoomProgress(m);
-    if(!preserveScroll) window.scrollTo({top:0, behavior:'smooth'});
+    if(!preserveScroll) scrollToTopDeferred();
   }
 
   // Theory items are either a plain string (rendered as-is, old format) or
@@ -1300,7 +1317,7 @@
     // "if resize is ever added, sync .editor-wrap's height via JS" this
     // codebase already flagged as a future requirement.
     const wrap = editor.closest('.editor-wrap');
-    (function pollEditorScroll(){
+    function pollEditorScroll(){
       if(!editor.isConnected) return;
       const st = editor.scrollTop;
       if(gutter.scrollTop !== st) gutter.scrollTop = st;
@@ -1308,7 +1325,8 @@
       const h = editor.offsetHeight + 'px';
       if(wrap && wrap.style.height !== h) wrap.style.height = h;
       requestAnimationFrame(pollEditorScroll);
-    })();
+    }
+    requestAnimationFrame(pollEditorScroll);
     editor.addEventListener('scroll', () => { if(ac.editor === editor) acPosition(editor); });
     editor.addEventListener('blur', () => { if(ac.editor === editor) acClose(); });
 
@@ -1405,7 +1423,18 @@
     let s = '';
     for(let i=1;i<=n;i++) s += i + (i<n ? '\n' : '');
     gutter.textContent = s;
-    gutter.scrollTop = editor.scrollTop;
+    // No scrollTop sync here on purpose (removed 10 Sept 2026, see ROADMAP
+    // "переходы подтормаживают") — bindTask's own pollEditorScroll already
+    // copies editor.scrollTop onto gutter/hl unconditionally every
+    // animation frame, so this was pure redundant work. Worse than
+    // redundant during a module open: syncGutter runs once per task in a
+    // tight loop (10-13 times), and reading editor.scrollTop right after
+    // writing gutter.textContent forces the browser to flush a full
+    // layout pass on EVERY iteration (a write, then a layout-dependent
+    // read, back to back) instead of batching all the writes — profiled
+    // at ~62ms of the ~67ms a 13-task module open spent in bindTask, on a
+    // fast dev machine. Dropping this line let the same open finish
+    // string sync (see the pollEditorScroll fix alongside this one).
   }
 
   function updateRoomProgress(m){
@@ -1711,7 +1740,7 @@
     currentModuleId = null;
     renderPath();
     goToInner('path', 'back');
-    window.scrollTo({top:0, behavior:'smooth'});
+    scrollToTopDeferred();
   });
 
   /* ---------------- language switch ---------------- */
