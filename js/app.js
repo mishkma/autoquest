@@ -529,7 +529,7 @@
   // change). Set the instant navigation is REQUESTED, not once it
   // visually finishes, so it always reflects intent, not animation state.
   let currentInnerViewName = 'path';
-  const INNER_VIEW_IDS = {path:'view-path', module:'view-module', stats:'view-stats', settings:'view-settings'};
+  const INNER_VIEW_IDS = {path:'view-path', module:'view-module'};
   function goToInner(target, direction){
     const from = currentInnerViewName;
     if(from === target) return;
@@ -638,8 +638,6 @@
         // DOM mutation, not after.
         scrollToTopNow();
         document.getElementById('view-module').hidden = true;
-        document.getElementById('view-stats').hidden = true;
-        document.getElementById('view-settings').hidden = true;
         document.getElementById('view-path').hidden = false;
         currentModuleId = null;
         currentInnerViewName = 'path';
@@ -669,8 +667,6 @@
         // handler un-hid #site-wrap again on the next "Continue click".
         // Reset to the same clean state the back-to-path button leaves.
         document.getElementById('view-module').hidden = true;
-        document.getElementById('view-stats').hidden = true;
-        document.getElementById('view-settings').hidden = true;
         document.getElementById('view-path').hidden = true;
         currentModuleId = null;
         currentInnerViewName = 'path';
@@ -685,212 +681,10 @@
     }
   }
 
-  // Stats and Settings pages (9 Sept 2026, user request — new pages
-  // alongside the transition rework above). The topbar's own nav buttons
-  // are visible even on the title screen (the topbar is sticky and always
-  // rendered), so a click there has to handle both "already inside
-  // #site-wrap, just switch which inner view is showing" AND "still on
-  // the title screen, need the title->site-wrap transition too" —
-  // goToTopLevelPage() below covers both starting points with one
-  // function instead of duplicating the same landing logic per button.
-  function goToTopLevelPage(target){
-    scrollToTopNow();
-    const titleVisible = !document.getElementById('view-title').hidden;
-    if(titleVisible){
-      document.getElementById('view-path').hidden = true;
-      document.getElementById('view-module').hidden = true;
-      document.getElementById('view-stats').hidden = (target !== 'stats');
-      document.getElementById('view-settings').hidden = (target !== 'settings');
-      currentModuleId = null;
-      currentInnerViewName = target;
-      switchView(document.getElementById('view-title'), document.getElementById('site-wrap'), 'fwd');
-    } else {
-      goToInner(target, 'fwd');
-    }
-    if(target === 'stats') renderStatsPage();
-    if(target === 'settings') renderSettingsPage();
-  }
-
-  function initTopbarNav(){
-    const statsBtn = document.getElementById('nav-stats');
-    if(statsBtn) statsBtn.addEventListener('click', () => goToTopLevelPage('stats'));
-    const settingsBtn = document.getElementById('nav-settings');
-    if(settingsBtn) settingsBtn.addEventListener('click', () => goToTopLevelPage('settings'));
-    const backStats = document.getElementById('btn-back-stats');
-    if(backStats) backStats.addEventListener('click', () => { scrollToTopNow(); goToInner('path', 'back'); });
-    const backSettings = document.getElementById('btn-back-settings');
-    if(backSettings) backSettings.addEventListener('click', () => { scrollToTopNow(); goToInner('path', 'back'); });
-  }
-
-  // Real per-module status/unlock rules live in renderPath() — mirrored
-  // here rather than shared via a helper because renderPath's version is
-  // entangled with building the DOM nodes themselves, and the stats page
-  // only needs the 3 labels (done/available/locked) plus a done/total
-  // count, not the node markup.
-  function renderStatsPage(){
-    const room = document.getElementById('stats-room');
-    if(!room) return;
-    const lvl = computeLevel(state.xp);
-    const doneModulesOnly = MODULES.filter(m => !m.checkpoint && m.tasks && m.tasks.every(t => state.completed[t.id])).length;
-    const totalModulesOnly = MODULES.filter(m => !m.checkpoint).length;
-    const doneCheckpointsOnly = MODULES.filter(m => m.checkpoint && m.tasks && m.tasks.every(t => state.completed[t.id])).length;
-    const totalCheckpointsOnly = MODULES.filter(m => m.checkpoint).length;
-    const rows = MODULES.map((m, idx) => {
-      let status = moduleStatus(m);
-      const unlocked = prevModuleDone(idx);
-      if(!m.tasks && !unlocked) status = 'locked';
-      if(!m.tasks && unlocked) status = 'available';
-      const doneCount = m.tasks ? m.tasks.filter(t => state.completed[t.id]).length : 0;
-      const totalCount = m.tasks ? m.tasks.length : null;
-      const statusLabel = status === 'done' ? tr('statsStatusDone') : (unlocked ? tr('statsStatusAvail') : tr('statsStatusLocked'));
-      return `
-        <div class="stats-row ${status === 'locked' ? 'locked' : ''}">
-          <div class="num">${m.checkpoint ? '🎯' : String(m.num).padStart(2,'0')}</div>
-          <div class="body">
-            <div class="t">${escapeHtml(mField(m, 'title'))}</div>
-            <div class="phase">${phaseName(m.phase)}${totalCount ? ' · ' + tr('chipTasks', {done: doneCount, total: totalCount}) : ''}</div>
-          </div>
-          <div class="status ${status}">${statusLabel}</div>
-        </div>`;
-    }).join('');
-    room.innerHTML = `
-      <div class="room-head"><h2>${tr('statsHeading')}</h2></div>
-      <div class="stats-tiles">
-        <div class="stats-tile"><div class="k">${tr('statsLevel')}</div><div class="v">LV.${String(lvl).padStart(2,'0')}</div></div>
-        <div class="stats-tile"><div class="k">${tr('statsXp')}</div><div class="v">${String(state.xp).padStart(4,'0')}</div></div>
-        <div class="stats-tile"><div class="k">${tr('statsStreak')}</div><div class="v">🔥 ${String(state.streak || 0).padStart(2,'0')}</div></div>
-        <div class="stats-tile"><div class="k">${tr('statsModulesLabel')}</div><div class="v">${doneModulesOnly} / ${totalModulesOnly}</div></div>
-        <div class="stats-tile"><div class="k">${tr('statsCheckpointsLabel')}</div><div class="v">${doneCheckpointsOnly} / ${totalCheckpointsOnly}</div></div>
-      </div>
-      <div class="stats-history-head">${tr('statsHistoryHeading')}</div>
-      <div class="stats-history">${rows}</div>`;
-  }
-
-  function renderSettingsPage(){
-    const room = document.getElementById('settings-room');
-    if(!room) return;
-    const swatchesHtml = SIGNALS.map(s => `<button type="button" class="settings-sw ${s===getSignal()?'active':''}" data-signal="${s}" style="--c:var(--a-accent)"></button>`).join('');
-    room.innerHTML = `
-      <div class="room-head"><h2>${tr('settingsHeading')}</h2></div>
-      <div class="settings-row">
-        <div class="settings-label"><div class="t">${tr('titleSignalColor')}</div><div class="d">${tr('settingsSignalDesc')}</div></div>
-        <div class="settings-swatches" id="settings-swatches">${swatchesHtml}</div>
-      </div>
-      <div class="settings-row">
-        <div class="settings-label"><div class="t">${tr('settingsLangLabel')}</div><div class="d">${tr('settingsLangDesc')}</div></div>
-        <div class="segbtn" id="settings-langseg">
-          <button type="button" data-lang="en" class="${getLang()==='en'?'active':''}">EN</button>
-          <button type="button" data-lang="ru" class="${getLang()==='ru'?'active':''}">RU</button>
-        </div>
-      </div>
-      <div class="settings-row">
-        <div class="settings-label"><div class="t">${tr('settingsResetLabel')}</div><div class="d">${tr('settingsResetDesc')}</div></div>
-        <button type="button" class="settings-dangerbtn" id="settings-reset-btn">${tr('settingsResetBtn')}</button>
-      </div>`;
-    // Real per-color swatch backgrounds — set via inline style rather than
-    // baked into a CSS class per signal, same reason SIGNAL_HEX exists
-    // nowhere else in the codebase: the 5 hexes already live in exactly one
-    // place, the title screen's own swatch markup in index.html, and
-    // duplicating them into a lookup table just to color these dots risked
-    // the two silently drifting apart on a future palette tweak.
-    const SIGNAL_HEX = {mint:'#8ff0a8', amber:'#f2c94c', violet:'#c78ff0', cyan:'#6bc8f0', rose:'#ff6fae'};
-    room.querySelectorAll('.settings-sw').forEach(btn => {
-      btn.style.background = SIGNAL_HEX[btn.dataset.signal];
-      btn.addEventListener('click', () => {
-        setSignal(btn.dataset.signal);
-        applySignalEverywhere();
-        room.querySelectorAll('.settings-sw').forEach(b => b.classList.toggle('active', b === btn));
-      });
-    });
-    room.querySelectorAll('#settings-langseg button').forEach(btn => {
-      btn.addEventListener('click', () => {
-        if(btn.dataset.lang === getLang()) return;
-        setLang(btn.dataset.lang);
-        applyLangEverywhere();
-        renderSettingsPage();
-      });
-    });
-    const resetBtn = document.getElementById('settings-reset-btn');
-    if(resetBtn){
-      resetBtn.addEventListener('click', openResetConfirm);
-    }
-  }
-
-  // Themed replacement for window.confirm() on "Reset progress" (see
-  // ROADMAP.md "Нативный браузерный window.confirm()") — the reset is
-  // destructive/irreversible, so this stays a true blocking modal: opening
-  // it remembers whatever had focus so Cancel/Escape/confirm can restore it,
-  // moves focus into the panel (Escape/Tab both need somewhere to land),
-  // and the actual wipe only ever runs from the confirm button's own click
-  // handler, never as a side effect of opening or closing the dialog.
-  let resetConfirmPrevFocus = null;
-  function openResetConfirm(){
-    const overlay = document.getElementById('reset-confirm-overlay');
-    if(!overlay) return;
-    overlay.dataset.signal = getSignal();
-    resetConfirmPrevFocus = document.activeElement;
-    overlay.hidden = false;
-    document.addEventListener('keydown', onResetConfirmKeydown, true);
-    const confirmBtn = document.getElementById('reset-confirm-confirm');
-    if(confirmBtn) confirmBtn.focus();
-  }
-  function closeResetConfirm(){
-    const overlay = document.getElementById('reset-confirm-overlay');
-    if(!overlay) return;
-    overlay.hidden = true;
-    document.removeEventListener('keydown', onResetConfirmKeydown, true);
-    if(resetConfirmPrevFocus && typeof resetConfirmPrevFocus.focus === 'function') resetConfirmPrevFocus.focus();
-    resetConfirmPrevFocus = null;
-  }
-  function onResetConfirmKeydown(e){
-    const overlay = document.getElementById('reset-confirm-overlay');
-    if(!overlay || overlay.hidden) return;
-    if(e.key === 'Escape'){
-      e.preventDefault();
-      closeResetConfirm();
-      return;
-    }
-    // Minimal focus trap — only two focusable elements in this dialog, so
-    // Tab/Shift+Tab just needs to bounce between them instead of letting
-    // focus escape onto the page hidden behind the backdrop.
-    if(e.key === 'Tab'){
-      const cancelBtn = document.getElementById('reset-confirm-cancel');
-      const confirmBtn = document.getElementById('reset-confirm-confirm');
-      if(!cancelBtn || !confirmBtn) return;
-      const goingBack = e.shiftKey;
-      const onCancel = document.activeElement === cancelBtn;
-      const onConfirm = document.activeElement === confirmBtn;
-      if((goingBack && onCancel) || (!goingBack && onConfirm)){
-        e.preventDefault();
-        (goingBack ? confirmBtn : cancelBtn).focus();
-      }
-    }
-  }
-  function initResetConfirmModal(){
-    const overlay = document.getElementById('reset-confirm-overlay');
-    if(!overlay) return;
-    const cancelBtn = document.getElementById('reset-confirm-cancel');
-    const confirmBtn = document.getElementById('reset-confirm-confirm');
-    if(cancelBtn) cancelBtn.addEventListener('click', closeResetConfirm);
-    // Click-outside cancels — but only a genuine click ON the backdrop
-    // itself (event target === overlay), never a click that started inside
-    // the panel and merely bubbled up, so text selection / random panel
-    // clicks can't be misread as "outside".
-    overlay.addEventListener('mousedown', (e) => {
-      if(e.target === overlay) closeResetConfirm();
-    });
-    if(confirmBtn){
-      confirmBtn.addEventListener('click', () => {
-        state = {xp:0, completed:{}, streak:0, lastOpen:null};
-        persist();
-        closeResetConfirm();
-        renderStats();
-        renderPath();
-        renderSettingsPage();
-        updateTitleCta(false);
-      });
-    }
-  }
+  // Stats and Settings pages were removed 10 Sept 2026 (user call: "они не
+  // нужны") — Signal Color and EN/RU remain reachable from the title
+  // screen and topbar respectively, so nothing they offered is otherwise
+  // lost except the standalone "reset progress" button, also removed.
 
   function updateTitleCta(hasPriorVisit){
     const cta = document.getElementById('title-cta');
@@ -1867,8 +1661,6 @@
     if(nameEl) nameEl.textContent = tr(CHARACTER_KEYS[getSignal()] || CHARACTER_KEYS.mint);
     if(!document.getElementById('view-path').hidden) renderPath();
     if(currentModuleId && !document.getElementById('view-module').hidden) openModule(currentModuleId, true);
-    if(!document.getElementById('view-stats').hidden) renderStatsPage();
-    if(!document.getElementById('view-settings').hidden) renderSettingsPage();
   }
 
   // Tap-to-reveal HUD detail cards (10 Sept 2026) — replaces the native
@@ -1958,8 +1750,6 @@
 
   initLangSwitch();
   initTitleScreen();
-  initTopbarNav();
-  initResetConfirmModal();
   initHudCards();
   initState();
 })();

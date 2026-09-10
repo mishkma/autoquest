@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Karla:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Press+Start+2P&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=20260910j">
+<link rel="stylesheet" href="css/style.css?v=20260910k">
 </head>
 <body>
 
@@ -31,8 +31,6 @@
       </div>
     </div>
     <div class="topbar-nav">
-      <button type="button" class="topbar-navbtn" id="nav-stats" data-i18n="navStats">STATS</button>
-      <button type="button" class="topbar-navbtn" id="nav-settings" data-i18n="navSettings">SETTINGS</button>
     </div>
     <div class="lang-switch" id="lang-switch-top" role="group" aria-label="Language">
       <button type="button" class="lang-btn" data-lang="en">EN</button>
@@ -118,15 +116,6 @@
     <div id="module-room"></div>
   </section>
 
-  <section id="view-stats" class="view arcade" hidden>
-    <button class="backbtn" id="btn-back-stats" data-i18n="backToPath">← Whole path</button>
-    <div id="stats-room"></div>
-  </section>
-
-  <section id="view-settings" class="view arcade" hidden>
-    <button class="backbtn" id="btn-back-settings" data-i18n="backToPath">← Whole path</button>
-    <div id="settings-room"></div>
-  </section>
 
 </div>
 
@@ -162,29 +151,10 @@
   </div>
 </div>
 
-<!-- Themed replacement for window.confirm() on "Reset progress" (Settings
-     page) — see ROADMAP.md "Нативный браузерный window.confirm()". Same
-     fixed full-screen overlay shape as #victory-overlay above (for layering
-     reference only), but a small centered panel styled like a task card
-     (.corner brackets, see TASK_CORNERS in app.js) rather than victory's
-     arcade-screen chrome — this is a warning dialog, not a celebration. -->
-<div id="reset-confirm-overlay" class="arcade reset-confirm-overlay" data-signal="mint" hidden>
-  <div class="reset-confirm-panel" role="alertdialog" aria-modal="true" aria-labelledby="reset-confirm-title" aria-describedby="reset-confirm-desc" tabindex="-1">
-    <span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span>
-    <div class="reset-confirm-tag" data-i18n="settingsResetModalTag">IRREVERSIBLE ACTION</div>
-    <h3 class="reset-confirm-title" id="reset-confirm-title" data-i18n="settingsResetBtn">RESET</h3>
-    <p class="reset-confirm-desc" id="reset-confirm-desc" data-i18n="settingsResetConfirm">Reset ALL progress on this device? This cannot be undone.</p>
-    <div class="reset-confirm-actions">
-      <button type="button" class="reset-confirm-cancel" id="reset-confirm-cancel" data-i18n="settingsResetCancel">CANCEL</button>
-      <button type="button" class="reset-confirm-confirm" id="reset-confirm-confirm" data-i18n="settingsResetConfirmBtn">RESET PROGRESS</button>
-    </div>
-  </div>
-</div>
-
 <script src="js/i18n.js?v=20260910d"></script>
 <script src="js/interpreter.js?v=20260909r"></script>
 <script src="js/modules-data.js?v=20260909s"></script>
 <script src="js/modules-data-ru.js?v=20260910a"></script>
-<script src="js/app.js?v=20260910k"></script>
+<script src="js/app.js?v=20260910l"></script>
 </body>
 </html>

@@ -78,12 +78,23 @@
   }
 
   *{box-sizing:border-box;}
+  /* body is the single flex column that .topbar (sticky, natural height),
+     #view-title, and #site-wrap all stack inside (10 Sept 2026 — see the
+     comment on #view-title below for why: any screen that wants to "fill
+     the viewport" has to fill what's left AFTER the topbar, not the raw
+     100vh, or it either scrolls when it shouldn't (title screen) or leaves
+     a body-colored gap it should have covered (path/module, see
+     #view-path.arcade below). min-height not height, so real content
+     (a long module list) still simply grows the page and scrolls normally
+     — this only guarantees a FLOOR of one full screen, never a cap. */
   body{
     margin:0;
     background:var(--ground);
     color:var(--ink);
     font-family:'Karla',ui-sans-serif,system-ui,sans-serif;
     line-height:1.5;
+    display:flex; flex-direction:column;
+    min-height:100vh; min-height:100dvh;
   }
   h1,h2,h3,.display{
     font-family:'Manrope',ui-sans-serif,system-ui,sans-serif;
@@ -103,7 +114,20 @@
   button{font-family:inherit;}
   ::selection{background:var(--accent);color:var(--accent-ink);}
 
-  .wrap{max-width:920px;margin:0 auto;padding:0 20px 80px;}
+  /* #site-wrap === .wrap (same element, see index.html). Its own bottom
+     padding used to be a flat 80px regardless of what's inside — with
+     Stats/Settings removed (10 Sept 2026, user call), the only children
+     left are #view-path/#view-module, and both already paint their own
+     dark arcade background with their own bottom padding (see
+     #view-path.arcade below) — an extra 80px OUTSIDE that dark box just
+     exposed plain body background as a visible seam at the very bottom of
+     every page (the "пятно" the user kept pointing at). Zeroed here; also
+     a flex column now (matching body's), with `.view` below asked to grow
+     into whatever's left so the dark background genuinely reaches the
+     bottom of the screen instead of merely reaching the bottom of its own
+     (possibly short) content. */
+  .wrap{max-width:920px;margin:0 auto;padding:0 20px;flex:1 1 auto;display:flex;flex-direction:column;min-height:0;}
+  .view{flex:1 1 auto;min-height:0;}
 
   /* Animated screen transitions (9 Sept 2026, user request) — see
      switchView()/goToInner() in app.js for the JS side. Applies to the 5
@@ -158,7 +182,7 @@
 
   /* topbar */
   .topbar{
-    position:sticky; top:0; z-index:20;
+    position:sticky; top:0; z-index:20; flex:0 0 auto;
     background:color-mix(in srgb, var(--ground) 88%, transparent);
     backdrop-filter:blur(8px);
     border-bottom:1px solid var(--edge);
@@ -486,6 +510,15 @@
   .view[hidden]{display:none !important;}
   .victory-overlay[hidden]{display:none !important;}
   #view-title[hidden]{display:none !important;}
+  /* #site-wrap (== .wrap) now sets its own `display:flex` (see .wrap rule
+     above) so it can lay #view-path/#view-module out as flex children —
+     that author-stylesheet `display` overrides the browser's normal
+     built-in `[hidden]{display:none}` UA-stylesheet behavior, which is why
+     this needs to be spelled out explicitly here too, matching the other
+     three top-level screens right above (10 Sept 2026, found while fixing
+     the flex-layout scroll bug — #site-wrap was rendering `display:flex`
+     at 33px tall even while `hidden`). */
+  #site-wrap[hidden]{display:none !important;}
 
   @media (max-width:520px){
     .badge{width:46px;height:46px;font-size:16px;border-radius:13px;}
@@ -539,23 +572,23 @@
     box-shadow: inset 0 0 0 2px var(--a-edge), 0 20px 50px -24px rgba(0,0,0,.7);
     background: var(--a-bg0); overflow:hidden;
   }
-  /* Fill the viewport height at the OUTER container, not by stretching the
-     card's own content (10 Sept 2026, second pass — see ROADMAP.md). First
-     attempt forced #view-title .arcade-screen{min-height:100vh} +
-     .arcade-content{flex:1;justify-content:center}, which did stop the raw
-     --ground body color from showing below the card, but on tall/wide
-     monitors it also vertically stretched the card's own modest content
-     (logo/hero/swatches/CTA) across the full viewport height — user reported
-     this reads as "too much" empty space, disproportionate rather than
-     adaptive. Fix: #view-title itself (the flex host) centers a
-     naturally-sized .arcade-screen within the viewport — comfortable, equal
-     breathing room above/below on tall screens, and the card's internal
-     proportions stay the same regardless of window height. 100dvh listed
-     after 100vh so it wins where supported (avoids the classic 100vh mobile
-     browser-chrome jump — see CLAUDE.md's "flex-container-without-height" bug
-     class, same family of issue, different cause). */
+  /* Fill the AVAILABLE viewport height (viewport minus the sticky topbar
+     above it), not the full viewport (10 Sept 2026, third pass — see
+     ROADMAP.md/CLAUDE.md). Both earlier attempts set #view-title (or its
+     .arcade-screen) to `min-height:100vh` — but .topbar is `position:sticky`,
+     i.e. still a normal in-flow element that consumes its own real height
+     above #view-title. Stacking "topbar's own height" + "100vh" always
+     produced a document taller than one screen, so the page could always be
+     scrolled by exactly the topbar's height even though #view-title's own
+     content was already vertically centered inside ITS box — a scrollbar
+     the user could see and use, even though nothing useful was reachable by
+     scrolling. Fix: body itself becomes the flex column (min-height:100vh/
+     100dvh), .topbar sizes to its own natural height as a normal flex item,
+     and #view-title is a flex:1 item that fills exactly what's left — no
+     separate vh math of its own, so it can never overshoot by the topbar's
+     height again. See the matching `body{display:flex...}` rule. */
   #view-title{
-    padding:0; min-height:100vh; min-height:100dvh;
+    padding:0; flex:1 1 auto; min-height:0;
     display:flex; align-items:center; justify-content:center;
   }
   #view-title .arcade-screen{
@@ -716,17 +749,26 @@
   /* world map — the path view retinted under the arcade signal, structure
      untouched: every module still renders, phase grouping still renders,
      this is CSS-only against the exact same DOM renderPath() already builds. */
-  /* min-height (not height) so the correct dark arcade background always
-     extends to at least the full viewport, regardless of how long the
-     rendered content is (10 Sept 2026) — with a short module list (little
-     saved progress, or just a tall/short-content viewport) the background
-     used to stop exactly at the last node, and the plain body --ground
-     color (a visibly different, lighter navy) showed through below it as a
-     jarring mismatched rectangle down to the window's bottom edge. This is
-     a normal top-down document flow (unlike #view-title above) — no flex/
-     centering here, content simply lays out as it always did, the extra
-     height is just more of the same background color underneath it. */
-  #view-path.arcade{ background: var(--a-bg0); margin: 0 -20px; padding: 0 20px 40px; min-height:100vh; min-height:100dvh; box-sizing:border-box; }
+  /* Dark arcade background must always reach the bottom of the screen, not
+     just the bottom of whatever content happens to be rendered (10 Sept
+     2026, THIRD pass — see CLAUDE.md/ROADMAP.md). A short module list left
+     the plain body --ground color (a visibly different, lighter navy)
+     showing through below it as a jarring rectangle. The first fix here
+     was `min-height:100vh` — wrong for the same reason #view-title's
+     matching first attempt was wrong: .topbar sits above this element as a
+     normal in-flow sticky element, so "100vh" always overshot by the
+     topbar's own height, and on a short module list the true bottom of the
+     page still fell short, still showing a (smaller but present) gap —
+     exactly what the user kept flagging as "not fixed". Real fix: this
+     element is `.view` (see that rule above), a flex:1 child of #site-wrap
+     which is itself a flex:1 child of body's flex column — it now simply
+     grows to fill whatever vertical space is actually left after the
+     topbar, however much or little that is, with no vh arithmetic of its
+     own to get wrong. Still a normal top-down document flow for its own
+     children (unlike #view-title's centered card) — this only affects how
+     tall the element itself is allowed to become, not how content inside
+     it is laid out. */
+  #view-path.arcade{ background: var(--a-bg0); margin: 0 -20px; padding: 0 20px 40px; }
   /* Fill the dead margin on wide viewports (#view-path/#view-module only
      fill .wrap's own 920px width, not the browser window) by extending
      the SAME faint code-editor line texture already used behind the title
@@ -821,124 +863,14 @@
     #view-path.arcade{ margin: 0 -14px; padding: 0 14px 32px; }
   }
 
-  /* Same fix as #view-path.arcade above — see comment there. */
-  #view-module.arcade{ background: var(--a-bg0); margin: 0 -20px; padding: 0 20px 40px; min-height:100vh; min-height:100dvh; box-sizing:border-box; }
+  /* Same fix and reasoning as #view-path.arcade above — a `.view` flex:1
+     child now, no min-height:100vh of its own. */
+  #view-module.arcade{ background: var(--a-bg0); margin: 0 -20px; padding: 0 20px 40px; }
 
-  #view-module.arcade .room-head .kicker,
-  #view-stats.arcade .room-head .kicker,
-  #view-settings.arcade .room-head .kicker{ font-family:'Press Start 2P',monospace; font-size:9px; color: var(--a-accent); }
-  #view-module.arcade .room-head h2,
-  #view-stats.arcade .room-head h2,
-  #view-settings.arcade .room-head h2{ color:#e8e8ec; }
-  #view-module.arcade .backbtn,
-  #view-stats.arcade .backbtn,
-  #view-settings.arcade .backbtn{ color: var(--a-dim); }
-  #view-module.arcade .backbtn:hover,
-  #view-stats.arcade .backbtn:hover,
-  #view-settings.arcade .backbtn:hover{ color:#e8e8ec; }
-
-  /* Stats page (9 Sept 2026) */
-  .stats-tiles{ display:flex; gap:14px; flex-wrap:wrap; margin:18px 0 24px; }
-  #view-stats.arcade .stats-tile{
-    background: var(--a-bg0); border:1px solid var(--a-edge); padding:14px 18px; flex:1; min-width:130px;
-  }
-  #view-stats.arcade .stats-tile .k{ font-size:10px; color: var(--a-dim); text-transform:uppercase; letter-spacing:.06em; }
-  #view-stats.arcade .stats-tile .v{
-    font-family:'Press Start 2P',monospace; font-size:18px; color: var(--a-accent); margin-top:6px;
-  }
-  #view-stats.arcade .stats-history-head{
-    font-family:'Press Start 2P',monospace; font-size:10px; color: var(--a-dim); letter-spacing:.05em; margin-bottom:8px;
-  }
-  #view-stats.arcade .stats-history{ display:flex; flex-direction:column; gap:1px; background: var(--a-edge); border:1px solid var(--a-edge); }
-  #view-stats.arcade .stats-row{
-    display:grid; grid-template-columns:36px 1fr 100px; gap:12px; align-items:center;
-    background: var(--a-bg0); padding:10px 14px; font-size:13px; color:#e8e8ec;
-  }
-  #view-stats.arcade .stats-row.locked{ opacity:.4; }
-  #view-stats.arcade .stats-row .num{ font-family:'Press Start 2P',monospace; font-size:9px; color: var(--a-dim2); }
-  #view-stats.arcade .stats-row .phase{ font-size:11px; color: var(--a-dim); margin-top:2px; }
-  #view-stats.arcade .stats-row .status{
-    font-family:'Press Start 2P',monospace; font-size:8px; text-align:right; letter-spacing:.03em;
-  }
-  #view-stats.arcade .stats-row .status.done{ color:#3ecf6b; }
-  #view-stats.arcade .stats-row .status.available{ color: var(--a-accent); }
-  #view-stats.arcade .stats-row .status.locked{ color: var(--a-dim2); }
-  @media (max-width:520px){
-    #view-stats.arcade .stats-row{ grid-template-columns:28px 1fr; }
-    #view-stats.arcade .stats-row .status{ grid-column:2; text-align:left; margin-top:4px; }
-  }
-
-  /* Settings page (9 Sept 2026) */
-  #view-settings.arcade .settings-row{
-    display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap;
-    padding:16px 0; border-bottom:1px solid var(--a-edge);
-  }
-  #view-settings.arcade .settings-row:last-child{ border-bottom:none; }
-  #view-settings.arcade .settings-label .t{ font-size:14px; color:#e8e8ec; }
-  #view-settings.arcade .settings-label .d{ font-size:11px; color: var(--a-dim); margin-top:2px; }
-  #view-settings.arcade .settings-swatches{ display:flex; gap:8px; }
-  #view-settings.arcade .settings-sw{
-    width:24px; height:24px; border-radius:50%; border:2px solid transparent; cursor:pointer; appearance:none; padding:0;
-  }
-  #view-settings.arcade .settings-sw.active{ border-color:#e8e8ec; }
-  #view-settings.arcade .settings-dangerbtn{
-    font-family:'Press Start 2P',monospace; font-size:9px; padding:10px 16px;
-    background:transparent; border:1px solid var(--a-danger); color: var(--a-danger); cursor:pointer; appearance:none;
-  }
-  #view-settings.arcade .settings-dangerbtn:hover{ background: rgba(255,107,107,.1); }
-  #view-settings.arcade .segbtn{ display:flex; border:1px solid var(--a-edge); }
-  #view-settings.arcade .segbtn button{
-    background:transparent; border:none; color: var(--a-dim); cursor:pointer; appearance:none;
-    font-family:'Press Start 2P',monospace; font-size:9px; padding:9px 16px;
-  }
-  #view-settings.arcade .segbtn button.active{ background: var(--a-bg0); color: var(--a-accent); }
-
-  /* Reset-progress confirmation modal (10 Sept 2026) — replaces a native
-     window.confirm() that read as jarring next to the rest of the arcade
-     chrome (see ROADMAP.md "Нативный браузерный window.confirm()"). A true
-     blocking dialog, not a toast: [hidden] fully removes it (no fade-out
-     that could be mistaken for auto-dismiss), the backdrop covers and dims
-     the whole page so nothing behind it is usable, and the panel itself
-     reuses the task-card corner-bracket frame (.corner, see TASK_CORNERS in
-     app.js / #view-module.arcade .card.task .corner above) rather than
-     victory-overlay's celebratory arcade-screen chrome — this is a warning,
-     not a reward. Sits under .arcade like every other themed piece so it
-     re-tints with Signal Color via the plain CSS custom properties. */
-  .reset-confirm-overlay{
-    position:fixed; inset:0; z-index:200; background:rgba(4,5,6,.86);
-    display:flex; align-items:center; justify-content:center; padding:24px;
-  }
-  .reset-confirm-overlay[hidden]{ display:none !important; }
-  .reset-confirm-panel{
-    position:relative; width:100%; max-width:380px; background: var(--a-bg1);
-    border:1px solid var(--a-danger); padding:26px 22px 22px;
-    box-shadow: 0 20px 50px -24px rgba(0,0,0,.7);
-  }
-  .reset-confirm-panel .corner{ position:absolute; width:14px; height:14px; border:2px solid var(--a-danger); opacity:.8; pointer-events:none; }
-  .reset-confirm-panel .corner.tl{ top:8px; left:8px; border-right:none; border-bottom:none; }
-  .reset-confirm-panel .corner.tr{ top:8px; right:8px; border-left:none; border-bottom:none; }
-  .reset-confirm-panel .corner.bl{ bottom:8px; left:8px; border-right:none; border-top:none; }
-  .reset-confirm-panel .corner.br{ bottom:8px; right:8px; border-left:none; border-top:none; }
-  .reset-confirm-tag{
-    font-family:'Press Start 2P',monospace; font-size:8px; letter-spacing:.05em; color: var(--a-danger);
-  }
-  .reset-confirm-title{
-    font-family:'Press Start 2P',monospace; font-size:14px; color:#e8e8ec; margin:12px 0 0; letter-spacing:.02em;
-  }
-  .reset-confirm-desc{ font-size:12.5px; color: var(--a-dim); margin:12px 0 0; line-height:1.5; }
-  .reset-confirm-actions{ display:flex; justify-content:flex-end; gap:10px; margin-top:22px; }
-  .reset-confirm-cancel, .reset-confirm-confirm{
-    font-family:'Press Start 2P',monospace; font-size:9px; padding:10px 14px; cursor:pointer; appearance:none;
-  }
-  .reset-confirm-cancel{ background:transparent; border:1px solid var(--a-edge); color: var(--a-dim); }
-  .reset-confirm-cancel:hover{ color:#e8e8ec; border-color:#e8e8ec; }
-  .reset-confirm-confirm{ background: var(--a-danger); border:1px solid var(--a-danger); color:#1a0505; }
-  .reset-confirm-confirm:hover{ background: var(--a-danger2); border-color: var(--a-danger2); }
-  .reset-confirm-cancel:focus-visible, .reset-confirm-confirm:focus-visible{ outline:2px solid var(--a-accent); outline-offset:2px; }
-  @media (max-width:520px){
-    .reset-confirm-actions{ flex-wrap:wrap; }
-    .reset-confirm-cancel, .reset-confirm-confirm{ flex:1; text-align:center; }
-  }
+  #view-module.arcade .room-head .kicker{ font-family:'Press Start 2P',monospace; font-size:9px; color: var(--a-accent); }
+  #view-module.arcade .room-head h2{ color:#e8e8ec; }
+  #view-module.arcade .backbtn{ color: var(--a-dim); }
+  #view-module.arcade .backbtn:hover{ color:#e8e8ec; }
 
   #view-module.arcade .card{ background: var(--a-bg1); border-color: var(--a-edge); box-shadow:none; }
   /* Task cards read as plain recolored light-UI cards next to the more
