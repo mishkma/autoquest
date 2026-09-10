@@ -1807,7 +1807,7 @@
       '<span class="corner tl"></span><span class="corner tr"></span>' +
       '<span class="corner bl"></span><span class="corner br"></span>' +
       '<div class="music-card-title">' + escapeHtml(tr('musicCardTitle')) + '</div>' +
-      '<button type="button" class="music-card-mute"><span class="dot"></span><span class="lbl"></span></button>' +
+      '<button type="button" class="music-card-mute"><span class="lbl"></span><span class="switch"><i></i></span></button>' +
       '<div class="music-card-vol-row">' +
         '<span class="music-card-vol-label">' + escapeHtml(tr('musicVolumeLabel')) + '</span>' +
         '<span class="music-card-vol-pct"></span>' +

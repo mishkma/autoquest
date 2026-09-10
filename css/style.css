@@ -1224,13 +1224,20 @@
   @media (max-width:720px){ .music-toggle-btn{ width:30px; height:30px; font-size:13px; } }
 
   /* Volume popup — same corner-bracket card as .hud-card right above (same
-     reasoning: informational, --a-accent not --a-danger), holding a mute
-     row plus a chunky, segmented-track range slider matching the pixel/
-     arcade look of .topbar.arcade .hud-xpbar elsewhere rather than a bare
-     native slider. */
+     reasoning: informational, --a-accent not --a-danger). Widened and
+     given more breathing room (10 Sept 2026, second pass — user: "сделай
+     нормальное поле для музыки, в котором будет всё видно") — the first
+     pass was cramped enough that the mute row read as loose floating text
+     rather than a control, and the slider (even once its fill was made
+     visible) still didn't read as draggable. Mute is now a real toggle
+     switch (track + sliding knob, the same on/off language switches use
+     everywhere else on the web) instead of a colored dot, a divider
+     separates it from the volume section, and the slider gets segment
+     ticks + a much larger grooved thumb so its shape alone says "drag
+     this", not just its color. */
   .music-card{
-    position:fixed; z-index:210; width:200px; max-width:calc(100vw - 20px);
-    background: var(--a-bg1); border:1px solid var(--a-accent); padding:14px 14px 14px;
+    position:fixed; z-index:210; width:230px; max-width:calc(100vw - 20px);
+    background: var(--a-bg1); border:1px solid var(--a-accent); padding:16px 16px 16px;
     box-shadow:0 14px 34px -18px rgba(0,0,0,.7); cursor:default;
   }
   .music-card .corner{ position:absolute; width:14px; height:14px; border:2px solid var(--a-accent); opacity:.8; pointer-events:none; }
@@ -1239,52 +1246,71 @@
   .music-card .corner.bl{ bottom:6px; left:6px; border-right:none; border-top:none; }
   .music-card .corner.br{ bottom:6px; right:6px; border-left:none; border-top:none; }
   .music-card-title{
-    font-family:'Press Start 2P',monospace; font-size:9px; letter-spacing:.04em; color: var(--a-accent); margin-bottom:12px;
+    font-family:'Press Start 2P',monospace; font-size:9.5px; letter-spacing:.05em; color: var(--a-accent); margin-bottom:14px;
   }
   .music-card-mute{
     display:flex; align-items:center; justify-content:space-between; gap:10px;
-    background:none; border:1px solid var(--a-edge); width:100%; padding:8px 10px; margin-bottom:14px;
-    font-family:'JetBrains Mono',monospace; font-size:11.5px; color:#e8e8ec; cursor:pointer; appearance:none;
+    background:none; border:none; width:100%; padding:0 0 14px; margin-bottom:14px;
+    border-bottom:1px solid var(--a-edge);
+    font-family:'JetBrains Mono',monospace; font-size:12.5px; color:#e8e8ec; cursor:pointer; appearance:none;
   }
-  .music-card-mute:hover{ border-color: var(--a-accent); }
-  .music-card-mute .dot{ width:7px; height:7px; border-radius:50%; background: var(--a-accent); box-shadow:0 0 6px var(--a-accent); flex:0 0 auto; }
-  .music-card-mute[data-muted="true"] .dot{ background: var(--a-dim2); box-shadow:none; }
-  .music-card-vol-row{ display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
-  .music-card-vol-label{ font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.04em; text-transform:uppercase; color: var(--a-dim); }
-  .music-card-vol-pct{ font-family:'Press Start 2P',monospace; font-size:9px; color: var(--a-accent); }
-  /* The first pass (var(--a-edge) tick marks on var(--a-bg0)) was nearly
-     invisible against .music-card's own var(--a-bg1) background — both
-     are near-black, and native range inputs give no filled-vs-empty
-     indication on their own (unlike .hud-xpbar, which is a plain <div>
-     this project can just draw a width:X% <i> into). Fixed two ways:
-     an accent-colored border so the control's OUTLINE is never in
-     question, and an actual progress fill up to the current value —
-     Chrome/Edge via a linear-gradient split at a `--fill` custom
-     property (app.js sets it on every input/sync, since WebKit's range
-     track has no native progress concept), Firefox via its own
-     ::-moz-range-progress pseudo-element (which DOES support this
-     natively, no custom property needed there). */
+  .music-card-mute .switch{
+    position:relative; width:34px; height:18px; flex:0 0 auto;
+    background: var(--a-bg0); border:2px solid var(--a-edge); transition: border-color .15s ease;
+  }
+  .music-card-mute .switch i{
+    position:absolute; top:1px; left:1px; width:10px; height:10px; background: var(--a-dim2);
+    transition: transform .15s ease, background .15s ease, box-shadow .15s ease;
+  }
+  .music-card-mute[data-muted="false"] .switch{ border-color: var(--a-accent); }
+  .music-card-mute[data-muted="false"] .switch i{
+    transform: translateX(16px); background: var(--a-accent); box-shadow:0 0 6px var(--a-accent);
+  }
+  .music-card-vol-row{ display:flex; align-items:baseline; justify-content:space-between; margin-bottom:10px; }
+  .music-card-vol-label{ font-family:'JetBrains Mono',monospace; font-size:10.5px; letter-spacing:.05em; text-transform:uppercase; color: var(--a-dim); }
+  .music-card-vol-pct{ font-family:'Press Start 2P',monospace; font-size:10px; color: var(--a-accent); }
+  /* Segment ticks (a dark line every 10%) drawn as a SECOND background
+     layer stacked on top of the fill gradient — visible regardless of
+     how much of the track underneath is filled — so the track itself
+     reads as a row of discrete blocks (matching .hud-xpbar's segmented
+     look elsewhere) rather than one plain bar; combined with a much
+     bigger, grooved thumb below, the whole control is unambiguous as a
+     slider even before anyone touches it. --fill set from app.js on
+     every input/sync (WebKit's own range track has no progress concept;
+     Firefox's ::-moz-range-progress below needs none). */
   .music-slider{
-    -webkit-appearance:none; appearance:none; width:100%; height:14px; margin:0;
+    -webkit-appearance:none; appearance:none; width:100%; height:18px; margin:0;
     background: var(--a-bg0); border:2px solid var(--a-accent); outline:none; cursor:pointer;
     --fill: 60%;
   }
   .music-slider::-webkit-slider-runnable-track{
-    height:14px;
-    background: linear-gradient(to right,
-      var(--a-accent) 0%, var(--a-accent) var(--fill),
-      var(--a-bg0) var(--fill), var(--a-bg0) 100%);
+    height:18px;
+    background:
+      repeating-linear-gradient(90deg, rgba(0,0,0,.4) 0 2px, transparent 2px 10%),
+      linear-gradient(to right,
+        var(--a-accent) 0%, var(--a-accent) var(--fill),
+        var(--a-bg0) var(--fill), var(--a-bg0) 100%);
   }
-  .music-slider::-moz-range-track{ height:14px; background: var(--a-bg0); }
-  .music-slider::-moz-range-progress{ height:14px; background: var(--a-accent); }
+  .music-slider::-moz-range-track{
+    height:18px;
+    background: repeating-linear-gradient(90deg, rgba(0,0,0,.4) 0 2px, transparent 2px 10%), var(--a-bg0);
+  }
+  .music-slider::-moz-range-progress{
+    height:18px;
+    background: repeating-linear-gradient(90deg, rgba(0,0,0,.4) 0 2px, transparent 2px 10%), var(--a-accent);
+  }
   .music-slider::-webkit-slider-thumb{
-    -webkit-appearance:none; width:12px; height:20px; margin-top:-5px;
-    background: #fff; border:2px solid #000; box-shadow:0 0 8px var(--a-glow); cursor:pointer;
+    -webkit-appearance:none; width:18px; height:28px; margin-top:-7px;
+    background: repeating-linear-gradient(90deg, #fff 0 3px, #ccc 3px 6px);
+    border:2px solid #000; box-shadow:0 0 8px var(--a-glow); cursor:grab;
   }
   .music-slider::-moz-range-thumb{
-    width:12px; height:20px; border-radius:0;
-    background: #fff; border:2px solid #000; box-shadow:0 0 8px var(--a-glow); cursor:pointer;
+    width:18px; height:28px; border-radius:0;
+    background: repeating-linear-gradient(90deg, #fff 0 3px, #ccc 3px 6px);
+    border:2px solid #000; box-shadow:0 0 8px var(--a-glow); cursor:grab;
   }
+  .music-slider:active::-webkit-slider-thumb{ cursor:grabbing; }
+  .music-slider:active::-moz-range-thumb{ cursor:grabbing; }
 
   /* Stats/Settings nav (9 Sept 2026) — same small-caps HUD-button treatment
      as the language switch right next to it, not a new visual language. */

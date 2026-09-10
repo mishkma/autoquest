@@ -28,7 +28,14 @@ window.Music = (function(){
 
   const STORAGE_KEY = 'autoquest-music';
   const VOL_KEY = 'autoquest-music-volume';
-  const DEFAULT_VOLUME = 0.6;
+  // A first-time visitor (nothing in localStorage yet) starts at 20%, not
+  // full volume — user request: quiet enough not to startle, easy to turn
+  // up from the popup. Still needs the first click anywhere on the page
+  // to actually START (see the module-level comment on `start()` below
+  // and initMusicToggle() in app.js) — no browser lets a page play audio
+  // before any user gesture at all, autoplay or not; this only controls
+  // the level it plays AT once that first click happens.
+  const DEFAULT_VOLUME = 0.2;
 
   // ---- equal-temperament note table (A4 = 440Hz) — just the notes the
   // five themes below actually use, not a full 88-key table. ----
