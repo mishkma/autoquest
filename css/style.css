@@ -275,9 +275,21 @@
      of a locked node's dimmed treatment. Checkpoints have no boss task,
      so bossPreview is simply omitted for them — the grid track just sits
      empty, not stretched or reflowed. */
+  .node-boss-wrap{ display:flex; flex-direction:column; align-items:center; gap:5px; }
+  /* "BOSS" tag (10 Sept 2026) — the spiky silhouette alone read as an
+     unlabeled decoration, not obviously a boss preview (user feedback).
+     Tiny Press Start 2P caps, same treatment as the other small HUD-style
+     labels throughout the arcade theme (.node-kicker etc.), in the boss
+     danger-red rather than the page's own accent so it reads as "warning/
+     encounter ahead" even before the icon itself is parsed. */
+  .node-boss-label{
+    font-family:'Press Start 2P',monospace; font-size:6.5px; letter-spacing:.04em;
+    color: var(--a-danger, #ff6b6b); text-align:center;
+  }
   .node-boss{ width:56px; height:56px; align-self:center; opacity:.85; }
   .node-boss svg{ width:100%; height:100%; filter: drop-shadow(0 0 6px rgba(255,80,110,.3)); }
   .node[data-locked="true"] .node-boss{ opacity:.25; filter:grayscale(1); }
+  .node[data-locked="true"] .node-boss-label{ opacity:.25; }
   /* Cleared module's boss (renderBossVisual's own `defeated` pose — rotated
      flat, cracked grey fill, X eyes) still needs to read as "handled",
      distinct from a LOCKED module's boss (unrelated state, dimmed+
@@ -289,6 +301,7 @@
      read as "still alive", the opposite of what defeated is meant to say. */
   .node-boss.defeated{ opacity:.75; }
   .node-boss.defeated svg{ filter: drop-shadow(0 0 6px rgba(200,195,185,.15)); }
+  .node-boss-wrap.defeated .node-boss-label{ color: var(--a-dim2); }
   .badge{
     position:relative;z-index:1;
     width:56px;height:56px;border-radius:16px;
@@ -544,11 +557,13 @@
     .badge{width:46px;height:46px;font-size:16px;border-radius:13px;}
     .node{grid-template-columns:46px 1fr;gap:14px;}
     .path-line{left:22px;}
-    /* .node-boss has no explicit track here (only 2 columns above) — left
-       unhidden, it would auto-place into an implicit 3rd column and cramp
-       a 375px-wide card. No real width to preview a boss in anyway at
-       this size, same call as hiding .hero-decor below 900px. */
-    .node-boss{display:none;}
+    /* .node-boss-wrap (icon + "BOSS" label, 10 Sept 2026 — was just
+       .node-boss before the label existed) has no explicit track here
+       (only 2 columns above) — left unhidden, it would auto-place into an
+       implicit 3rd column and cramp a 375px-wide card. No real width to
+       preview a boss in anyway at this size, same call as hiding
+       .hero-decor below 900px. */
+    .node-boss-wrap{display:none;}
   }
 
   /* =====================================================================
