@@ -487,35 +487,36 @@
     switchView(document.getElementById(INNER_VIEW_IDS[from]), document.getElementById(INNER_VIEW_IDS[target]), direction);
   }
 
-  // Every navigation that scrolls back to top does so right after a heavy
-  // DOM rebuild (renderPath()'s 16 module cards, openModule()'s theory +
-  // up to 13 task-card editors, etc.) — calling window.scrollTo() forces
-  // the browser to flush a full layout pass right then to know the page's
-  // new scrollable extent, on top of whatever the render itself just cost.
-  // Profiled 10 Sept 2026 ("переходы подтормаживают"): ~46ms on a fast
-  // dev machine for a single module open, entirely inside this one call.
-  // That layout flush is unavoidable (the DOM genuinely changed).
-  //
-  // First attempt deferred it with setTimeout(fn, 0) — next tick, right at
-  // the START of the .32s fade/slide transition (see the `transition:
-  // opacity .32s ease, transform .32s ease` rule in style.css). That
-  // traded "frozen screen, then a smooth transition" for "transition
-  // starts instantly, then stutters a few frames in" — same user report,
-  // same session, now describing the ANIMATION itself as janky rather
-  // than a pause before it. Forcing a layout recalc is main-thread work;
-  // opacity/transform transitions are normally compositor-driven and can
-  // usually ride out a busy main thread, but this project's transitions
-  // also drive real DOM/paint changes during the same window (e.g. the
-  // per-task highlight self-heal retry in bindTask, itself on
-  // requestAnimationFrame) — enough concurrent main-thread work right at
-  // the start of the animation to visibly drop frames on real hardware.
-  // Delaying past the transition's own duration (320ms + a small buffer)
-  // instead keeps the main thread quiet for the entire visible motion,
-  // paying the layout cost only once the screen has already finished
-  // settling — a delay this short reads as "arrived, then snapped to
-  // top" rather than a separate, noticeable jump.
-  function scrollToTopDeferred(){
-    setTimeout(() => window.scrollTo({top:0, behavior:'smooth'}), 340);
+  // Every navigation that scrolls back to top used to do it right after a
+  // heavy DOM rebuild (renderPath()'s 16 module cards, openModule()'s
+  // theory + up to 13 task-card editors, etc.) — calling window.scrollTo()
+  // right then forces the browser to flush a full layout pass to know the
+  // page's new scrollable extent, on top of whatever the render itself
+  // just cost. Profiled 10 Sept 2026 ("переходы подтормаживают"): ~46ms on
+  // a fast dev machine for a single module open, entirely inside that one
+  // call — two fixes both made this worse before landing on the right
+  // one:
+  // 1. Deferring it with setTimeout(fn, 0) (next tick, right at the START
+  //    of the .32s fade/slide transition) traded "frozen screen, then a
+  //    smooth transition" for "transition starts instantly, then stutters
+  //    a few frames in" — main-thread layout work competing with the
+  //    animation for frames.
+  // 2. Delaying it past the transition's own duration (340ms) fixed THAT,
+  //    but introduced a different, more visible bug: if the visitor was
+  //    scrolled down on the PREVIOUS screen, the new screen now appears
+  //    already faded in at that same old scroll offset — showing some
+  //    arbitrary middle slice of it — and only ~340ms later does the page
+  //    visibly jump to top, reported as "появляется половина прорисованной
+  //    страницы, а через миллисекунду остальное дотягивается."
+  // The actual fix: scroll to top INSTANTLY (no animation to fight the
+  // transition for frames) and BEFORE any DOM mutation, not after — at
+  // that point layout is still clean from the last paint, so reading
+  // scroll bounds costs nothing close to the ~46ms measured before; the
+  // expensive case was never scrolling itself, only doing it right after
+  // changing a large chunk of the page. Called first thing in every
+  // navigation handler, ahead of any render/hide/show work.
+  function scrollToTopNow(){
+    window.scrollTo({top:0, behavior:'instant'});
   }
 
   // Every top-level .arcade container (title, path/world-map, victory) shares
@@ -582,6 +583,10 @@
         // itself is what's animating in here, its children should already
         // be in their resting state (no separate inner transition) the
         // moment it becomes visible.
+        // Scroll first, before anything else changes — see
+        // scrollToTopNow()'s comment for why this has to run before any
+        // DOM mutation, not after.
+        scrollToTopNow();
         document.getElementById('view-module').hidden = true;
         document.getElementById('view-stats').hidden = true;
         document.getElementById('view-settings').hidden = true;
@@ -589,9 +594,7 @@
         currentModuleId = null;
         // Start the transition FIRST, re-render the path list after — same
         // fix as openModule() got for "переходы подтормаживают" (10 Sept
-        // 2026), applied here once the user reported this specific
-        // Title->Continue transition still stalling after that first
-        // round. renderPath() (16 module cards + boss SVGs) profiled at
+        // 2026). renderPath() (16 module cards + boss SVGs) profiled at
         // ~21ms on a fast dev machine — enough, stacked with switchView's
         // own forced reflow, to visibly delay the START of the animation.
         // Safe to defer here unlike a fresh module open: #view-path
@@ -599,18 +602,14 @@
         // rendered it (page load, or the last language switch that saw it
         // visible) — this call is only needed to catch a language change
         // made while still sitting on the title screen, a rare edge case.
-        // Delayed past the transition's own .32s duration (see
-        // scrollToTopDeferred's comment above for why next-tick isn't far
-        // enough — that same mistake here would just move renderPath's
-        // cost from "pause before the animation" to "stutter during it").
         switchView(document.getElementById('view-title'), document.getElementById('site-wrap'), 'fwd');
         setTimeout(renderPath, 340);
-        scrollToTopDeferred();
       });
     }
     const brandBtn = document.getElementById('brand-home');
     if(brandBtn){
       brandBtn.addEventListener('click', () => {
+        scrollToTopNow();
         // Root cause of the "path and an old module both visible" bug:
         // this only ever hid the outer #site-wrap, leaving whichever of
         // #view-path/#view-module was showing underneath still marked
@@ -624,7 +623,6 @@
         document.getElementById('view-path').hidden = true;
         currentModuleId = null;
         switchView(document.getElementById('site-wrap'), document.getElementById('view-title'), 'back');
-        scrollToTopDeferred();
       });
     }
     const continueBtn = document.getElementById('victory-continue');
@@ -644,6 +642,7 @@
   // goToTopLevelPage() below covers both starting points with one
   // function instead of duplicating the same landing logic per button.
   function goToTopLevelPage(target){
+    scrollToTopNow();
     const titleVisible = !document.getElementById('view-title').hidden;
     if(titleVisible){
       document.getElementById('view-path').hidden = true;
@@ -657,7 +656,6 @@
     }
     if(target === 'stats') renderStatsPage();
     if(target === 'settings') renderSettingsPage();
-    scrollToTopDeferred();
   }
 
   function initTopbarNav(){
@@ -666,9 +664,9 @@
     const settingsBtn = document.getElementById('nav-settings');
     if(settingsBtn) settingsBtn.addEventListener('click', () => goToTopLevelPage('settings'));
     const backStats = document.getElementById('btn-back-stats');
-    if(backStats) backStats.addEventListener('click', () => { goToInner('path', 'back'); scrollToTopDeferred(); });
+    if(backStats) backStats.addEventListener('click', () => { scrollToTopNow(); goToInner('path', 'back'); });
     const backSettings = document.getElementById('btn-back-settings');
-    if(backSettings) backSettings.addEventListener('click', () => { goToInner('path', 'back'); scrollToTopDeferred(); });
+    if(backSettings) backSettings.addEventListener('click', () => { scrollToTopNow(); goToInner('path', 'back'); });
   }
 
   // Real per-module status/unlock rules live in renderPath() — mirrored
@@ -1076,8 +1074,11 @@
     // preserveScroll is a re-render of the module the visitor is already
     // looking at (a language switch), not real navigation — skip the
     // transition then, goToInner() already no-ops if 'module' is already
-    // showing so this only matters for the timing, not correctness.
+    // showing so this only matters for the timing, not correctness. Scroll
+    // (when this IS real navigation) happens first, before anything else —
+    // see scrollToTopNow()'s comment.
     if(!preserveScroll){
+      scrollToTopNow();
       goToInner('module', 'fwd');
     } else {
       document.getElementById('view-path').hidden = true;
@@ -1095,7 +1096,6 @@
           <div class="display">${tr('soonTitle')}</div>
           <p>${tr('soonDesc')}</p>
         </div>`;
-      if(!preserveScroll) scrollToTopDeferred();
       return;
     }
 
@@ -1136,7 +1136,6 @@
     if(m.homework){ m.homework.forEach(t => bindTask(room, t, m)); }
 
     updateRoomProgress(m);
-    if(!preserveScroll) scrollToTopDeferred();
   }
 
   // Theory items are either a plain string (rendered as-is, old format) or
@@ -1778,10 +1777,10 @@
   /* ---------------- nav ---------------- */
 
   document.getElementById('btn-back').addEventListener('click', () => {
+    scrollToTopNow();
     currentModuleId = null;
     renderPath();
     goToInner('path', 'back');
-    scrollToTopDeferred();
   });
 
   /* ---------------- language switch ---------------- */
