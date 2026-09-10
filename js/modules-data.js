@@ -1381,6 +1381,7 @@ print(cart_report(cart))
         'VS Code is a code editor with a Python extension (install it from the Extensions panel — look for the official one by Microsoft). Once installed, opening a <code>.py</code> file gives you a Run button, and VS Code\'s own integrated terminal lets you run <code>python file.py</code> directly — same result, two ways to trigger it.',
         'Git tracks snapshots of a folder over time: <code>git init</code> turns a folder into a repository, <code>git add file.py</code> stages a file for the next snapshot, <code>git commit -m "message"</code> saves that snapshot with a description. This AutoQuest site itself lives in a git repository exactly like this — every module you have completed so far exists as a commit history you could inspect.',
         'GitHub hosts your repository online so it is not just on one machine. <code>git push</code> uploads your local commits there. This matters for two reasons: it is a backup, and — starting a few modules from now — it is what lets an automated pipeline (CI) run your tests every time you push, instead of you running them by hand.',
+        'A virtual environment (<code>venv</code>) is a private, isolated copy of Python for one project folder — packages you <code>pip install</code> inside it exist ONLY there, not system-wide. Without one, every project on your machine shares the same global set of packages, and two projects needing different versions of the same library silently break each other — this is one of the very first things a real team checks when a new project does not "just work" on someone else\'s machine.',
         'A few real Python features do not exist in this sandbox on purpose (it is a teaching subset, remember?) — slicing (<code>list[1:3]</code>), <code>.items()</code>, tuple unpacking, <code>*args</code>. Several tasks below show you real code using them and ask you to predict the output, the same way the "predict" tasks worked before — except now nothing runs in the browser, because this is real Python, not the sandbox.'
       ],
       tasks:[
@@ -1467,9 +1468,9 @@ print(fastest_three)
       ],
       homework:[
         {
-          id:'m6-hw1', kind:'checklist', title:'Use the integrated terminal',
-          goal:'Open VS Code\'s own integrated terminal (View → Terminal, or the shortcut it shows there) instead of a separate terminal window, and run both <code>python --version</code> and <code>git --version</code> inside it. Mark this done once both work from inside VS Code.',
-          hint:'Everything you have done in a separate terminal so far also works inside VS Code\'s integrated one — that is the whole point of using it day to day.'
+          id:'m6-hw1', kind:'checklist', title:'Create and use a real virtual environment',
+          goal:'Open VS Code\'s own integrated terminal (View → Terminal) inside <code>autoquest-practice</code>, and confirm <code>python --version</code>/<code>git --version</code> both work from inside it. Then create a virtual environment with <code>python -m venv venv</code>, activate it (<code>venv\\Scripts\\activate</code> on Windows, <code>source venv/bin/activate</code> on macOS/Linux — your prompt should now show <code>(venv)</code>), and run <code>pip install requests</code> inside it. Confirm isolation: run <code>pip show requests</code> (it is there), then <code>deactivate</code> and run <code>pip show requests</code> again OUTSIDE the venv — mark this done once you see it reports "not found" outside, proving the install stayed local to this one project.',
+          hint:'This is not just a formality — a venv is what lets two different projects on the same machine need two different versions of the same package without breaking each other, and it is the very first thing a real team checks when "it works on my machine" turns out to mean "it only works inside my one particular global Python install". Everything you did in a separate terminal so far also works inside VS Code\'s integrated one, which is why both live in one task here.'
         },
         {
           id:'m6-hw2', kind:'predict', offline:true, title:'Predict: self-documenting f-strings',
@@ -2173,9 +2174,9 @@ print(counter.call_count)
           hint:'A real API validating its own inputs and telling you clearly what is missing — worth testing on purpose, since "what happens when a required field is missing" is exactly the kind of case a thin happy-path-only test suite misses.'
         },
         {
-          id:'m12-hw3', kind:'checklist', title:'Inspect real response headers',
-          goal:'GET <code>productsList</code>, then print <code>r.headers["Content-Type"]</code>. Confirm it mentions <b>json</b> somewhere in the value.',
-          hint:'<code>r.headers</code> behaves like a dict of metadata ABOUT the response, separate from <code>r.json()</code> which is the actual body content — <code>Content-Type</code> is the server telling you what format to expect before you even parse it.'
+          id:'m12-hw3', kind:'checklist', title:'Inspect real response headers (and catch a real mismatch)',
+          goal:'GET <code>productsList</code>, then print <code>r.headers["Content-Type"]</code>. On this real API it comes back as <code>text/html; charset=utf-8</code> — NOT anything mentioning json — even though <code>r.json()</code> parses the body without error. Print both <code>r.headers["Content-Type"]</code> and <code>type(r.json())</code> side by side and confirm you can see the mismatch for yourself: a header claiming HTML, a body that is actually valid JSON.',
+          hint:'<code>r.headers</code> behaves like a dict of metadata ABOUT the response, separate from <code>r.json()</code> which is the actual body content — and this is exactly why you cannot always trust one to describe the other. A real API lying about its own <code>Content-Type</code> is not rare; this is the same lesson as task 3\'s HTTP-status-vs-responseCode gotcha, one header lower: never assume the metadata matches the body, check the thing you actually care about directly.'
         }
       ]
     },
@@ -2308,6 +2309,7 @@ print(cursor.rowcount)
         'Reading vs acting, same split as everywhere else in this course: <code>.text</code> reads visible text, <code>.get_attribute("value")</code> reads an attribute (like what is currently typed into a field); <code>.click()</code> and <code>.send_keys("...")</code> actually act on the element, exactly like a real click or real typing.',
         'THE single most important lesson in browser automation: a page takes TIME to load and react. Calling <code>find_element</code> the instant after <code>.get(...)</code> or <code>.click()</code> can fail simply because the element has not rendered yet — not because the locator is wrong. <code>WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.ID, "...")))</code> checks repeatedly for up to 10 seconds instead of guessing a fixed pause, needing <code>from selenium.webdriver.support.ui import WebDriverWait</code> and <code>from selenium.webdriver.support import expected_conditions as EC</code>.',
         'Always <code>driver.quit()</code> when a script is done — a leftover browser process wastes resources, and piles up fast across a real test suite running many times in CI.',
+        'A real, extremely common blocker on this exact site: a cookie-consent overlay ("This site asks for consent to use your data") sits on top of the page on a fresh visit and physically intercepts clicks/typing meant for whatever is underneath it — including the login form used later in this module. The fix is not a mystery workaround, it is dismissing the overlay first, exactly like a real user would: <code>driver.find_element(By.CSS_SELECTOR, ".fc-cta-consent").click()</code> right after <code>driver.get(...)</code>, before interacting with anything else on the page. (Module 15 hits the exact same overlay on the exact same site — same fix, different library.)',
         'This is the exact moment Module 7\'s <code>Page Object</code> preview stops being a preview: a class per page, an <code>__init__</code> storing the <code>driver</code>, methods wrapping the raw <code>find_element</code>/<code>click</code>/<code>send_keys</code> calls for that one page — so a test reads like <code>login_page.login(email, password)</code> instead of five raw Selenium lines repeated in every test that needs to log in.'
       ],
       tasks:[
@@ -2328,13 +2330,13 @@ print(cursor.rowcount)
         },
         {
           id:'m14-t4', kind:'checklist', title:'Read form field attributes',
-          goal:'Navigate to <code>https://automationexercise.com/login</code>. Find the email field with <code>driver.find_element(By.CSS_SELECTOR, \'input[data-qa="login-email"]\')</code> and print <code>.get_attribute("name")</code>. Confirm you see <b>email</b>.',
-          hint:'<code>data-qa="..."</code> attributes exist on this site specifically to give automation a stable way to find things, independent of visual styling classes that might change — a real pattern worth recognizing when you see it on other sites.'
+          goal:'Navigate to <code>https://automationexercise.com/login</code>. FIRST dismiss the cookie-consent overlay this site shows on a fresh visit — <code>driver.find_element(By.CSS_SELECTOR, ".fc-cta-consent").click()</code> — otherwise it sits on top of the page and later steps in this module will fail with an "element not interactable" error that has nothing to do with your locator. Then find the email field with <code>driver.find_element(By.CSS_SELECTOR, \'input[data-qa="login-email"]\')</code> and print <code>.get_attribute("name")</code>. Confirm you see <b>email</b>.',
+          hint:'<code>data-qa="..."</code> attributes exist on this site specifically to give automation a stable way to find things, independent of visual styling classes that might change — a real pattern worth recognizing when you see it on other sites. If the consent click itself fails because the button is not there yet, wrap it in <code>WebDriverWait(driver, 5).until(EC.element_to_be_clickable(...))</code> the same way task 7 does.'
         },
         {
           id:'m14-t5', kind:'checklist', title:'Type into a field and read it back',
-          goal:'On the login page, find the email field and call <code>.send_keys("test@example.com")</code> on it. Then print <code>.get_attribute("value")</code> on that SAME element. Confirm it shows exactly what you typed.',
-          hint:'<code>send_keys</code> does not overwrite by default — it types onto whatever is already there. On an empty field like this one, that does not matter, but it is worth remembering for a field that might already have text in it.'
+          goal:'On the login page (with the cookie banner from task 4 already dismissed), find the email field and call <code>.send_keys("test@example.com")</code> on it. Then print <code>.get_attribute("value")</code> on that SAME element. Confirm it shows exactly what you typed.',
+          hint:'<code>send_keys</code> does not overwrite by default — it types onto whatever is already there. On an empty field like this one, that does not matter, but it is worth remembering for a field that might already have text in it. If this fails with "element not interactable" and you have not dismissed the cookie banner yet in this script run, that overlay is almost always the reason — see task 4.'
         },
         {
           id:'m14-t6', kind:'checklist', title:'Read a real NoSuchElementException',
@@ -2348,8 +2350,8 @@ print(cursor.rowcount)
         },
         {
           id:'m14-t8', kind:'checklist', title:'Click a link and confirm navigation',
-          goal:'On the home page, wait for the "Cart" link to be clickable with <code>WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.LINK_TEXT, "Cart")))</code>, click it, then print <code>driver.current_url</code>. Confirm the URL now contains <b>view_cart</b>.',
-          hint:'<code>EC.element_to_be_clickable</code> checks both that the element exists AND that nothing else is currently covering it — a stricter, more useful wait than just checking it is present when the next step is a click.'
+          goal:'On the home page, dismiss the cookie-consent overlay first (see task 4) — the "Cart" link sits right behind it on a fresh page load, and a click there can still be intercepted by the overlay even after <code>EC.element_to_be_clickable</code> reports the link itself as ready. Then wait for the "Cart" link to be clickable with <code>WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.LINK_TEXT, "Cart")))</code>, click it, then print <code>driver.current_url</code>. Confirm the URL now contains <b>view_cart</b>.',
+          hint:'<code>EC.element_to_be_clickable</code> checks that the element exists and is enabled — but it does NOT know about a separate overlay floating on top of it. This is exactly why "the wait says it is clickable but the click still fails" is one of the most common real Selenium surprises, and it is almost always an overlay like this one.'
         },
         {
           id:'m14-t9', kind:'checklist', title:'Always quit, even on failure',
@@ -2358,8 +2360,8 @@ print(cursor.rowcount)
         },
         {
           id:'m14-t10', kind:'checklist', boss:true, title:'A real Page Object',
-          goal:'Write <code>class LoginPage:</code> with <code>__init__(self, driver)</code> storing the driver, and a method <code>open(self)</code> that navigates to the login URL, and a method <code>enter_email(self, email)</code> that finds the email field and sends it the given text. Create an instance, call <code>.open()</code>, then <code>.enter_email("alex@example.com")</code>, then read the field\'s value directly through <code>page.driver.find_element(...)</code> to confirm it worked.',
-          hint:'This is Module 7\'s class syntax wrapping Module 14\'s Selenium calls — the exact shape a real Page Object takes: the class knows HOW to interact with one page, a test just calls its methods by name.'
+          goal:'Write <code>class LoginPage:</code> with <code>__init__(self, driver)</code> storing the driver, and a method <code>open(self)</code> that navigates to the login URL AND dismisses the cookie-consent overlay from task 4 right there (so every test using this page object gets it for free, instead of every test remembering to do it separately), and a method <code>enter_email(self, email)</code> that finds the email field and sends it the given text. Create an instance, call <code>.open()</code>, then <code>.enter_email("alex@example.com")</code>, then read the field\'s value directly through <code>page.driver.find_element(...)</code> to confirm it worked.',
+          hint:'This is Module 7\'s class syntax wrapping Module 14\'s Selenium calls — the exact shape a real Page Object takes: the class knows HOW to interact with one page, a test just calls its methods by name. Folding the cookie-dismissal into <code>open()</code> is also a real, common Page Object pattern: page-wide quirks belong in the page object, not repeated in every test that uses it.'
         }
       ],
       homework:[
@@ -2500,8 +2502,8 @@ print(cursor.rowcount)
         },
         {
           id:'m16-t6', kind:'checklist', title:'requirements.txt',
-          goal:'Create a <code>requirements.txt</code> file listing <code>pytest</code>, <code>playwright</code>, and <code>requests</code>, one per line. In a NEW empty virtual environment (or just conceptually), confirm <code>pip install -r requirements.txt</code> would install everything this project needs in one command.',
-          hint:'Run <code>pip freeze</code> to see the exact installed versions on your machine — pinning exact versions (e.g. <code>pytest==9.1.1</code>) makes the project reproducible; leaving them unpinned always installs the latest.'
+          goal:'Create a <code>requirements.txt</code> file listing <code>pytest</code>, <code>playwright</code>, and <code>requests</code>, one per line. Create a NEW, separate virtual environment for this exact framework folder (<code>python -m venv venv</code>, same as Module 6), activate it, and confirm <code>pip install -r requirements.txt</code> really installs everything this project needs into it in one command — do not skip this by reasoning about it "conceptually", actually run it in a fresh venv and watch the packages install.',
+          hint:'This is the payoff for Module 6\'s venv task: a <code>requirements.txt</code> is only actually reproducible if you have proven it works starting from NOTHING installed — running it in an environment that already has everything installed globally would not catch a missing dependency. Run <code>pip freeze</code> to see the exact installed versions — pinning exact versions (e.g. <code>pytest==9.1.1</code>) makes the project reproducible; leaving them unpinned always installs the latest.'
         },
         {
           id:'m16-t7', kind:'checklist', title:'API and UI tests running together',
@@ -2539,6 +2541,11 @@ print(cursor.rowcount)
           id:'m16-hw3', kind:'checklist', title:'Write a README',
           goal:'Create a <code>README.md</code> in the project root with a short description of what the framework tests, and the exact command to run it (<code>pip install -r requirements.txt</code> then <code>pytest -v</code>). Confirm someone with no other context could read it and run the suite themselves.',
           hint:'A framework nobody but its author can figure out how to run is not really finished — this is the same instinct behind every good README on a real GitHub project, including this AutoQuest repository\'s own one.'
+        },
+        {
+          id:'m16-hw4', kind:'checklist', title:'Actually run it on push — a real CI pipeline',
+          goal:'Module 6 promised this moment: create <code>.github/workflows/tests.yml</code> in your pushed repository with a minimal GitHub Actions workflow that triggers <code>on: push</code>, checks out the code, sets up Python, runs <code>pip install -r requirements.txt</code>, then <code>pytest -v</code>. Push it, then open the "Actions" tab on your GitHub repository page and confirm you see a real run — green if everything passes, red if something fails, with the actual pytest output visible in the log, not run by you by hand on your own machine.',
+          hint:'This is the exact promise from Module 6\'s theory — "it is what lets an automated pipeline (CI) run your tests every time you push, instead of you running them by hand" — finally cashed in. A minimal starting workflow looks like: <code>on: [push]</code> at the top level, one <code>jobs.test</code> job running on <code>ubuntu-latest</code>, steps <code>actions/checkout@v4</code>, <code>actions/setup-python@v5</code> (with a <code>python-version</code>), then two <code>run:</code> steps for install and pytest — search "GitHub Actions python pytest workflow" for a copy-pasteable template if the YAML syntax itself is unfamiliar; the goal here is seeing it run for real, not memorizing YAML.'
         }
       ]
     }
