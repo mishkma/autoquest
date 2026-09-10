@@ -126,7 +126,27 @@
      into whatever's left so the dark background genuinely reaches the
      bottom of the screen instead of merely reaching the bottom of its own
      (possibly short) content. */
-  .wrap{max-width:920px;margin:0 auto;padding:0 20px;flex:1 1 auto;display:flex;flex-direction:column;min-height:0;}
+  /* Widened 920px -> 1200px (10 Sept 2026, third pass on this exact value —
+     see CLAUDE.md/ROADMAP.md for the earlier back-and-forth). The previous
+     920px + an undecorated side margin was an explicit, deliberate call —
+     but the user came back to it again unprompted with a screenshot asking
+     for the empty side columns to actually go away, which is a real
+     "явный запрос" superseding that earlier decision, not a guess on my
+     part. Keep this synced with `.topbar-inner`'s max-width right above
+     (both instances — the plain one and `.topbar.arcade .topbar-inner`
+     further down) and with the side-rail decoration's calc()/breakpoint
+     right below, which is written in terms of this exact number. */
+  /* width:100% is required here, not just max-width — .wrap is now a flex
+     ITEM of body (flex-direction:column), and a flex item's horizontal
+     `margin:auto` is interpreted as flexbox cross-axis alignment, not
+     classic block centering: it shrink-wraps the item to its content
+     width first and only THEN centers that smaller box, silently ignoring
+     max-width as an upper bound to grow into. Giving it an explicit
+     width:100% (which max-width then correctly caps at 1200px) sidesteps
+     that special case — found immediately after widening 920px -> 1200px,
+     when the computed width stayed stuck at content size (~664px) instead
+     of actually reaching 1200px. */
+  .wrap{max-width:1200px;width:100%;margin:0 auto;padding:0 20px;flex:1 1 auto;display:flex;flex-direction:column;min-height:0;}
   .view{flex:1 1 auto;min-height:0;}
 
   /* Animated screen transitions (9 Sept 2026, user request) — see
@@ -188,7 +208,7 @@
     border-bottom:1px solid var(--edge);
   }
   .topbar-inner{
-    max-width:920px;margin:0 auto;padding:14px 20px;
+    max-width:1200px;margin:0 auto;padding:14px 20px;
     display:flex;align-items:center;gap:16px;flex-wrap:wrap;
   }
   .brand{
@@ -782,29 +802,30 @@
      it is laid out. */
   #view-path.arcade{ background: var(--a-bg0); margin: 0 -20px; padding: 0 20px 40px; }
   /* Fill the dead margin on wide viewports (#view-path/#view-module only
-     fill .wrap's own 920px width, not the browser window) by extending
+     fill .wrap's own max-width, not the browser window) by extending
      the SAME faint code-editor line texture already used behind the title
      screen (.arcade-linebg) — not a new illustration. A previous attempt
      here (circuit-trace side rails, see CLAUDE.md "Известный класс
      багов") read as visual noise and was reverted; reusing an already-
      approved motif is deliberately the lower-risk choice this time.
-     Pure ::before/::after, no extra markup needed. Hidden below ~1180px,
-     where there's no real gap left to fill. `.wrap` briefly widened to
-     1180px on 9 Sept (reverted 10 Sept, see CLAUDE.md) — this calc/
-     breakpoint pair must always track .wrap's actual max-width (half of
-     it, minus the 20px .wrap side padding minus a hair of margin), or a
-     stale value here re-creates the exact "empty field" complaint this
-     block exists to close, just at the wrong distance from center. */
+     Pure ::before/::after, no extra markup needed. `.wrap` widened
+     920px -> 1200px (10 Sept 2026, see CLAUDE.md/the comment on `.wrap`
+     above) — this calc/breakpoint pair must always track .wrap's actual
+     max-width (half of it, minus a hair of margin), or a stale value here
+     re-creates the exact "empty field" complaint this block exists to
+     close, just at the wrong distance from center. Hidden below ~1460px
+     (1200 + ~260, the same margin this had relative to the old 920px
+     width), where there's no real gap left worth filling. */
   #view-path.arcade::before, #view-path.arcade::after,
   #view-module.arcade::before, #view-module.arcade::after{
     content:''; position:fixed; top:0; bottom:0;
-    width:calc(50vw - 460px - 16px); max-width:640px;
+    width:calc(50vw - 600px - 16px); max-width:640px;
     background: repeating-linear-gradient(0deg, var(--a-line) 0 24px, transparent 24px 25px);
     pointer-events:none; z-index:0;
   }
   #view-path.arcade::before, #view-module.arcade::before{ left:0; border-right:1px solid var(--a-edge); }
   #view-path.arcade::after, #view-module.arcade::after{ right:0; border-left:1px solid var(--a-edge); }
-  @media (max-width:1180px){
+  @media (max-width:1460px){
     #view-path.arcade::before, #view-path.arcade::after,
     #view-module.arcade::before, #view-module.arcade::after{ display:none; }
   }
@@ -1087,7 +1108,7 @@
     background: var(--a-bg1); border-bottom:1px solid var(--a-edge); backdrop-filter:none;
   }
   .topbar.arcade .topbar-inner{
-    max-width:920px; margin:0 auto; padding:11px 20px; display:flex; align-items:center; gap:22px; flex-wrap:wrap;
+    max-width:1200px; margin:0 auto; padding:11px 20px; display:flex; align-items:center; gap:22px; flex-wrap:wrap;
   }
   .topbar.arcade .brand{ appearance:none; border:none; background:none; padding:0; cursor:pointer; display:flex; align-items:center; gap:8px; margin-right:auto; }
   .topbar.arcade .brand .mark{ font-family:'JetBrains Mono',monospace; color: var(--a-accent); font-weight:700; }
