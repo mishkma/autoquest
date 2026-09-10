@@ -144,7 +144,7 @@
      that special case — found immediately after widening 920px -> 1200px,
      when the computed width stayed stuck at content size (~664px) instead
      of actually reaching 1200px. */
-  .wrap{max-width:1040px;width:100%;margin:0 auto;padding:0 20px;flex:1 1 auto;display:flex;flex-direction:column;min-height:0;}
+  .wrap{max-width:1000px;width:100%;margin:0 auto;padding:0 20px;flex:1 1 auto;display:flex;flex-direction:column;min-height:0;}
   .view{flex:1 1 auto;min-height:0;}
 
   /* Animated screen transitions (9 Sept 2026, user request) — see
@@ -206,7 +206,7 @@
     border-bottom:1px solid var(--edge);
   }
   .topbar-inner{
-    max-width:1040px;margin:0 auto;padding:14px 20px;
+    max-width:1000px;margin:0 auto;padding:14px 20px;
     display:flex;align-items:center;gap:16px;flex-wrap:wrap;
   }
   .brand{
@@ -289,15 +289,17 @@
      etc.), in the boss danger-red rather than the page's own accent so it
      reads as "warning/encounter ahead" even before the icon is parsed. */
   .node-boss-label{
-    font-family:'Press Start 2P',monospace; font-size:6.5px; letter-spacing:.04em;
+    font-family:'Press Start 2P',monospace; font-size:7.5px; letter-spacing:.04em;
     color: var(--a-danger, #ff6b6b); text-align:right;
   }
   /* The boss task's own real title (taskField(bossTask,m,'title') in
      app.js) — not an invented monster name, this course has never had
      those. Wraps up to 2 lines rather than truncating with an ellipsis,
-     since showing the actual name was the entire point of this label. */
+     since showing the actual name was the entire point of this label.
+     Color tracks the active Signal Color (--a-accent) rather than a flat
+     grey, like the rest of the arcade theme's text accents. */
   .node-boss-name{
-    font-size:12px; line-height:1.3; color:#cfd6cf; text-align:right;
+    font-size:13.5px; line-height:1.35; color: var(--a-accent, #8ff0a8); text-align:right;
   }
   .node-boss{ width:56px; height:56px; flex:0 0 auto; opacity:.85; }
   .node-boss svg{ width:100%; height:100%; filter: drop-shadow(0 0 6px rgba(255,80,110,.3)); }
@@ -848,7 +850,7 @@
   #view-path.arcade::before, #view-path.arcade::after,
   #view-module.arcade::before, #view-module.arcade::after{
     content:''; position:fixed; top:0; bottom:0;
-    width:calc(50vw - 520px - 16px); max-width:640px;
+    width:calc(50vw - 500px - 16px); max-width:640px;
     background: repeating-linear-gradient(0deg, var(--a-line) 0 24px, transparent 24px 25px);
     pointer-events:none; z-index:0;
   }
@@ -1137,7 +1139,7 @@
     background: var(--a-bg1); border-bottom:1px solid var(--a-edge); backdrop-filter:none;
   }
   .topbar.arcade .topbar-inner{
-    max-width:1040px; margin:0 auto; padding:11px 20px; display:flex; align-items:center; gap:22px; flex-wrap:wrap;
+    max-width:1000px; margin:0 auto; padding:11px 20px; display:flex; align-items:center; gap:22px; flex-wrap:wrap;
   }
   .topbar.arcade .brand{ appearance:none; border:none; background:none; padding:0; cursor:pointer; display:flex; align-items:center; gap:8px; margin-right:auto; }
   .topbar.arcade .brand .mark{ font-family:'JetBrains Mono',monospace; color: var(--a-accent); font-weight:700; }
