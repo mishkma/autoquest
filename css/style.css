@@ -540,8 +540,28 @@
     background: var(--a-bg0); overflow:hidden;
   }
   #view-title{ padding:0; }
-  #view-title .arcade-screen{ max-width:none; border-left:none; border-right:none; }
-  #view-title .arcade-content{ max-width:680px; margin:0 auto; padding-top:32px; padding-bottom:36px; }
+  /* Stretch the title screen to fill the viewport (10 Sept 2026) — on tall/
+     wide monitors .arcade-content used to size purely to its own content
+     height (flex column, gap 22px), leaving raw body background showing
+     below .arcade-floor all the way to the window's bottom edge. min-height
+     (not height) so short viewports still just grow with content instead of
+     clipping; 100dvh listed after 100vh so it wins where supported (avoids
+     the classic 100vh mobile browser-chrome jump — see CLAUDE.md's "flex-
+     container-without-height" bug class, same family of issue, different
+     cause). display:flex + column turns .arcade-content/.arcade-floor into
+     stacked flex children filling that height instead of a plain block that
+     stops at its content. Scoped to #view-title .arcade-screen only — do NOT
+     widen this to the bare .arcade-screen class, the boss header and victory
+     overlay have their own scoped max-width/sizing rules this must not touch. */
+  #view-title .arcade-screen{
+    max-width:none; border-left:none; border-right:none;
+    min-height:100vh; min-height:100dvh;
+    display:flex; flex-direction:column;
+  }
+  #view-title .arcade-content{
+    max-width:680px; margin:0 auto; padding-top:32px; padding-bottom:36px;
+    flex:1; justify-content:center;
+  }
 
   .arcade-backdrop{ position:absolute; inset:0; z-index:0; }
   .arcade-gutter{
