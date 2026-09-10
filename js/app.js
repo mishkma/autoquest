@@ -587,14 +587,24 @@
         document.getElementById('view-settings').hidden = true;
         document.getElementById('view-path').hidden = false;
         currentModuleId = null;
-        // The path list was last rendered whenever initState() first ran
-        // (page load, always in whatever language was current then) or the
-        // last time the language switch actually saw #view-path visible —
-        // if the visitor changed language while still on the title screen,
-        // neither of those re-ran it, so it can be stale here. Cheap to
-        // just always re-render on the way in rather than track that.
-        renderPath();
+        // Start the transition FIRST, re-render the path list after — same
+        // fix as openModule() got for "переходы подтормаживают" (10 Sept
+        // 2026), applied here once the user reported this specific
+        // Title->Continue transition still stalling after that first
+        // round. renderPath() (16 module cards + boss SVGs) profiled at
+        // ~21ms on a fast dev machine — enough, stacked with switchView's
+        // own forced reflow, to visibly delay the START of the animation.
+        // Safe to defer here unlike a fresh module open: #view-path
+        // already holds correct content from whenever initState() last
+        // rendered it (page load, or the last language switch that saw it
+        // visible) — this call is only needed to catch a language change
+        // made while still sitting on the title screen, a rare edge case.
+        // Delayed past the transition's own .32s duration (see
+        // scrollToTopDeferred's comment above for why next-tick isn't far
+        // enough — that same mistake here would just move renderPath's
+        // cost from "pause before the animation" to "stutter during it").
         switchView(document.getElementById('view-title'), document.getElementById('site-wrap'), 'fwd');
+        setTimeout(renderPath, 340);
         scrollToTopDeferred();
       });
     }
