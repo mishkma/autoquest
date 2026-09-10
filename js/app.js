@@ -1814,7 +1814,18 @@
       '</div>' +
       '<input type="range" class="music-slider" min="0" max="100" step="1">';
     card.addEventListener('click', (e) => e.stopPropagation());
-    document.body.appendChild(card);
+    // Appended to the button itself, NOT document.body — same reason
+    // openHudCard() appends to .hud-cell rather than body (see its own
+    // comment above): the card's every color comes from --a-accent/
+    // --a-bg0/--a-edge/etc, defined on the nearest .arcade[data-signal]
+    // ancestor (.topbar.arcade, which #music-toggle already lives inside)
+    // and inherited down — body itself carries none of those custom
+    // properties, so a body-appended card silently gets NO colors at all
+    // (found from a live screenshot: switch/slider rendered with zero
+    // background/border, not just "hard to see" but genuinely unstyled;
+    // position:fixed keeps the actual on-screen placement identical
+    // either way, only inheritance depends on where in the DOM this sits).
+    btn.appendChild(card);
     const rect = btn.getBoundingClientRect();
     const margin = 10;
     let left = rect.left + rect.width / 2 - card.offsetWidth / 2;
