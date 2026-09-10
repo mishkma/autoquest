@@ -1153,9 +1153,22 @@
   .topbar.arcade .brand:hover h1{ color: var(--a-accent); }
 
   .topbar.arcade .hud{ display:flex; align-items:center; gap:20px; font-family:'Press Start 2P',monospace; font-size:10px; }
-  .topbar.arcade .hud-cell{ display:flex; align-items:center; gap:7px; }
+  /* Each cell is a tap target for the detail card below (see initHudCards()
+     in app.js) — position:relative isn't needed for the card itself (it's
+     positioned via JS/getBoundingClientRect, not CSS-anchored to this
+     ancestor), only cursor/focus affordance lives here. */
+  .topbar.arcade .hud-cell{ display:flex; align-items:center; gap:7px; cursor:pointer; }
+  .topbar.arcade .hud-cell:focus-visible{ outline:2px solid var(--a-accent); outline-offset:3px; }
   .topbar.arcade .hud-label{ color: var(--a-dim); letter-spacing:.03em; }
   .topbar.arcade .hud-cell b{ color:#e8e8ec; font-variant-numeric:tabular-nums; font-weight:400; }
+  /* 11x11 pixel-style glyphs (LV chevron-stack, XP spark) — same crisp-pixel
+     technique as .briefing-icon: shape-rendering:crispEdges + currentColor
+     rects, re-tints with Signal Color for free since .hud-cell only sets
+     `color` here and everything else stays on --a-accent inheritance. */
+  .topbar.arcade .hud-icon{
+    flex:0 0 auto; width:11px; height:11px; color: var(--a-accent); shape-rendering:crispEdges;
+  }
+  .topbar.arcade .hud-icon rect{ fill: currentColor; }
 
   .topbar.arcade .hud-xpbar{
     position:relative; width:88px; height:11px; background: var(--a-bg0); border:2px solid var(--a-edge); overflow:hidden;
@@ -1168,6 +1181,32 @@
 
   .topbar.arcade .hud-streak b{ color: var(--a-danger2); }
   .topbar.arcade .hud-flame{ font-size:12px; filter:saturate(1.2); }
+
+  /* HUD detail card (10 Sept 2026) — opens on click/tap of a .hud-cell (see
+     initHudCards() in app.js), replaces the earlier native title="" tooltip
+     approach (hover-only, unreadable on mobile). Same corner-bracket motif
+     as .reset-confirm-panel .corner, but in --a-accent (informational),
+     never the reset panel's --a-danger (that one's a destructive warning,
+     this one isn't). position:fixed + left/top set from JS via
+     getBoundingClientRect, clamped to the viewport there — no CSS anchoring
+     to the cell needed, which keeps the 375px overflow case a pure JS math
+     problem instead of a CSS one. Appended as a child of the .hud-cell (not
+     document.body) purely so it stays under the same .arcade[data-signal]
+     ancestor and inherits --a-accent/--a-bg1/--a-dim/--a-edge normally. */
+  .hud-card{
+    position:fixed; z-index:210; width:220px; max-width:calc(100vw - 20px);
+    background: var(--a-bg1); border:1px solid var(--a-accent); padding:14px 14px 12px;
+    box-shadow:0 14px 34px -18px rgba(0,0,0,.7); cursor:default;
+  }
+  .hud-card .corner{ position:absolute; width:14px; height:14px; border:2px solid var(--a-accent); opacity:.8; pointer-events:none; }
+  .hud-card .corner.tl{ top:6px; left:6px; border-right:none; border-bottom:none; }
+  .hud-card .corner.tr{ top:6px; right:6px; border-left:none; border-bottom:none; }
+  .hud-card .corner.bl{ bottom:6px; left:6px; border-right:none; border-top:none; }
+  .hud-card .corner.br{ bottom:6px; right:6px; border-left:none; border-top:none; }
+  .hud-card-title{
+    font-family:'Press Start 2P',monospace; font-size:9px; letter-spacing:.04em; color: var(--a-accent); margin-bottom:8px;
+  }
+  .hud-card-body{ font-family:'JetBrains Mono',monospace; font-size:11.5px; line-height:1.5; color: var(--a-dim); }
 
   /* Stats/Settings nav (9 Sept 2026) — same small-caps HUD-button treatment
      as the language switch right next to it, not a new visual language. */

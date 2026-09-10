@@ -1850,6 +1850,9 @@
   // "translate this DOM" step for them.
   function applyLangEverywhere(){
     document.documentElement.lang = getLang();
+    // Card content is resolved once at open time via tr(), not kept live —
+    // simplest to just close it on a language switch than to re-render it.
+    closeHudCard();
     document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = tr(el.dataset.i18n); });
     document.querySelectorAll('[data-i18n-title]').forEach(el => { el.title = tr(el.dataset.i18nTitle); });
     document.querySelectorAll('.lang-switch .lang-btn').forEach(btn => {
@@ -1868,6 +1871,80 @@
     if(!document.getElementById('view-settings').hidden) renderSettingsPage();
   }
 
+  // Tap-to-reveal HUD detail cards (10 Sept 2026) — replaces the native
+  // title="" tooltips that used to sit on the three .hud-cell's (see
+  // CLAUDE.md/ROADMAP.md, approved mockup "A + B combined"). A native
+  // hover tooltip is hover-only and unreadable on mobile, which was the
+  // whole reason this replaced it — click/tap opens a small corner-bracket
+  // card anchored under the tapped cell, reusing the same corner-bracket
+  // visual language as .reset-confirm-panel/.card.task's .corner (accent
+  // color here, not the reset panel's danger color — this is informational,
+  // not a destructive warning). Cards are appended as a child of the
+  // .hud-cell itself (not document.body) so they stay inside the nearest
+  // .arcade[data-signal] ancestor and inherit --a-accent/--a-bg1/etc via
+  // normal CSS custom property inheritance — position:fixed only affects
+  // layout, not the DOM tree, so this doesn't cost us that inheritance.
+  const HUD_CARD_INFO = {
+    lv: {name: 'hudLvName', body: 'hudLvTitle'},
+    xp: {name: 'hudXpName', body: 'hudXpTitle'},
+    streak: {name: 'hudStreakName', body: 'hudStreakTitle'}
+  };
+  let hudCardOpenKey = null;
+  function closeHudCard(){
+    const existing = document.querySelector('.hud-card');
+    if(existing) existing.remove();
+    hudCardOpenKey = null;
+  }
+  function positionHudCard(card, cell){
+    // position:fixed + viewport-relative math (not CSS centering transforms)
+    // so the same clamp logic that centers the card under a normal-width
+    // cell also just works at 375px without a separate mobile code path.
+    const rect = cell.getBoundingClientRect();
+    const margin = 10;
+    const cardWidth = card.offsetWidth;
+    let left = rect.left + rect.width / 2 - cardWidth / 2;
+    left = Math.max(margin, Math.min(left, window.innerWidth - cardWidth - margin));
+    card.style.left = left + 'px';
+    card.style.top = (rect.bottom + 8) + 'px';
+  }
+  function openHudCard(cell, key){
+    if(hudCardOpenKey === key){ closeHudCard(); return; }
+    closeHudCard();
+    const info = HUD_CARD_INFO[key];
+    if(!info) return;
+    const card = document.createElement('div');
+    card.className = 'hud-card';
+    card.innerHTML =
+      '<span class="corner tl"></span><span class="corner tr"></span>' +
+      '<span class="corner bl"></span><span class="corner br"></span>' +
+      '<div class="hud-card-title">' + escapeHtml(tr(info.name)) + '</div>' +
+      '<div class="hud-card-body">' + escapeHtml(tr(info.body)) + '</div>';
+    // Stop clicks inside the card from bubbling to the document-level
+    // "click elsewhere closes it" listener below.
+    card.addEventListener('click', (e) => e.stopPropagation());
+    cell.appendChild(card);
+    hudCardOpenKey = key;
+    positionHudCard(card, cell);
+  }
+  function initHudCards(){
+    document.querySelectorAll('.hud-cell[data-hud-key]').forEach(cell => {
+      cell.setAttribute('role', 'button');
+      cell.setAttribute('tabindex', '0');
+      cell.addEventListener('click', (e) => {
+        e.stopPropagation();
+        openHudCard(cell, cell.dataset.hudKey);
+      });
+      cell.addEventListener('keydown', (e) => {
+        if(e.key === 'Enter' || e.key === ' '){
+          e.preventDefault();
+          openHudCard(cell, cell.dataset.hudKey);
+        }
+      });
+    });
+    document.addEventListener('click', () => closeHudCard());
+    document.addEventListener('keydown', (e) => { if(e.key === 'Escape') closeHudCard(); });
+  }
+
   function initLangSwitch(){
     document.querySelectorAll('.lang-switch .lang-btn').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -1883,5 +1960,6 @@
   initTitleScreen();
   initTopbarNav();
   initResetConfirmModal();
+  initHudCards();
   initState();
 })();

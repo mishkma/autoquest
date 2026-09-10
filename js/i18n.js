@@ -35,6 +35,10 @@ var I18N = {
     hudLvTitle: 'Level — rises as you earn XP by completing tasks',
     hudXpTitle: 'XP — experience earned by completing tasks and challenges',
     hudStreakTitle: 'Day streak — consecutive days you have completed at least one task',
+    // tap-to-reveal HUD detail cards (10 Sept 2026, replaces native title
+    // tooltips on the three .hud-cell's — see CLAUDE.md/ROADMAP.md) — short
+    // title line for the card, body text repurposes the hud*Title copy above
+    hudLvName: 'LEVEL', hudXpName: 'XP', hudStreakName: 'STREAK',
     navStats: 'STATS', navSettings: 'SETTINGS',
     // stats page
     statsHeading: 'PROGRESS STATS',
@@ -141,6 +145,7 @@ var I18N = {
     hudLvTitle: 'Уровень — растёт по мере получения ОП за выполненные задания',
     hudXpTitle: 'ОП — очки опыта за выполненные задания и испытания',
     hudStreakTitle: 'Серия дней — сколько дней подряд выполнено хотя бы одно задание',
+    hudLvName: 'УРОВЕНЬ', hudXpName: 'ОП', hudStreakName: 'СЕРИЯ',
     navStats: 'СТАТИСТИКА', navSettings: 'НАСТРОЙКИ',
     statsHeading: 'СТАТИСТИКА ПРОГРЕССА',
     statsLevel: 'УРОВЕНЬ', statsXp: 'ВСЕГО ОП', statsStreak: 'СЕРИЯ', statsModulesLabel: 'МОДУЛИ', statsCheckpointsLabel: 'ЧЕКПОИНТЫ',
