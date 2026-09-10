@@ -32,6 +32,9 @@ var I18N = {
     // topbar / brand
     brandBackTitle: 'Back to title screen',
     hudLv: 'LV', hudXp: 'XP',
+    hudLvTitle: 'Level — rises as you earn XP by completing tasks',
+    hudXpTitle: 'XP — experience earned by completing tasks and challenges',
+    hudStreakTitle: 'Day streak — consecutive days you have completed at least one task',
     navStats: 'STATS', navSettings: 'SETTINGS',
     // stats page
     statsHeading: 'PROGRESS STATS',
@@ -135,6 +138,9 @@ var I18N = {
   ru: {
     brandBackTitle: 'Вернуться на титульный экран',
     hudLv: 'УР', hudXp: 'ОП',
+    hudLvTitle: 'Уровень — растёт по мере получения ОП за выполненные задания',
+    hudXpTitle: 'ОП — очки опыта за выполненные задания и испытания',
+    hudStreakTitle: 'Серия дней — сколько дней подряд выполнено хотя бы одно задание',
     navStats: 'СТАТИСТИКА', navSettings: 'НАСТРОЙКИ',
     statsHeading: 'СТАТИСТИКА ПРОГРЕССА',
     statsLevel: 'УРОВЕНЬ', statsXp: 'ВСЕГО ОП', statsStreak: 'СЕРИЯ', statsCleared: 'ПРОЙДЕНО',
