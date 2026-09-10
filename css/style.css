@@ -190,7 +190,6 @@
   .node{
     position:relative;display:grid;grid-template-columns:56px 1fr 64px;align-items:center;gap:18px;
     padding:14px 6px;border-radius:16px;cursor:pointer;
-    max-width:640px;
     transition:background .15s ease;
   }
   .node:hover{background:var(--surface);}
@@ -670,25 +669,29 @@
      this is CSS-only against the exact same DOM renderPath() already builds. */
   #view-path.arcade{ background: var(--a-bg0); margin: 0 -20px; padding: 0 20px 40px; }
   /* Fill the dead margin on wide viewports (#view-path/#view-module only
-     fill .wrap's own 1180px width, not the browser window) by extending
+     fill .wrap's own 920px width, not the browser window) by extending
      the SAME faint code-editor line texture already used behind the title
      screen (.arcade-linebg) — not a new illustration. A previous attempt
      here (circuit-trace side rails, see CLAUDE.md "Известный класс
      багов") read as visual noise and was reverted; reusing an already-
      approved motif is deliberately the lower-risk choice this time.
-     Pure ::before/::after, no extra markup needed. Hidden below ~1440px,
-     scaled up from the old 1180px breakpoint to match .wrap's new 1180px
-     width (was 920px when that threshold was picked). */
+     Pure ::before/::after, no extra markup needed. Hidden below ~1180px,
+     where there's no real gap left to fill. `.wrap` briefly widened to
+     1180px on 9 Sept (reverted 10 Sept, see CLAUDE.md) — this calc/
+     breakpoint pair must always track .wrap's actual max-width (half of
+     it, minus the 20px .wrap side padding minus a hair of margin), or a
+     stale value here re-creates the exact "empty field" complaint this
+     block exists to close, just at the wrong distance from center. */
   #view-path.arcade::before, #view-path.arcade::after,
   #view-module.arcade::before, #view-module.arcade::after{
     content:''; position:fixed; top:0; bottom:0;
-    width:calc(50vw - 590px - 16px); max-width:640px;
+    width:calc(50vw - 460px - 16px); max-width:640px;
     background: repeating-linear-gradient(0deg, var(--a-line) 0 24px, transparent 24px 25px);
     pointer-events:none; z-index:0;
   }
   #view-path.arcade::before, #view-module.arcade::before{ left:0; border-right:1px solid var(--a-edge); }
   #view-path.arcade::after, #view-module.arcade::after{ right:0; border-left:1px solid var(--a-edge); }
-  @media (max-width:1440px){
+  @media (max-width:1180px){
     #view-path.arcade::before, #view-path.arcade::after,
     #view-module.arcade::before, #view-module.arcade::after{ display:none; }
   }
