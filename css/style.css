@@ -929,7 +929,34 @@
      case — higher selector specificity than the rule above (extra
      `.editor-wrap` class) wins regardless of source order, so this one
      rule is enough without touching the predict-guess textarea's rule. */
-  #view-module.arcade .editor-wrap textarea.editor{ color:transparent; }
+  /* Same regression class as the color one just above, found 10 Sept
+     2026 via a user report ("текст в код редакторе не видно") that
+     survived a hard refresh, incognito, and resetting both Windows
+     scaling and Chrome's zoom back to 100% — ruling out cache,
+     extensions, and DPI/zoom as the cause. The base rule at line ~377
+     (`.editor-wrap textarea.editor`) sets `background:transparent` for
+     exactly the same reason it sets `color:transparent` — so
+     .editor-highlight's colored text shows through. But
+     `#view-module.arcade textarea.editor` (line ~917, meant only for
+     the unwrapped predict-guess textarea) sets an OPAQUE
+     `background: var(--a-bg0)`, and — unlike color — nothing scoped to
+     `.editor-wrap` ever overrode it back to transparent, so the real
+     code editor's textarea silently regained an opaque background
+     under the arcade theme. Ordinary paint order (.editor-highlight is
+     position:absolute, so it paints above a static-positioned sibling
+     regardless of DOM order) hides this most of the time, which is why
+     it wasn't caught in earlier testing — but an opaque, independently
+     scrollable (overflow-y:auto) textarea like this is also exactly the
+     shape of element Chrome's compositor commonly promotes to its own
+     GPU layer, and on at least one real machine (confirmed: reproduces
+     in a hard-refreshed incognito window at 100% OS/Chrome zoom, so not
+     cache/extensions/DPI) that layer promotion visibly painted the
+     opaque background ABOVE the highlight layer instead of below it —
+     selecting the invisible text forced a repaint that fixed it
+     instantly, textbook stuck-compositor-layer symptom. Restoring
+     transparency here removes the opaque layer entirely, closing off
+     that failure mode regardless of the exact compositor mechanics. */
+  #view-module.arcade .editor-wrap textarea.editor{ color:transparent; background:transparent; }
 
   #view-module.arcade .chip{ background: var(--a-bg0); border-color: var(--a-edge); color: var(--a-dim); }
   #view-module.arcade .chip.good{ background: rgba(60,255,140,.12); color:#3ecf6b; border-color:transparent; }
