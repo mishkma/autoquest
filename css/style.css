@@ -121,17 +121,36 @@
      already treats scroll-to-top as `behavior:'smooth'` conditionally
      (browsers already honor that media query for scrollTo automatically;
      transitions need it spelled out explicitly since they're plain CSS). */
-  #view-title, #site-wrap, .view{ transition: opacity .32s ease, transform .32s ease; }
-  /* scale(.98) dropped 10 Sept 2026 (user report: "какая-то линия
-     появляется", on every transition, not just Title<->path) — a
-     shrinking incoming screen briefly reveals a sliver of whatever sits
-     behind it (the page background, or the outgoing screen mid-fade at
-     its own now position:fixed rect, see switchView()'s comment) right
-     at the edge the scale pulls in from, one or two frames of a thin
-     seam line. translateY alone (a pure position offset, no size change)
-     has no edge to reveal — same slide-in feel, no seam. */
-  .view-enter-fwd{ opacity:0; transform: translateY(14px); }
-  .view-enter-back{ opacity:0; transform: translateY(-14px); }
+  #view-title, #site-wrap, .view{ transition: opacity .32s ease; }
+  /* This slide/scale history (10 Sept 2026) turned out to have THREE
+     independent causes for the same user report ("какая-то линия
+     появляется"), found one at a time as each fix removed one but left
+     the report standing:
+     1. scale(.98) — a shrinking incoming screen briefly reveals a sliver
+        of whatever sits behind it right at the edge the scale pulls in
+        from. Dropped, kept translateY alone.
+     2. Simultaneous crossfade — the outgoing and incoming screens were
+        both genuinely visible/overlapping for the whole .32s fade (see
+        switchView()'s comment in app.js), so on structurally different
+        screens (Title vs. the path list) unrelated borders/buttons could
+        land on top of each other. Fixed by making switchView() fade the
+        leaving screen out FIRST, only revealing the next one once it's
+        gone — confirmed via DOM state that the two are never both
+        `hidden===false` at once — but the user reported the line was
+        STILL there afterward, just slower (since the whole transition
+        now takes ~2x as long).
+     3. translateY itself — the actual final cause. The incoming screen
+        starts offset 14px from its resting position and slides up/down
+        into place; while it's still mid-slide, the strip of space
+        between its currently-offset top edge and where it will finally
+        sit shows whatever is behind it (the page background) — a gap
+        that visibly closes as the slide finishes, described exactly as
+        "картинка появляется сразу с полосой, потом полоса исчезает".
+        transform is dropped from the transition entirely now — opacity-
+        only fade, no movement at all, so there is no edge left that can
+        ever open a gap in the first place. */
+  .view-enter-fwd{ opacity:0; }
+  .view-enter-back{ opacity:0; }
   .view-leave{ opacity:0; }
   @media (prefers-reduced-motion: reduce){
     #view-title, #site-wrap, .view{ transition:none; }
