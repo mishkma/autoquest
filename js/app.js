@@ -494,14 +494,28 @@
   // new scrollable extent, on top of whatever the render itself just cost.
   // Profiled 10 Sept 2026 ("переходы подтормаживают"): ~46ms on a fast
   // dev machine for a single module open, entirely inside this one call.
-  // That layout flush is unavoidable (the DOM genuinely changed), but it
-  // doesn't need to happen inside the SAME synchronous tick that also
-  // just started the CSS fade/slide transition — deferring it lets the
-  // browser paint the transition's first frame before paying that cost,
-  // instead of the whole screen sitting frozen an extra ~46ms before any
-  // motion is visible at all.
+  // That layout flush is unavoidable (the DOM genuinely changed).
+  //
+  // First attempt deferred it with setTimeout(fn, 0) — next tick, right at
+  // the START of the .32s fade/slide transition (see the `transition:
+  // opacity .32s ease, transform .32s ease` rule in style.css). That
+  // traded "frozen screen, then a smooth transition" for "transition
+  // starts instantly, then stutters a few frames in" — same user report,
+  // same session, now describing the ANIMATION itself as janky rather
+  // than a pause before it. Forcing a layout recalc is main-thread work;
+  // opacity/transform transitions are normally compositor-driven and can
+  // usually ride out a busy main thread, but this project's transitions
+  // also drive real DOM/paint changes during the same window (e.g. the
+  // per-task highlight self-heal retry in bindTask, itself on
+  // requestAnimationFrame) — enough concurrent main-thread work right at
+  // the start of the animation to visibly drop frames on real hardware.
+  // Delaying past the transition's own duration (320ms + a small buffer)
+  // instead keeps the main thread quiet for the entire visible motion,
+  // paying the layout cost only once the screen has already finished
+  // settling — a delay this short reads as "arrived, then snapped to
+  // top" rather than a separate, noticeable jump.
   function scrollToTopDeferred(){
-    setTimeout(() => window.scrollTo({top:0, behavior:'smooth'}), 0);
+    setTimeout(() => window.scrollTo({top:0, behavior:'smooth'}), 340);
   }
 
   // Every top-level .arcade container (title, path/world-map, victory) shares
@@ -1280,6 +1294,23 @@
     }catch(e){ console.error('Editor init failed for', t.id, e); }
     requestAnimationFrame(() => {
       if(!editor.isConnected) return;
+      // Only redo the render if it actually looks broken (editor has real
+      // code but the highlight came out empty) — the root cause this
+      // retry exists for turned out to be a CSS specificity bug (an
+      // opaque background leaking onto the arcade-themed editor
+      // textarea, fixed 10 Sept 2026), not a rendering race, so the first
+      // synchronous call above succeeds every time in practice now. This
+      // retry used to unconditionally redo the work for every task on
+      // every module open regardless — up to 13 wasted DOM writes on the
+      // very first animation frame after opening a module, right when
+      // the screen's own .32s fade/slide transition is trying to run
+      // (found while chasing a separate "переходы подтормаживают"
+      // report: real DOM/paint work competing with the transition for
+      // the main thread on that first frame reads as jank). Kept as a
+      // cheap safety net for any other cause, just no longer doing
+      // pointless work on the common path.
+      const codeEl = hl && hl.querySelector('code');
+      if(codeEl && codeEl.children.length > 0) return;
       try{
         syncGutter(editor, gutter);
         updateHighlight(hl, editor.value, null);
