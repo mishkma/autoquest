@@ -428,6 +428,17 @@
   function switchView(hideEl, showEl, direction){
     if(!showEl || hideEl === showEl){ if(showEl) showEl.hidden = false; return; }
     if(!hideEl || hideEl.hidden){ showEl.hidden = false; return; }
+    // showEl may itself still be mid-leave from an earlier, still-pending
+    // switchView call (rapid back-and-forth navigation, faster than one
+    // 320ms fade) — it would still be carrying the position:fixed lock
+    // from the block below, applied to whichever element was leaving at
+    // the time. Clear it unconditionally before showing: a stale fixed
+    // position/size from a previous leave would otherwise pin it in the
+    // wrong place instead of letting it render in normal flow again.
+    showEl.style.position = '';
+    showEl.style.top = '';
+    showEl.style.left = '';
+    showEl.style.width = '';
     const enterCls = direction === 'back' ? 'view-enter-back' : 'view-enter-fwd';
     showEl.classList.add(enterCls);
     showEl.hidden = false;
@@ -456,6 +467,41 @@
     // switchView call actually wants visible lets the OTHER half's
     // scheduled hide (below) recognize it's been outdated and skip itself.
     showEl.dataset.viewGen = String(++viewGenCounter);
+    // Take the leaving screen OUT of normal document flow before fading it
+    // — without this, both hideEl and showEl are simultaneously
+    // `hidden=false` for the whole 320ms fade (hideEl's actual `hidden`
+    // flip happens on the timer below), and since neither has ever been
+    // positioned, they just stack one after another in ordinary block
+    // flow: showEl doesn't overlap hideEl, it gets pushed BELOW it for
+    // the entire transition. Reported 10 Sept 2026 ("появляется половина
+    // прорисованной страницы, а через миллисекунду остальное
+    // дотягивается") — most obvious on Title<->path (very different
+    // content/height makes the stacking obvious) but structurally present
+    // on every switchView() call, including the path/module/stats/
+    // settings swaps inside #site-wrap, just less visually jarring there
+    // since those screens look more alike. Wasn't caught earlier because
+    // scrollToTopDeferred (and, briefly, plain non-deferred smooth
+    // scrolling) left the viewport somewhere other than the very top of
+    // this taller-than-usual combined stack during the brief window it
+    // existed; scrollToTopNow's synchronous instant scroll-to-top (see
+    // its own comment) put the viewport exactly where the stacking is
+    // most visible, exposing it.
+    // Fix: snapshot hideEl's own current on-screen box BEFORE removing it
+    // from flow, then pin it there with position:fixed + explicit
+    // top/left/width — this is what guarantees zero visual jump (a bare
+    // `position:absolute` with no offsets falls back to a "static
+    // position" the spec doesn't pin down precisely across engines, and
+    // finding a correctly-positioned ancestor for `position:absolute`
+    // would mean touching body's or #site-wrap's own positioning). Once
+    // truly hidden again (timer below), every inline style set here is
+    // removed so the element returns to plain normal-flow layout the
+    // next time it's shown — this lock is only ever active during its
+    // own 320ms fade-out.
+    const hideRect = hideEl.getBoundingClientRect();
+    hideEl.style.position = 'fixed';
+    hideEl.style.top = hideRect.top + 'px';
+    hideEl.style.left = hideRect.left + 'px';
+    hideEl.style.width = hideRect.width + 'px';
     hideEl.classList.add('view-leave');
     const myGen = String(++viewGenCounter);
     hideEl.dataset.viewGen = myGen;
@@ -466,6 +512,10 @@
       if(hideEl.dataset.viewGen === myGen){
         hideEl.hidden = true;
         hideEl.classList.remove('view-leave');
+        hideEl.style.position = '';
+        hideEl.style.top = '';
+        hideEl.style.left = '';
+        hideEl.style.width = '';
       }
     }, 320);
   }
