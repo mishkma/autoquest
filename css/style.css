@@ -588,11 +588,23 @@
      separate vh math of its own, so it can never overshoot by the topbar's
      height again. See the matching `body{display:flex...}` rule. */
   #view-title{
-    padding:0; flex:1 1 auto; min-height:0;
+    padding:0; flex:1 1 auto; min-height:0; background: var(--a-bg0);
     display:flex; align-items:center; justify-content:center;
   }
+  /* #view-title itself now paints the correct dark arcade background (see
+     background:var(--a-bg0) right above — #view-title carries class=
+     "arcade" + data-signal on the element itself, so --a-bg0 already
+     resolves there) — without it, the space ABOVE/BELOW the centered card
+     on a tall screen showed plain body background instead, reading as "not
+     actually full-screen" even though nothing scrolled (10 Sept 2026,
+     fourth pass, found from a user screenshot after the scroll fix). The
+     card's own border also gets dropped for the same reason: a bordered
+     box floating in a matching-color field still reads as a box, not a
+     screen — full-bleed border:none finishes the "this IS the screen, not
+     a card on top of one" effect the max-width:none/border-left/right:none
+     rules already started. */
   #view-title .arcade-screen{
-    width:100%; max-width:none; border-left:none; border-right:none;
+    width:100%; max-width:none; border:none; box-shadow:none;
   }
   #view-title .arcade-content{
     max-width:680px; margin:0 auto; padding-top:32px; padding-bottom:36px;
