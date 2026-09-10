@@ -1242,8 +1242,32 @@
     const gutter = room.querySelector(`#gutter-${t.id}`);
     const hl = room.querySelector(`#hl-${t.id}`);
     editor.value = savedCode(t.id) || t.starter;
-    syncGutter(editor, gutter);
-    updateHighlight(hl, editor.value, null);
+    // The real code textarea is deliberately color:transparent — the only
+    // thing that makes its text visible is .editor-highlight underneath,
+    // kept in sync by the two calls below. If either one fails on this
+    // very first render (reported 10 Sept 2026: task opened with only the
+    // gutter's line numbers visible, the code itself invisible until
+    // manually text-selected — never reproduced on demand, so the exact
+    // trigger is unconfirmed), the user is left staring at an apparently
+    // empty task with no obvious way to recover short of reloading the
+    // whole page. Wrapping in try/catch stops a failure here from also
+    // skipping every addEventListener() below (a thrown error would have
+    // aborted the rest of this function silently) breaking Run/Check/
+    // Hint/Reset too, and the rAF retry gives the highlight one more
+    // chance to draw a frame later — same self-healing pattern already
+    // used for the scrollTop/height sync below, for the same reason: a
+    // one-off timing hiccup shouldn't need a page reload to fix itself.
+    try{
+      syncGutter(editor, gutter);
+      updateHighlight(hl, editor.value, null);
+    }catch(e){ console.error('Editor init failed for', t.id, e); }
+    requestAnimationFrame(() => {
+      if(!editor.isConnected) return;
+      try{
+        syncGutter(editor, gutter);
+        updateHighlight(hl, editor.value, null);
+      }catch(e){ console.error('Editor retry failed for', t.id, e); }
+    });
     editor.addEventListener('keydown', onEditorKeydown);
     editor.addEventListener('input', () => {
       saveCode(t.id, editor.value);
