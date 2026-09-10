@@ -884,16 +884,21 @@
       // right on wide screens (found in the same feedback round), and "what
       // boss is waiting in this module" is real course content already
       // sitting right there in m.tasks, not a made-up decoration.
-      // A small "BOSS" tag stacked above the icon (10 Sept 2026, user
-      // feedback: the spiky silhouette alone read as "какая-то непонятная
-      // штука", not obviously a boss preview) — labels what the icon IS,
-      // not an invented monster name (this course has never had per-boss
-      // names, see modules-data.js: bossTask.title is a real task title
-      // like "Test run report", not flavor text).
+      // A "BOSS" tag + the boss task's own real title, to the LEFT of the
+      // icon (10 Sept 2026, user feedback: the spiky silhouette alone read
+      // as unlabeled decoration; a first pass stacked just "BOSS" above the
+      // icon, which the user then explicitly rejected — they want the name
+      // too, positioned to the icon's left, not above it). No invented
+      // monster name — this course has never had those, taskField(...,
+      // 'title') is the real, already-existing boss task title (e.g. "Test
+      // run report"), same string used in renderBossHeader/showVictory.
       const bossTask = m.tasks && m.tasks.find(x => x.boss);
       const bossPreview = bossTask
         ? `<div class="node-boss-wrap${state.completed[bossTask.id] ? ' defeated' : ''}">
-             <div class="node-boss-label">${tr('bossLabel')}</div>
+             <div class="node-boss-text">
+               <div class="node-boss-label">${tr('bossLabel')}</div>
+               <div class="node-boss-name">${escapeHtml(taskField(bossTask, m, 'title'))}</div>
+             </div>
              <div class="node-boss${state.completed[bossTask.id] ? ' defeated' : ''}">${renderBossVisual(m.id, !!state.completed[bossTask.id])}</div>
            </div>`
         : '';
