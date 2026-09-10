@@ -126,16 +126,14 @@
      into whatever's left so the dark background genuinely reaches the
      bottom of the screen instead of merely reaching the bottom of its own
      (possibly short) content. */
-  /* Widened 920px -> 1200px (10 Sept 2026, third pass on this exact value —
-     see CLAUDE.md/ROADMAP.md for the earlier back-and-forth). The previous
-     920px + an undecorated side margin was an explicit, deliberate call —
-     but the user came back to it again unprompted with a screenshot asking
-     for the empty side columns to actually go away, which is a real
-     "явный запрос" superseding that earlier decision, not a guess on my
-     part. Keep this synced with `.topbar-inner`'s max-width right above
-     (both instances — the plain one and `.topbar.arcade .topbar-inner`
-     further down) and with the side-rail decoration's calc()/breakpoint
-     right below, which is written in terms of this exact number. */
+  /* This exact number has moved a few times in one day (10 Sept 2026) —
+     920px -> 1200px (explicit request: empty side columns felt too big)
+     -> 1040px (explicit follow-up: 1200 then felt too wide) — see
+     CLAUDE.md/ROADMAP.md for the full back-and-forth. Keep this synced
+     with `.topbar-inner`'s max-width right above (both instances — the
+     plain one and `.topbar.arcade .topbar-inner` further down) and with
+     the side-rail decoration's calc()/breakpoint right below, which is
+     written in terms of this exact number (half of it). */
   /* width:100% is required here, not just max-width — .wrap is now a flex
      ITEM of body (flex-direction:column), and a flex item's horizontal
      `margin:auto` is interpreted as flexbox cross-axis alignment, not
@@ -146,7 +144,7 @@
      that special case — found immediately after widening 920px -> 1200px,
      when the computed width stayed stuck at content size (~664px) instead
      of actually reaching 1200px. */
-  .wrap{max-width:1200px;width:100%;margin:0 auto;padding:0 20px;flex:1 1 auto;display:flex;flex-direction:column;min-height:0;}
+  .wrap{max-width:1040px;width:100%;margin:0 auto;padding:0 20px;flex:1 1 auto;display:flex;flex-direction:column;min-height:0;}
   .view{flex:1 1 auto;min-height:0;}
 
   /* Animated screen transitions (9 Sept 2026, user request) — see
@@ -208,7 +206,7 @@
     border-bottom:1px solid var(--edge);
   }
   .topbar-inner{
-    max-width:1200px;margin:0 auto;padding:14px 20px;
+    max-width:1040px;margin:0 auto;padding:14px 20px;
     display:flex;align-items:center;gap:16px;flex-wrap:wrap;
   }
   .brand{
@@ -850,13 +848,13 @@
   #view-path.arcade::before, #view-path.arcade::after,
   #view-module.arcade::before, #view-module.arcade::after{
     content:''; position:fixed; top:0; bottom:0;
-    width:calc(50vw - 600px - 16px); max-width:640px;
+    width:calc(50vw - 520px - 16px); max-width:640px;
     background: repeating-linear-gradient(0deg, var(--a-line) 0 24px, transparent 24px 25px);
     pointer-events:none; z-index:0;
   }
   #view-path.arcade::before, #view-module.arcade::before{ left:0; border-right:1px solid var(--a-edge); }
   #view-path.arcade::after, #view-module.arcade::after{ right:0; border-left:1px solid var(--a-edge); }
-  @media (max-width:1460px){
+  @media (max-width:1300px){
     #view-path.arcade::before, #view-path.arcade::after,
     #view-module.arcade::before, #view-module.arcade::after{ display:none; }
   }
@@ -1139,7 +1137,7 @@
     background: var(--a-bg1); border-bottom:1px solid var(--a-edge); backdrop-filter:none;
   }
   .topbar.arcade .topbar-inner{
-    max-width:1200px; margin:0 auto; padding:11px 20px; display:flex; align-items:center; gap:22px; flex-wrap:wrap;
+    max-width:1040px; margin:0 auto; padding:11px 20px; display:flex; align-items:center; gap:22px; flex-wrap:wrap;
   }
   .topbar.arcade .brand{ appearance:none; border:none; background:none; padding:0; cursor:pointer; display:flex; align-items:center; gap:8px; margin-right:auto; }
   .topbar.arcade .brand .mark{ font-family:'JetBrains Mono',monospace; color: var(--a-accent); font-weight:700; }
