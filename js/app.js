@@ -575,6 +575,13 @@
   function applySignalEverywhere(){
     const s = getSignal();
     document.querySelectorAll('.arcade').forEach(el => { el.dataset.signal = s; });
+    // Each character gets its own chiptune loop (js/music.js THEMES,
+    // keyed the same way as CHARACTER_KEYS below) — this is the one place
+    // a Signal Color change already fans out everywhere else, so the
+    // music switch rides along with it rather than needing its own
+    // separate wiring. Takes effect on the next scheduled note, no
+    // restart (see setTheme()'s own comment in music.js).
+    if(window.Music) window.Music.setTheme(s);
     // The character (head shape + name) tied to the chosen Signal Color —
     // redrawn into the two STATIC svg placeholders left in index.html
     // (#title-hero-svg, #path-hero-svg) every time the signal changes, not
@@ -1787,7 +1794,9 @@
     label.textContent = tr(on ? 'musicMuteOn' : 'musicMuteOff');
     const pct = Math.round(window.Music.getVolume() * 100);
     card.querySelector('.music-card-vol-pct').textContent = pct + '%';
-    card.querySelector('.music-slider').value = pct;
+    const slider = card.querySelector('.music-slider');
+    slider.value = pct;
+    slider.style.setProperty('--fill', pct + '%');
   }
   function openMusicCard(btn){
     if(document.querySelector('.music-card')){ closeMusicCard(); return; }
@@ -1823,6 +1832,7 @@
       if(!window.Music) return;
       window.Music.setVolume(e.target.value / 100);
       card.querySelector('.music-card-vol-pct').textContent = e.target.value + '%';
+      e.target.style.setProperty('--fill', e.target.value + '%');
     });
   }
   function initMusicToggle(){
