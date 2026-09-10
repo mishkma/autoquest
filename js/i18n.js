@@ -31,6 +31,8 @@ var I18N = {
   en: {
     // topbar / brand
     brandBackTitle: 'Back to title screen',
+    musicToggleTitleOn: 'Music: on — click to mute',
+    musicToggleTitleOff: 'Music: off — click to unmute',
     hudLv: 'LV', hudXp: 'XP',
     hudLvTitle: 'Level — rises as you earn XP by completing tasks',
     hudXpTitle: 'XP — experience earned by completing tasks and challenges',
@@ -142,6 +144,8 @@ var I18N = {
   },
   ru: {
     brandBackTitle: 'Вернуться на титульный экран',
+    musicToggleTitleOn: 'Музыка: включена — клик, чтобы выключить',
+    musicToggleTitleOff: 'Музыка: выключена — клик, чтобы включить',
     hudLv: 'УР', hudXp: 'ОП',
     hudLvTitle: 'Уровень — растёт по мере получения ОП за выполненные задания',
     hudXpTitle: 'ОП — очки опыта за выполненные задания и испытания',

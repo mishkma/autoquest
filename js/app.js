@@ -1751,6 +1751,40 @@
     document.addEventListener('keydown', (e) => { if(e.key === 'Escape') closeHudCard(); });
   }
 
+  // Background chiptune (10 Sept 2026, see js/music.js — declared outside
+  // any IIFE on window.Music, same reason matchEn()/tr() are, so this
+  // closure can call into it). Browsers block audio until a genuine user
+  // gesture, so Music.start() is never called on page load — it's wired
+  // to the FIRST click anywhere on the page (one-shot listener, capture
+  // phase so it fires before any other click handler might stop
+  // propagation) as well as directly to the mute button's own click,
+  // which is itself already a qualifying gesture.
+  function initMusicToggle(){
+    const btn = document.getElementById('music-toggle');
+    function syncButton(){
+      if(!btn) return;
+      const on = window.Music && window.Music.isEnabled();
+      btn.textContent = on ? '🔊' : '🔇';
+      const key = on ? 'musicToggleTitleOn' : 'musicToggleTitleOff';
+      btn.dataset.i18nTitle = key;
+      btn.title = tr(key);
+    }
+    if(btn){
+      btn.addEventListener('click', () => {
+        if(!window.Music) return;
+        window.Music.setEnabled(!window.Music.isEnabled());
+        syncButton();
+      });
+    }
+    if(window.Music && window.Music.isEnabled()){
+      document.addEventListener('click', function firstGesture(){
+        document.removeEventListener('click', firstGesture, true);
+        window.Music.start();
+      }, true);
+    }
+    syncButton();
+  }
+
   function initLangSwitch(){
     document.querySelectorAll('.lang-switch .lang-btn').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -1765,5 +1799,6 @@
   initLangSwitch();
   initTitleScreen();
   initHudCards();
+  initMusicToggle();
   initState();
 })();
