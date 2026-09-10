@@ -57,6 +57,10 @@ window.Music = (function(){
   let started = false, enabled = true;
   let schedulerId = null, stepIndex = 0, nextStepTime = 0;
 
+  const VOL_KEY = 'autoquest-music-volume';
+  const DEFAULT_VOLUME = 0.6;
+  let volume = DEFAULT_VOLUME;
+
   function getStoredEnabled(){
     try{
       const v = localStorage.getItem(STORAGE_KEY);
@@ -66,6 +70,23 @@ window.Music = (function(){
   function setStoredEnabled(on){
     try{ localStorage.setItem(STORAGE_KEY, on ? '1' : '0'); }catch(e){}
   }
+  function getStoredVolume(){
+    try{
+      const v = parseFloat(localStorage.getItem(VOL_KEY));
+      return isFinite(v) && v >= 0 && v <= 1 ? v : DEFAULT_VOLUME;
+    }catch(e){ return DEFAULT_VOLUME; }
+  }
+  function setStoredVolume(v){
+    try{ localStorage.setItem(VOL_KEY, String(v)); }catch(e){}
+  }
+
+  // Effective output level: 0 whenever muted, `volume` otherwise — one
+  // gain node, one place this combination is computed, so mute and the
+  // slider can never fight over what the node's actual value should be.
+  function applyGain(){
+    if(!masterGain || !ctx) return;
+    masterGain.gain.setTargetAtTime(enabled ? volume : 0, ctx.currentTime, 0.05);
+  }
 
   function ensureContext(){
     if(ctx) return;
@@ -73,7 +94,7 @@ window.Music = (function(){
     if(!AC) return; // no Web Audio support — Music quietly does nothing
     ctx = new AC();
     masterGain = ctx.createGain();
-    masterGain.gain.value = enabled ? 1 : 0;
+    masterGain.gain.value = enabled ? volume : 0;
     masterGain.connect(ctx.destination);
   }
 
@@ -156,9 +177,7 @@ window.Music = (function(){
   function setEnabled(on){
     enabled = on;
     setStoredEnabled(on);
-    if(masterGain && ctx){
-      masterGain.gain.setTargetAtTime(on ? 1 : 0, ctx.currentTime, 0.05);
-    }
+    applyGain();
     // First unmute after page load also doubles as the required user-
     // gesture to actually start playback — browsers block audio until
     // one, and the mute button's own click already satisfies that.
@@ -167,7 +186,16 @@ window.Music = (function(){
 
   function isEnabled(){ return enabled; }
 
-  enabled = getStoredEnabled();
+  function setVolume(v){
+    volume = Math.max(0, Math.min(1, v));
+    setStoredVolume(volume);
+    applyGain();
+  }
 
-  return { start, setEnabled, isEnabled };
+  function getVolume(){ return volume; }
+
+  enabled = getStoredEnabled();
+  volume = getStoredVolume();
+
+  return { start, setEnabled, isEnabled, setVolume, getVolume };
 })();

@@ -1204,6 +1204,75 @@
   }
   .hud-card-body{ font-family:'JetBrains Mono',monospace; font-size:11.5px; line-height:1.5; color: var(--a-dim); }
 
+  /* Music toggle (10 Sept 2026) — was a plain .topbar-navbtn holding a
+     bare emoji, which that button style was built for text labels like
+     "STATS"/"SETTINGS" and read as an awkward afterthought (user: "сделай
+     по симпатичнее"). A proper small square icon-chip instead — same
+     idea as .arcade-swatch's ring (border lights up + glows in the active
+     Signal Color on hover/focus, not just a text hover color change). */
+  .music-toggle-btn{
+    display:flex; align-items:center; justify-content:center;
+    width:34px; height:34px; padding:0; flex:0 0 auto;
+    background: var(--a-bg0); border:1px solid var(--a-edge); border-radius:8px;
+    font-size:15px; line-height:1; cursor:pointer; appearance:none;
+    transition: border-color .15s ease, box-shadow .15s ease, opacity .15s ease;
+  }
+  .music-toggle-btn:hover, .music-toggle-btn:focus-visible{
+    border-color: var(--a-accent); box-shadow: 0 0 10px var(--a-glow); outline:none;
+  }
+  .music-toggle-btn[aria-pressed="false"]{ opacity:.5; }
+  @media (max-width:720px){ .music-toggle-btn{ width:30px; height:30px; font-size:13px; } }
+
+  /* Volume popup — same corner-bracket card as .hud-card right above (same
+     reasoning: informational, --a-accent not --a-danger), holding a mute
+     row plus a chunky, segmented-track range slider matching the pixel/
+     arcade look of .topbar.arcade .hud-xpbar elsewhere rather than a bare
+     native slider. */
+  .music-card{
+    position:fixed; z-index:210; width:200px; max-width:calc(100vw - 20px);
+    background: var(--a-bg1); border:1px solid var(--a-accent); padding:14px 14px 14px;
+    box-shadow:0 14px 34px -18px rgba(0,0,0,.7); cursor:default;
+  }
+  .music-card .corner{ position:absolute; width:14px; height:14px; border:2px solid var(--a-accent); opacity:.8; pointer-events:none; }
+  .music-card .corner.tl{ top:6px; left:6px; border-right:none; border-bottom:none; }
+  .music-card .corner.tr{ top:6px; right:6px; border-left:none; border-bottom:none; }
+  .music-card .corner.bl{ bottom:6px; left:6px; border-right:none; border-top:none; }
+  .music-card .corner.br{ bottom:6px; right:6px; border-left:none; border-top:none; }
+  .music-card-title{
+    font-family:'Press Start 2P',monospace; font-size:9px; letter-spacing:.04em; color: var(--a-accent); margin-bottom:12px;
+  }
+  .music-card-mute{
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    background:none; border:1px solid var(--a-edge); width:100%; padding:8px 10px; margin-bottom:14px;
+    font-family:'JetBrains Mono',monospace; font-size:11.5px; color:#e8e8ec; cursor:pointer; appearance:none;
+  }
+  .music-card-mute:hover{ border-color: var(--a-accent); }
+  .music-card-mute .dot{ width:7px; height:7px; border-radius:50%; background: var(--a-accent); box-shadow:0 0 6px var(--a-accent); flex:0 0 auto; }
+  .music-card-mute[data-muted="true"] .dot{ background: var(--a-dim2); box-shadow:none; }
+  .music-card-vol-row{ display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
+  .music-card-vol-label{ font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.04em; text-transform:uppercase; color: var(--a-dim); }
+  .music-card-vol-pct{ font-family:'Press Start 2P',monospace; font-size:9px; color: var(--a-accent); }
+  .music-slider{
+    -webkit-appearance:none; appearance:none; width:100%; height:12px; margin:0;
+    background: var(--a-bg0); border:2px solid var(--a-edge); outline:none; cursor:pointer;
+  }
+  .music-slider::-webkit-slider-runnable-track{
+    height:12px;
+    background: repeating-linear-gradient(90deg, var(--a-edge) 0 1px, transparent 1px 10%);
+  }
+  .music-slider::-moz-range-track{
+    height:12px;
+    background: repeating-linear-gradient(90deg, var(--a-edge) 0 1px, transparent 1px 10%);
+  }
+  .music-slider::-webkit-slider-thumb{
+    -webkit-appearance:none; width:10px; height:16px; margin-top:-2px;
+    background: var(--a-accent); border:2px solid #000; box-shadow:0 0 6px var(--a-glow); cursor:pointer;
+  }
+  .music-slider::-moz-range-thumb{
+    width:10px; height:16px; border-radius:0;
+    background: var(--a-accent); border:2px solid #000; box-shadow:0 0 6px var(--a-glow); cursor:pointer;
+  }
+
   /* Stats/Settings nav (9 Sept 2026) — same small-caps HUD-button treatment
      as the language switch right next to it, not a new visual language. */
   .topbar-nav{ display:flex; gap:8px; }

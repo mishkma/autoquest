@@ -1661,6 +1661,7 @@
     // Card content is resolved once at open time via tr(), not kept live —
     // simplest to just close it on a language switch than to re-render it.
     closeHudCard();
+    closeMusicCard();
     document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = tr(el.dataset.i18n); });
     document.querySelectorAll('[data-i18n-title]').forEach(el => { el.title = tr(el.dataset.i18nTitle); });
     document.querySelectorAll('.lang-switch .lang-btn').forEach(btn => {
@@ -1716,6 +1717,7 @@
   function openHudCard(cell, key){
     if(hudCardOpenKey === key){ closeHudCard(); return; }
     closeHudCard();
+    closeMusicCard();
     const info = HUD_CARD_INFO[key];
     if(!info) return;
     const card = document.createElement('div');
@@ -1757,32 +1759,89 @@
   // gesture, so Music.start() is never called on page load — it's wired
   // to the FIRST click anywhere on the page (one-shot listener, capture
   // phase so it fires before any other click handler might stop
-  // propagation) as well as directly to the mute button's own click,
+  // propagation) as well as directly to anything inside the music popup,
   // which is itself already a qualifying gesture.
+  //
+  // The button itself just opens/closes a small corner-bracket popup
+  // (same component family as the HUD detail cards above — user asked
+  // for "по симпатичнее" plus a volume slider, so a bare click-to-mute
+  // button on its own no longer covers what's needed here) holding a
+  // mute row and a chunky pixel-styled <input type="range">.
+  function closeMusicCard(){
+    const existing = document.querySelector('.music-card');
+    if(existing) existing.remove();
+  }
+  function syncMusicButton(){
+    const btn = document.getElementById('music-toggle');
+    if(!btn || !window.Music) return;
+    const on = window.Music.isEnabled();
+    btn.textContent = on ? '🔊' : '🔇';
+    btn.setAttribute('aria-pressed', String(on));
+  }
+  function syncMusicCard(card){
+    if(!window.Music) return;
+    const on = window.Music.isEnabled();
+    const muteBtn = card.querySelector('.music-card-mute');
+    const label = card.querySelector('.music-card-mute .lbl');
+    muteBtn.dataset.muted = String(!on);
+    label.textContent = tr(on ? 'musicMuteOn' : 'musicMuteOff');
+    const pct = Math.round(window.Music.getVolume() * 100);
+    card.querySelector('.music-card-vol-pct').textContent = pct + '%';
+    card.querySelector('.music-slider').value = pct;
+  }
+  function openMusicCard(btn){
+    if(document.querySelector('.music-card')){ closeMusicCard(); return; }
+    closeHudCard();
+    const card = document.createElement('div');
+    card.className = 'music-card';
+    card.innerHTML =
+      '<span class="corner tl"></span><span class="corner tr"></span>' +
+      '<span class="corner bl"></span><span class="corner br"></span>' +
+      '<div class="music-card-title">' + escapeHtml(tr('musicCardTitle')) + '</div>' +
+      '<button type="button" class="music-card-mute"><span class="dot"></span><span class="lbl"></span></button>' +
+      '<div class="music-card-vol-row">' +
+        '<span class="music-card-vol-label">' + escapeHtml(tr('musicVolumeLabel')) + '</span>' +
+        '<span class="music-card-vol-pct"></span>' +
+      '</div>' +
+      '<input type="range" class="music-slider" min="0" max="100" step="1">';
+    card.addEventListener('click', (e) => e.stopPropagation());
+    document.body.appendChild(card);
+    const rect = btn.getBoundingClientRect();
+    const margin = 10;
+    let left = rect.left + rect.width / 2 - card.offsetWidth / 2;
+    left = Math.max(margin, Math.min(left, window.innerWidth - card.offsetWidth - margin));
+    card.style.left = left + 'px';
+    card.style.top = (rect.bottom + 8) + 'px';
+    syncMusicCard(card);
+    card.querySelector('.music-card-mute').addEventListener('click', () => {
+      if(!window.Music) return;
+      window.Music.setEnabled(!window.Music.isEnabled());
+      syncMusicCard(card);
+      syncMusicButton();
+    });
+    card.querySelector('.music-slider').addEventListener('input', (e) => {
+      if(!window.Music) return;
+      window.Music.setVolume(e.target.value / 100);
+      card.querySelector('.music-card-vol-pct').textContent = e.target.value + '%';
+    });
+  }
   function initMusicToggle(){
     const btn = document.getElementById('music-toggle');
-    function syncButton(){
-      if(!btn) return;
-      const on = window.Music && window.Music.isEnabled();
-      btn.textContent = on ? '🔊' : '🔇';
-      const key = on ? 'musicToggleTitleOn' : 'musicToggleTitleOff';
-      btn.dataset.i18nTitle = key;
-      btn.title = tr(key);
-    }
     if(btn){
-      btn.addEventListener('click', () => {
-        if(!window.Music) return;
-        window.Music.setEnabled(!window.Music.isEnabled());
-        syncButton();
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        openMusicCard(btn);
       });
     }
+    document.addEventListener('click', () => closeMusicCard());
+    document.addEventListener('keydown', (e) => { if(e.key === 'Escape') closeMusicCard(); });
     if(window.Music && window.Music.isEnabled()){
       document.addEventListener('click', function firstGesture(){
         document.removeEventListener('click', firstGesture, true);
         window.Music.start();
       }, true);
     }
-    syncButton();
+    syncMusicButton();
   }
 
   function initLangSwitch(){
