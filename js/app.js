@@ -1071,7 +1071,7 @@
         <div class="task-goal">${goal}</div>
         <pre class="code-preview">${escapeHtml(t.code)}</pre>
         <label class="field-label">${tr('predictQuestion')}</label>
-        <textarea class="editor" id="guess-${t.id}" spellcheck="false" placeholder="${tr('predictPlaceholder')}"></textarea>
+        <textarea class="editor" id="guess-${t.id}" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off" placeholder="${tr('predictPlaceholder')}"></textarea>
         <div class="rowbtns" style="margin-top:12px;">
           <button class="btn primary" data-check="${t.id}">${tr('revealAndCheck')}</button>
           <button class="btn" data-hint="${t.id}">${tr('hintBtn')}</button>
@@ -1102,7 +1102,7 @@
               <div class="editor-gutter" id="gutter-${t.id}" aria-hidden="true">1</div>
               <div class="editor-code">
                 <pre class="editor-highlight" id="hl-${t.id}" aria-hidden="true"><code></code></pre>
-                <textarea class="editor" id="code-${t.id}" spellcheck="false" wrap="off"></textarea>
+                <textarea class="editor" id="code-${t.id}" spellcheck="false" wrap="off" autocomplete="off" autocorrect="off" autocapitalize="off"></textarea>
               </div>
             </div>
           </div>
@@ -1433,6 +1433,31 @@
     return acEl;
   }
 
+  // Safety net for the "dropdown won't go away" report from mobile Safari:
+  // acClose() is already called from several places (blur, Escape, accepting
+  // an item, no candidates left), but on iOS a tap that should have blurred
+  // the textarea or landed on an .ac-item doesn't always fire those handlers
+  // in the order/timing this was written against — a two-stage touch gesture
+  // (first tap just moves the caret/shows the selection magnifier, only a
+  // second tap actually "clicks") can leave ac.editor pointing at a textarea
+  // that no longer has focus, with acEl still visible. Closing on ANY pointer
+  // interaction that lands outside both the dropdown and the current editor
+  // means it can never outlive the gesture that was supposed to dismiss it,
+  // regardless of which specific handler misfired.
+  document.addEventListener('pointerdown', (e) => {
+    if(!ac.editor) return;
+    if(acEl && acEl.contains(e.target)) return; // handled by acEl's own listener
+    if(e.target === ac.editor) return; // typing/tapping inside the same editor
+    acClose();
+  }, true);
+  // The on-screen keyboard opening/closing resizes the visual viewport, which
+  // can leave the fixed-position dropdown pointing at stale caret coordinates
+  // (or floating over content that scrolled underneath it) — simplest fix is
+  // to just close it rather than try to re-track a moving target.
+  if(window.visualViewport){
+    window.visualViewport.addEventListener('resize', () => { if(ac.editor) acClose(); });
+  }
+
   function measureTextWidth(text, font){
     if(!acCanvas) acCanvas = document.createElement('canvas');
     const ctx = acCanvas.getContext('2d');
@@ -1537,9 +1562,23 @@
     if(!ac.editor || ac.index < 0) return;
     const editor = ac.editor;
     const chosen = ac.items[ac.index].word;
+    // wordStart/wordEnd were captured back when acOpen() built this list, not
+    // just now — on mobile Safari that gap can be enough for the caret/value
+    // to have moved without us knowing (the on-screen keyboard's own
+    // autocorrect/predictive-text can silently rewrite the word being typed,
+    // and tapping a dropdown item is itself a slow two-stage touch gesture on
+    // iOS). Splicing at the stale range then lands on the wrong slice of the
+    // now-different value — typically inserting `chosen` next to text that's
+    // already there instead of replacing it, which reads as the variable
+    // name appearing twice. Recompute the word actually at the caret right
+    // now and prefer that; only fall back to the captured range if, for some
+    // reason, there's no longer a word at the caret at all.
+    const liveCw = currentWordAtCaret(editor);
+    const start = liveCw ? liveCw.start : ac.wordStart;
+    const end = liveCw ? liveCw.end : ac.wordEnd;
     const val = editor.value;
-    editor.value = val.slice(0, ac.wordStart) + chosen + val.slice(ac.wordEnd);
-    const caret = ac.wordStart + chosen.length;
+    editor.value = val.slice(0, start) + chosen + val.slice(end);
+    const caret = start + chosen.length;
     editor.selectionStart = editor.selectionEnd = caret;
     acClose();
     editor.focus();
