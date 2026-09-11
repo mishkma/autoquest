@@ -1103,6 +1103,23 @@
     background:var(--a-dim2); border-radius:0; border:2px solid var(--a-bg1);
   }
   #view-module.arcade .editor-wrap textarea.editor::-webkit-scrollbar-thumb:hover{ background:var(--a-accent); }
+  /* The horizontal-scrollbar suppression on the plain `.editor-wrap
+     textarea.editor` rule (11 Sept 2026 mobile-Safari fix, see the
+     overflow-x:auto comment there) loses the cascade inside the arcade
+     room: #view-module always carries .arcade in practice (index.html
+     hardcodes class="view arcade"), and the arcade scrollbar-theming
+     block just above sets `scrollbar-width:thin` and a bare
+     `::-webkit-scrollbar{width:10px}` on this same element — same
+     property, but with an ID in the selector, which the plain-class
+     suppression rule doesn't have, so the arcade rule always won
+     regardless of source order (confirmed: computed scrollbar-width was
+     "thin", not "none", eating ~8px of height and reintroducing the old
+     gutter/highlight desync this whole thing exists to prevent).
+     Redeclared here at matching specificity (#view-module.arcade …) so it
+     wins the ID tie-break and, being later in the file, the source-order
+     tie-break too. */
+  #view-module.arcade .editor-wrap textarea.editor{ scrollbar-width:none; }
+  #view-module.arcade .editor-wrap textarea.editor::-webkit-scrollbar:horizontal{ display:none; height:0; }
   #view-module.arcade .tok-keyword{ color:#c792ea; }
   #view-module.arcade .tok-string{ color:#7fd8a6; }
   #view-module.arcade .tok-number{ color:#f2b366; }
