@@ -1450,12 +1450,28 @@
     if(e.target === ac.editor) return; // typing/tapping inside the same editor
     acClose();
   }, true);
-  // The on-screen keyboard opening/closing resizes the visual viewport, which
-  // can leave the fixed-position dropdown pointing at stale caret coordinates
-  // (or floating over content that scrolled underneath it) — simplest fix is
-  // to just close it rather than try to re-track a moving target.
+  // Reposition (not just reposition-on-the-editor's-own-scroll, which is all
+  // acPosition was wired to before) on every scroll/resize signal that can
+  // move the caret relative to the viewport. This is the actual cause of the
+  // "dropdown renders off-screen" report: opening the on-screen keyboard on
+  // iOS scrolls the whole PAGE (document/window), not the textarea, to bring
+  // the focused input above the keyboard — acPosition() had computed the
+  // dropdown's fixed-position coordinates once, at acOpen() time, from
+  // getBoundingClientRect() *before* that page-level scroll happened, and
+  // nothing ever told it to recompute afterwards. The dropdown then sits
+  // wherever the caret used to be pre-scroll, which can be anywhere from
+  // "a bit off" to fully outside the visible viewport depending on how far
+  // the page shifted — matching "sometimes a little visible, but basically
+  // not" exactly. `true` (capture) on the scroll listener because scroll
+  // events don't bubble, so this is the only way to catch scrolling on any
+  // ancestor, not just window. visualViewport's own resize/scroll additionally
+  // cover the keyboard's own show/hide animation and iOS's separate visual
+  // vs. layout viewport scrolling.
+  window.addEventListener('scroll', () => { if(ac.editor) acPosition(ac.editor); }, true);
+  window.addEventListener('resize', () => { if(ac.editor) acPosition(ac.editor); });
   if(window.visualViewport){
-    window.visualViewport.addEventListener('resize', () => { if(ac.editor) acClose(); });
+    window.visualViewport.addEventListener('resize', () => { if(ac.editor) acPosition(ac.editor); });
+    window.visualViewport.addEventListener('scroll', () => { if(ac.editor) acPosition(ac.editor); });
   }
 
   function measureTextWidth(text, font){
@@ -1545,8 +1561,30 @@
     if(!acEl || acEl.hidden) return;
     const { x, y } = getCaretPixelPos(editor);
     const rect = editor.getBoundingClientRect();
-    acEl.style.left = Math.round(rect.left + x) + 'px';
-    acEl.style.top = Math.round(rect.top + y) + 'px';
+    let left = rect.left + x;
+    let top = rect.top + y;
+    // Clamp inside the currently VISIBLE viewport, not just the layout one —
+    // on a narrow phone the caret can sit close enough to the right edge, or
+    // near the bottom edge where the on-screen keyboard has already eaten
+    // most of the height, that the dropdown's own box (it has a min-width
+    // and can be several items tall) would otherwise start on-screen but run
+    // straight off it. visualViewport reports the actually-visible area
+    // (shrunk by the keyboard, offset by iOS's own scroll-into-view), so
+    // prefer it over window.innerWidth/Height where available.
+    const vv = window.visualViewport;
+    const vpW = vv ? vv.width : document.documentElement.clientWidth;
+    const vpH = vv ? vv.height : window.innerHeight;
+    const vpLeft = vv ? vv.offsetLeft : 0;
+    const vpTop = vv ? vv.offsetTop : 0;
+    const margin = 6;
+    const elW = acEl.offsetWidth || 170;
+    const elH = acEl.offsetHeight || 0;
+    left = Math.min(left, vpLeft + vpW - elW - margin);
+    left = Math.max(left, vpLeft + margin);
+    top = Math.min(top, vpTop + vpH - elH - margin);
+    top = Math.max(top, vpTop + margin);
+    acEl.style.left = Math.round(left) + 'px';
+    acEl.style.top = Math.round(top) + 'px';
   }
 
   function acRenderActive(){
