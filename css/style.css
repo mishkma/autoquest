@@ -478,7 +478,8 @@
     position:relative;width:100%;min-height:148px;
     background:transparent;border:none;border-radius:0;
     color:transparent;caret-color:var(--ink);
-    resize:vertical;overflow-y:auto;overflow-x:hidden;
+    resize:vertical;overflow-y:auto;overflow-x:auto;
+    scrollbar-width:none;-ms-overflow-style:none;
     /* resize:vertical here needs app.js's per-frame editor-scroll loop to
        also copy this textarea's live rendered height onto .editor-wrap
        (see bindTask in app.js) — .editor-wrap's own height is what its
@@ -487,17 +488,40 @@
        size themselves against, so dragging this handle without that sync
        would leave the gutter/highlight still fixed at their old height
        while only the real textarea grew. */
-    /* overflow-x MUST stay hidden here: leaving it unset makes it compute to
-       `auto` (a CSS quirk — when one axis is a scrolling value, `visible` on
-       the other axis is forced to `auto` too), and with white-space:pre +
-       wrap="off" a long line then grows a horizontal scrollbar that eats a
-       few px of the textarea's own height. .editor-gutter/.editor-highlight
-       never get that scrollbar (they use overflow:hidden), so their
-       scrollable range ends up a few px shorter than the textarea's — right
-       at the bottom of a scrolled editor their scrollTop then clamps short
-       of the textarea's, and the last line renders visibly offset between
-       the two layers (looks like a duplicated/ghost last line).
-       min-height override (148px, not the base rule's 150px): .editor-wrap
+    /* overflow-x is `auto` (scrollable), NOT `hidden` (11 Sept 2026, fixed
+       after a mobile Safari report: with white-space:pre + wrap="off" and
+       overflow-x:hidden, a long line has nowhere to scroll to at all — the
+       caret gets trapped past the visible edge, uneditable and invisible,
+       which is exactly what `hidden` means: no scrolling, not even
+       programmatic/caret-follow. Desktop browsers mostly get away with
+       auto-scrolling a hidden-overflow textarea to follow the caret
+       anyway (it's caret-follow logic, not real overflow scrolling), but
+       iOS Safari does not — it takes `hidden` literally, so on mobile a
+       long fix-the-bug line broke cursor movement entirely. Horizontal
+       scrolling now needs to actually work, so overflow-x can't go back
+       to `hidden` — see the `scrollbar-width`/`::-webkit-scrollbar` rule
+       right below for how the visible scrollbar this would otherwise show
+       is suppressed WITHOUT reintroducing the old height-eating bug this
+       replaces (that bug is why overflow-x was `hidden` in the first
+       place — see history below). */
+    /* scrollbar-width:none + -ms-overflow-style:none (Firefox/old Edge) and
+       ::-webkit-scrollbar{display:none} below (Safari/Chrome, including
+       mobile) hide the horizontal scrollbar WITHOUT reserving layout space
+       for it — unlike a plain classic scrollbar, a `display:none`
+       scrollbar takes zero height, so .editor-gutter/.editor-highlight
+       (plain overflow:hidden, never had a scrollbar) stay exactly the same
+       height as the textarea's content box. That's the fix for the
+       original bug this replaces: a *visible* horizontal scrollbar used to
+       eat a few px of the textarea's own height that gutter/highlight
+       never lost, desyncing their max scrollTop from the textarea's and
+       making the last line render offset between layers near the bottom
+       of a scrolled editor. Scrolling still works (via caret movement,
+       trackpad/touch swipe, or JS) — only the bar's chrome is gone, so the
+       height math that fix depended on is preserved.
+       Because .editor-highlight is the layer that actually shows colored
+       text, its own scrollLeft must now track the textarea's scrollLeft
+       too (not just scrollTop) — see pollEditorScroll in app.js. */
+    /* min-height override (148px, not the base rule's 150px): .editor-wrap
        is border-box with a 1px border top+bottom, so its flex-stretched
        children (.editor-gutter/.editor-code, and .editor-highlight inside
        it via inset:0) get a 148px content box, not 150px. The base
@@ -506,6 +530,17 @@
        ~2px scrollTop-range gap versus gutter/highlight even after the
        overflow-x fix above. 148px matches them exactly. */
   }
+  /* :horizontal only — NOT the bare ::-webkit-scrollbar pseudo, which
+     covers both axes and would also hide the vertical scrollbar the arcade
+     theme styles further down (that rule sets width/track/thumb color on
+     the bare pseudo, which has higher specificity via #view-module.arcade
+     and would still apply, but a hidden `display:none` scrollbar can't be
+     resized visible again — it'd apply to nothing). scrollbar-width can't
+     be split per-axis in Firefox, so this is webkit-only; Firefox falls
+     back to hiding both bars via the plain `scrollbar-width:none` above,
+     leaving vertical scroll fully working but without a visible thumb —
+     a minor discoverability tradeoff, not a functional one. */
+  .editor-wrap textarea.editor::-webkit-scrollbar:horizontal{ display:none; height:0; }
   .tok-keyword{color:var(--tok-kw);font-weight:600;}
   .tok-string{color:var(--tok-str);}
   .tok-number{color:var(--tok-num);}

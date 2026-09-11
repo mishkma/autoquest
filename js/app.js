@@ -1228,12 +1228,23 @@
     // the resize handle needs this to keep them matching, exactly the
     // "if resize is ever added, sync .editor-wrap's height via JS" this
     // codebase already flagged as a future requirement.
+    // scrollLeft is polled the same way, for the same reason: the textarea
+    // went from overflow-x:hidden to overflow-x:auto (11 Sept 2026, mobile
+    // Safari fix — see the CSS comment on .editor-wrap textarea.editor) so
+    // a long line can now actually scroll horizontally to follow the caret.
+    // .editor-highlight is the layer that renders the visible colored text
+    // (the textarea's own text is color:transparent), so without this it
+    // would stay pinned at scrollLeft 0 while the real text slid underneath
+    // it — .editor-gutter shows only line numbers, never scrolls sideways,
+    // so it doesn't need this.
     const wrap = editor.closest('.editor-wrap');
     function pollEditorScroll(){
       if(!editor.isConnected) return;
       const st = editor.scrollTop;
       if(gutter.scrollTop !== st) gutter.scrollTop = st;
       if(hl.scrollTop !== st) hl.scrollTop = st;
+      const sl = editor.scrollLeft;
+      if(hl.scrollLeft !== sl) hl.scrollLeft = sl;
       const h = editor.offsetHeight + 'px';
       if(wrap && wrap.style.height !== h) wrap.style.height = h;
       requestAnimationFrame(pollEditorScroll);
