@@ -1864,11 +1864,41 @@ def test_cart_total():
       id:'m10', num:10, phase:'Automated tests in Python', title:'Exception handling',
       desc:'try/except, raising your own errors, when to catch what',
       theory:[
-        '<code>try: ... except SomeError: ...</code> is the real, controlled version of every traceback you have been reading since Module 6 and 7 — instead of the script dying, YOUR code decides what happens next. Code inside <code>try:</code> runs normally; if it raises the exact exception type named after <code>except</code>, the <code>except</code> block runs instead of crashing.',
-        'Always name a SPECIFIC exception type — <code>except ValueError:</code>, not a bare <code>except:</code>. A bare <code>except:</code> catches literally everything, including bugs you never meant to hide, and turns a real crash into silent wrong behavior that is much harder to debug later.',
-        '<code>else:</code> after a try/except runs only when NO exception happened; <code>finally:</code> runs no matter what — exception or not. <code>finally</code> is for cleanup that must always happen, like closing a connection, whether the test passed or blew up.',
-        'You can raise your own exception on purpose with <code>raise ValueError("a clear message")</code> — this is how you fail fast with a message that actually explains what went wrong, instead of letting broken data silently propagate deeper into your code.',
-        'In automation this is not optional politeness — it is how you tell the difference between "this specific, expected thing went wrong, handle it" (a flaky network call, a missing optional field) and "something is actually broken, let it crash loudly." Catching too much hides real bugs; catching too little makes your test helpers fragile.'
+        {
+          text:'<code>try: ... except SomeError: ...</code> is the real, controlled version of every traceback you have been reading since Module 6 and 7 — instead of the script dying, YOUR code decides what happens next. Code inside <code>try:</code> runs normally; if it raises the exact exception type named after <code>except</code>, the <code>except</code> block runs instead of crashing.',
+          examples:[
+            {label:'Simple', code:'try:\n    print(1/0)\nexcept ZeroDivisionError:\n    print("Caught")', result:'Caught'},
+            {label:'In practice', kind:'real', code:'try:\n    age = int("abc")\nexcept ValueError:\n    print("Invalid age input")', result:'Invalid age input'}
+          ]
+        },
+        {
+          text:'Always name a SPECIFIC exception type — <code>except ValueError:</code>, not a bare <code>except:</code>. A bare <code>except:</code> catches literally everything, including bugs you never meant to hide, and turns a real crash into silent wrong behavior that is much harder to debug later.',
+          examples:[
+            {label:'Simple', code:'try:\n    x = int("abc")\nexcept ValueError:\n    print("Got a ValueError, as expected")', result:'Got a ValueError, as expected'},
+            {label:'In practice', kind:'real', code:'try:\n    result = 10 / 0\nexcept ValueError:\n    print("This never runs")\nexcept ZeroDivisionError:\n    print("Division by zero caught specifically")', result:'Division by zero caught specifically'}
+          ]
+        },
+        {
+          text:'<code>else:</code> after a try/except runs only when NO exception happened; <code>finally:</code> runs no matter what — exception or not. <code>finally</code> is for cleanup that must always happen, like closing a connection, whether the test passed or blew up.',
+          examples:[
+            {label:'Simple', code:'try:\n    x = 10 / 2\nexcept ZeroDivisionError:\n    print("Error")\nelse:\n    print("No error, result is", x)\nfinally:\n    print("Done")', result:'No error, result is 5.0\nDone'},
+            {label:'In practice', kind:'real', code:'try:\n    print("Query executed")\nexcept Exception:\n    print("Query failed")\nfinally:\n    print("Connection closed")', result:'Query executed\nConnection closed'}
+          ]
+        },
+        {
+          text:'You can raise your own exception on purpose with <code>raise ValueError("a clear message")</code> — this is how you fail fast with a message that actually explains what went wrong, instead of letting broken data silently propagate deeper into your code.',
+          examples:[
+            {label:'Simple', code:'def check_age(age):\n    if age < 0:\n        raise ValueError("Age cannot be negative")\n    return age\n\ntry:\n    check_age(-5)\nexcept ValueError as e:\n    print(e)', result:'Age cannot be negative'},
+            {label:'In practice', kind:'real', code:'def validate_status_code(code):\n    if code not in (200, 201, 204):\n        raise ValueError(f"Unexpected status code: {code}")\n    return code\n\ntry:\n    validate_status_code(500)\nexcept ValueError as e:\n    print(e)', result:'Unexpected status code: 500'}
+          ]
+        },
+        {
+          text:'In automation this is not optional politeness — it is how you tell the difference between "this specific, expected thing went wrong, handle it" (a flaky network call, a missing optional field) and "something is actually broken, let it crash loudly." Catching too much hides real bugs; catching too little makes your test helpers fragile.',
+          examples:[
+            {label:'Simple', code:'def risky_call():\n    raise ConnectionError("Network down")\n\ntry:\n    result = risky_call()\nexcept ConnectionError:\n    result = None\nprint(result)', result:'None'},
+            {label:'In practice', kind:'real', code:'def get_config_value(config, key):\n    try:\n        return config[key]\n    except KeyError:\n        return "default"\n\nprint(get_config_value({"env": "staging"}, "timeout"))', result:'default'}
+          ]
+        }
       ],
       tasks:[
         {
@@ -1986,14 +2016,62 @@ except ZeroDivisionError:
       id:'m11', num:11, phase:'Automated tests in Python', title:'Mocks and stubs',
       desc:'faking dependencies: mock, stub — when and why',
       theory:[
-        'A test should not depend on a real payment API, a real email server, or the exact current time to be fast, repeatable, and pass even when the internet is down. A <b>mock</b> is a fake stand-in object you hand to your code INSTEAD of the real dependency — it behaves close enough to be useful, without doing anything real.',
-        '<code>from unittest.mock import Mock</code> — <code>Mock()</code> creates a fake object that accepts ANY attribute access or method call without complaint, auto-creating a new Mock for each one. This is what makes it useful as a stand-in for something you have not built yet, or do not want to actually call.',
-        '<code>Mock(return_value=X)</code> makes CALLING the mock return <code>X</code> instead of another Mock. You can also set it after creation on a specific method: <code>fake_db.get_user.return_value = {...}</code> — only that one method is scripted, everything else on the object still behaves like a generic Mock.',
-        'A mock also REMEMBERS how it was called — <code>mock.assert_called_with(args)</code> fails loudly (a real <code>AssertionError</code>, with both what was expected and what actually happened) if your code called it differently than expected, or not at all. This turns "did my code talk to the dependency correctly" into something a test can check automatically.',
-        '<code>side_effect</code> makes a mock do more than return one fixed value: set it to an exception INSTANCE to make every call raise it, or to a LIST to make each successive call return (or raise) the next item — perfect for simulating something that fails once and then succeeds, without touching anything real.',
-        '<code>patch("module.function", return_value=X)</code>, used with <code>with</code>, temporarily REPLACES a real function everywhere it is looked up by that name, only for the code inside the <code>with</code> block — outside it, the real function is back untouched. This is how you neutralize something unpredictable (like <code>random</code> or the network) for the length of one test only.',
-        'This module\'s title says "mocks AND stubs" — here is the actual difference, since Python\'s <code>unittest.mock</code> blurs it on purpose. A <b>stub</b> is the simplest fake: it just returns canned data when called, nothing more (<code>Mock(return_value=...)</code> used purely for its return value is really a stub). A <b>mock</b> does that AND remembers how it was called, so the test can later assert on the interaction itself (<code>assert_called_with(...)</code>) — every <code>Mock()</code> in this module is technically capable of being used as either; which one you are using is about what your test actually checks, not which class you imported.',
-        'The one rule that separates a healthy mock from an anti-pattern: mock the dependency AT THE EDGE of what you are testing (a payment gateway, an email service, the current time), never the thing the test exists to verify. Module 12\'s <code>test_search_product</code> should still make a real <code>requests.get(...)</code> call — mocking that out would leave a test that always passes and checks nothing. A test built around <code>checkout()</code> mocking <code>payment_gateway</code> is correct, because the test is about checkout logic, not about whether a real payment gateway works.'
+        {
+          text:'A test should not depend on a real payment API, a real email server, or the exact current time to be fast, repeatable, and pass even when the internet is down. A <b>mock</b> is a fake stand-in object you hand to your code INSTEAD of the real dependency — it behaves close enough to be useful, without doing anything real.',
+          examples:[
+            {label:'Simple', code:'from unittest.mock import Mock\nfake_payment = Mock()\nfake_payment.charge(100)\nprint("No crash")', result:'No crash'},
+            {label:'In practice', kind:'real', code:'from unittest.mock import Mock\nfake_email_service = Mock()\nfake_email_service.send("hi@example.com", "Order shipped")\nprint("Email service call did not touch a real server")', result:'Email service call did not touch a real server'}
+          ]
+        },
+        {
+          text:'<code>from unittest.mock import Mock</code> — <code>Mock()</code> creates a fake object that accepts ANY attribute access or method call without complaint, auto-creating a new Mock for each one. This is what makes it useful as a stand-in for something you have not built yet, or do not want to actually call.',
+          examples:[
+            {label:'Simple', code:'from unittest.mock import Mock\nfake_api = Mock()\nfake_api.get_status()\nprint("Called without error")', result:'Called without error'},
+            {label:'In practice', kind:'real', code:'from unittest.mock import Mock\nfake_browser = Mock()\nfake_browser.find_element("id", "login-button").click()\nprint("Simulated a click on a fake browser")', result:'Simulated a click on a fake browser'}
+          ]
+        },
+        {
+          text:'<code>Mock(return_value=X)</code> makes CALLING the mock return <code>X</code> instead of another Mock. You can also set it after creation on a specific method: <code>fake_db.get_user.return_value = {...}</code> — only that one method is scripted, everything else on the object still behaves like a generic Mock.',
+          examples:[
+            {label:'Simple', code:'from unittest.mock import Mock\nfake_api = Mock(return_value="200 OK")\nprint(fake_api())', result:'200 OK'},
+            {label:'In practice', kind:'real', code:'from unittest.mock import Mock\nfake_db = Mock()\nfake_db.get_user.return_value = {"name": "Alex", "active": True}\nprint(fake_db.get_user(42)["name"])', result:'Alex'}
+          ]
+        },
+        {
+          text:'A mock also REMEMBERS how it was called — <code>mock.assert_called_with(args)</code> fails loudly (a real <code>AssertionError</code>, with both what was expected and what actually happened) if your code called it differently than expected, or not at all. This turns "did my code talk to the dependency correctly" into something a test can check automatically.',
+          examples:[
+            {label:'Simple', code:'from unittest.mock import Mock\nsend = Mock()\nsend("a@example.com")\nsend.assert_called_with("a@example.com")\nprint("Assertion passed")', result:'Assertion passed'},
+            {label:'In practice', kind:'real', code:'from unittest.mock import Mock\npayment_gateway = Mock()\ndef checkout(total, gateway):\n    gateway.charge(total)\ncheckout(150, payment_gateway)\npayment_gateway.charge.assert_called_with(150)\nprint("Checkout charged the right amount")', result:'Checkout charged the right amount'}
+          ]
+        },
+        {
+          text:'<code>side_effect</code> makes a mock do more than return one fixed value: set it to an exception INSTANCE to make every call raise it, or to a LIST to make each successive call return (or raise) the next item — perfect for simulating something that fails once and then succeeds, without touching anything real.',
+          examples:[
+            {label:'Simple', code:'from unittest.mock import Mock\nflaky = Mock(side_effect=ConnectionError("Network down"))\ntry:\n    flaky()\nexcept ConnectionError as e:\n    print(f"Caught: {e}")', result:'Caught: Network down'},
+            {label:'In practice', kind:'real', code:'from unittest.mock import Mock\nflaky_call = Mock(side_effect=[ConnectionError("Network down"), "success"])\nfor attempt in range(2):\n    try:\n        result = flaky_call()\n        print(result)\n        break\n    except ConnectionError:\n        print("Retry")', result:'Retry\nsuccess'}
+          ]
+        },
+        {
+          text:'<code>patch("module.function", return_value=X)</code>, used with <code>with</code>, temporarily REPLACES a real function everywhere it is looked up by that name, only for the code inside the <code>with</code> block — outside it, the real function is back untouched. This is how you neutralize something unpredictable (like <code>random</code> or the network) for the length of one test only.',
+          examples:[
+            {label:'Simple', code:'from unittest.mock import patch\nimport random\n\ndef roll_dice():\n    return random.randint(1, 6)\n\nwith patch("random.randint", return_value=4):\n    print(roll_dice())', result:'4'},
+            {label:'In practice', kind:'real', code:'from unittest.mock import patch\nimport requests\n\ndef get_status():\n    r = requests.get("https://example.com/health")\n    return r.status_code\n\nwith patch("requests.get") as fake_get:\n    fake_get.return_value.status_code = 200\n    print(get_status())', result:'200'}
+          ]
+        },
+        {
+          text:'This module\'s title says "mocks AND stubs" — here is the actual difference, since Python\'s <code>unittest.mock</code> blurs it on purpose. A <b>stub</b> is the simplest fake: it just returns canned data when called, nothing more (<code>Mock(return_value=...)</code> used purely for its return value is really a stub). A <b>mock</b> does that AND remembers how it was called, so the test can later assert on the interaction itself (<code>assert_called_with(...)</code>) — every <code>Mock()</code> in this module is technically capable of being used as either; which one you are using is about what your test actually checks, not which class you imported.',
+          examples:[
+            {label:'Simple', code:'from unittest.mock import Mock\nstub = Mock(return_value=42)\nprint(stub())', result:'42'},
+            {label:'In practice', kind:'real', code:'from unittest.mock import Mock\nmock_logger = Mock()\nmock_logger.log("Test started")\nmock_logger.log.assert_called_with("Test started")\nprint("Verified the interaction, not just a fixed return value")', result:'Verified the interaction, not just a fixed return value'}
+          ]
+        },
+        {
+          text:'The one rule that separates a healthy mock from an anti-pattern: mock the dependency AT THE EDGE of what you are testing (a payment gateway, an email service, the current time), never the thing the test exists to verify. Module 12\'s <code>test_search_product</code> should still make a real <code>requests.get(...)</code> call — mocking that out would leave a test that always passes and checks nothing. A test built around <code>checkout()</code> mocking <code>payment_gateway</code> is correct, because the test is about checkout logic, not about whether a real payment gateway works.',
+          examples:[
+            {label:'Simple', code:'from unittest.mock import Mock\n\ndef checkout(cart_total, payment_gateway):\n    payment_gateway.charge(cart_total)\n    return "Order placed"\n\nfake_gateway = Mock()\nprint(checkout(150, fake_gateway))', result:'Order placed'},
+            {label:'In practice', kind:'real', code:'def total_price(cart):\n    return sum(item["price"] for item in cart)\n\ncart = [{"price": 25}, {"price": 45}]\nprint(total_price(cart))', result:'70'}
+          ]
+        }
       ],
       tasks:[
         {
@@ -2106,11 +2184,41 @@ print(counter.call_count)
       id:'m12', num:12, phase:'Automation tooling', title:'API testing',
       desc:'checking requests and responses with requests',
       theory:[
-        'Every task below hits the REAL public API of automationexercise.com — the same site your Module 4-11 examples have been themed around. <code>pip install requests</code>, then <code>requests.get(url, timeout=10)</code> sends a real HTTP request and returns a <code>Response</code> object — <code>.status_code</code> is the HTTP status (200 = OK), <code>.json()</code> parses the body as JSON, exactly like <code>json.loads(...)</code> did in Module 8, because that is literally what <code>.json()</code> does internally.',
-        'ALWAYS pass <code>timeout=...</code> to a real request. Without it, a request can hang forever if the server never responds — a single stuck test freezing an entire suite is a real, common automation failure, not a hypothetical one.',
-        '<code>requests.get(url)</code> reads data, <code>requests.post(url, data={...})</code> sends data — the dict passed as <code>data=</code> gets form-encoded into the request body, similar in spirit to the dicts you have been building all course, just sent over the network instead of printed.',
-        'A crucial, easy-to-miss gotcha: the HTTP status code and an API\'s OWN success/error code inside the JSON body are two DIFFERENT things. automationexercise.com\'s API always answers with HTTP 200, even on a request it considers wrong — the real error (like "wrong method") shows up as a <code>responseCode</code> field inside the JSON, not as the HTTP status. A test that only checks <code>status_code == 200</code> here would incorrectly call broken requests "fine."',
-        'Once parsed, an API response is just Python data you already know how to work with — a list of dicts (Module 5), maybe nested. Looping, counting, filtering — none of that changes just because the data arrived over a network instead of being typed by hand.'
+        {
+          text:'Every task below hits the REAL public API of automationexercise.com — the same site your Module 4-11 examples have been themed around. <code>pip install requests</code>, then <code>requests.get(url, timeout=10)</code> sends a real HTTP request and returns a <code>Response</code> object — <code>.status_code</code> is the HTTP status (200 = OK), <code>.json()</code> parses the body as JSON, exactly like <code>json.loads(...)</code> did in Module 8, because that is literally what <code>.json()</code> does internally.',
+          examples:[
+            {label:'Simple', code:'import requests\nr = requests.get("https://automationexercise.com/api/productsList", timeout=10)\nprint(r.status_code)', result:'200'},
+            {label:'In practice', kind:'real', code:'import requests\nr = requests.get("https://automationexercise.com/api/productsList", timeout=10)\ndata = r.json()\nprint(data["responseCode"])', result:'200'}
+          ]
+        },
+        {
+          text:'ALWAYS pass <code>timeout=...</code> to a real request. Without it, a request can hang forever if the server never responds — a single stuck test freezing an entire suite is a real, common automation failure, not a hypothetical one.',
+          examples:[
+            {label:'Simple', code:'import requests\ntry:\n    r = requests.get("https://automationexercise.com/api/productsList", timeout=0.001)\nexcept requests.exceptions.Timeout:\n    print("Timed out")', result:'Timed out'},
+            {label:'In practice', kind:'real', code:'import requests\ntry:\n    r = requests.get("https://automationexercise.com/api/productsList", timeout=10)\n    print("Request completed within the timeout")\nexcept requests.exceptions.Timeout:\n    print("Timed out")', result:'Request completed within the timeout'}
+          ]
+        },
+        {
+          text:'<code>requests.get(url)</code> reads data, <code>requests.post(url, data={...})</code> sends data — the dict passed as <code>data=</code> gets form-encoded into the request body, similar in spirit to the dicts you have been building all course, just sent over the network instead of printed.',
+          examples:[
+            {label:'Simple', code:'import requests\nr = requests.get("https://automationexercise.com/api/productsList", timeout=10)\ndata = r.json()\nprint(len(data["products"]) > 0)', result:'True'},
+            {label:'In practice', kind:'real', code:'import requests\nr = requests.post("https://automationexercise.com/api/searchProduct", data={"search_product": "dress"}, timeout=10)\ndata = r.json()\nprint(data["responseCode"], len(data["products"]) > 0)', result:'200 True'}
+          ]
+        },
+        {
+          text:'A crucial, easy-to-miss gotcha: the HTTP status code and an API\'s OWN success/error code inside the JSON body are two DIFFERENT things. automationexercise.com\'s API always answers with HTTP 200, even on a request it considers wrong — the real error (like "wrong method") shows up as a <code>responseCode</code> field inside the JSON, not as the HTTP status. A test that only checks <code>status_code == 200</code> here would incorrectly call broken requests "fine."',
+          examples:[
+            {label:'Simple', code:'import requests\nr = requests.get("https://automationexercise.com/api/searchProduct", timeout=10)\nprint(r.status_code, r.json()["responseCode"])', result:'200 405'},
+            {label:'In practice', kind:'real', code:'import requests\nr = requests.get("https://automationexercise.com/api/productsList", timeout=10)\nprint(r.status_code, r.json()["responseCode"])', result:'200 200'}
+          ]
+        },
+        {
+          text:'Once parsed, an API response is just Python data you already know how to work with — a list of dicts (Module 5), maybe nested. Looping, counting, filtering — none of that changes just because the data arrived over a network instead of being typed by hand.',
+          examples:[
+            {label:'Simple', code:'import requests\nr = requests.get("https://automationexercise.com/api/productsList", timeout=10)\ndata = r.json()\ncount = 0\nfor product in data["products"]:\n    if product["brand"] == "Polo":\n        count += 1\nprint(count)', result:'6'},
+            {label:'In practice', kind:'real', code:'import requests\nr = requests.get("https://automationexercise.com/api/productsList", timeout=10)\ndata = r.json()\nnames = [p["name"] for p in data["products"][:3]]\nprint(names)', result:"['Blue Top', 'Men Tshirt', 'Sleeveless Dress']"}
+          ]
+        }
       ],
       tasks:[
         {
@@ -2186,11 +2294,41 @@ print(counter.call_count)
       id:'m13', num:13, phase:'Automation tooling', title:'Databases',
       desc:'checking data in a DB straight from tests',
       theory:[
-        'A UI or API saying "order placed" is not proof it actually happened — checking the database directly confirms the real state, underneath whatever the interface claims. <code>sqlite3</code> is part of the standard library (no install), stores everything in a single file — or, for tests, entirely in memory with <code>sqlite3.connect(":memory:")</code>, which vanishes the moment the script ends. No server, no cleanup, ideal for quick checks.',
-        'A <code>cursor</code> is what actually runs SQL: <code>cursor.execute("CREATE TABLE tests (name TEXT, status TEXT)")</code>, then <code>cursor.execute("INSERT INTO tests VALUES (\'test_login\', \'pass\')")</code>, then <code>conn.commit()</code> — nothing is actually saved until you commit. <code>cursor.fetchone()</code> gets one row back as a plain tuple; <code>cursor.fetchall()</code> gets every matching row as a list of tuples.',
-        'NEVER build SQL by gluing strings together with a value that came from outside your own code — <code>"...WHERE name = \'" + user_input + "\'"</code> lets that value change what the query actually does (SQL injection: a real, serious vulnerability class, not a theoretical one). Use a <code>?</code> placeholder and pass the value separately: <code>cursor.execute("SELECT * FROM tests WHERE name = ?", (name,))</code> — the database handles it safely no matter what the value contains.',
-        '<code>WHERE</code> filters which rows a query touches — <code>SELECT * FROM tests WHERE status = \'fail\'</code> only returns the failing ones. The exact same clause works with <code>UPDATE</code> and <code>DELETE</code>: <code>UPDATE tests SET status = ? WHERE name = ?</code> changes only the matching row, everything else stays untouched.',
-        'A row comes back as a TUPLE, not a dict — <code>row[0]</code>, <code>row[1]</code> access columns by position, in the order they were selected, not by name. This is different from the dicts you have used everywhere since Module 5; keep the two straight.'
+        {
+          text:'A UI or API saying "order placed" is not proof it actually happened — checking the database directly confirms the real state, underneath whatever the interface claims. <code>sqlite3</code> is part of the standard library (no install), stores everything in a single file — or, for tests, entirely in memory with <code>sqlite3.connect(":memory:")</code>, which vanishes the moment the script ends. No server, no cleanup, ideal for quick checks.',
+          examples:[
+            {label:'Simple', code:'import sqlite3\nconn = sqlite3.connect(":memory:")\nprint("Connected")', result:'Connected'},
+            {label:'In practice', kind:'real', code:'import sqlite3\nconn = sqlite3.connect(":memory:")\ncursor = conn.cursor()\ncursor.execute("CREATE TABLE tests (name TEXT, status TEXT)")\nprint("Table ready for a fast, disposable test database")', result:'Table ready for a fast, disposable test database'}
+          ]
+        },
+        {
+          text:'A <code>cursor</code> is what actually runs SQL: <code>cursor.execute("CREATE TABLE tests (name TEXT, status TEXT)")</code>, then <code>cursor.execute("INSERT INTO tests VALUES (\'test_login\', \'pass\')")</code>, then <code>conn.commit()</code> — nothing is actually saved until you commit. <code>cursor.fetchone()</code> gets one row back as a plain tuple; <code>cursor.fetchall()</code> gets every matching row as a list of tuples.',
+          examples:[
+            {label:'Simple', code:'import sqlite3\nconn = sqlite3.connect(":memory:")\ncursor = conn.cursor()\ncursor.execute("CREATE TABLE tests (name TEXT, status TEXT)")\ncursor.execute("INSERT INTO tests VALUES (\'test_login\', \'pass\')")\nconn.commit()\ncursor.execute("SELECT * FROM tests")\nprint(cursor.fetchone())', result:"('test_login', 'pass')"},
+            {label:'In practice', kind:'real', code:'import sqlite3\nconn = sqlite3.connect(":memory:")\ncursor = conn.cursor()\ncursor.execute("CREATE TABLE tests (name TEXT, status TEXT)")\ncursor.execute("INSERT INTO tests VALUES (\'test_login\', \'pass\')")\ncursor.execute("INSERT INTO tests VALUES (\'test_logout\', \'fail\')")\nconn.commit()\ncursor.execute("SELECT * FROM tests")\nprint(cursor.fetchall())', result:"[('test_login', 'pass'), ('test_logout', 'fail')]"}
+          ]
+        },
+        {
+          text:'NEVER build SQL by gluing strings together with a value that came from outside your own code — <code>"...WHERE name = \'" + user_input + "\'"</code> lets that value change what the query actually does (SQL injection: a real, serious vulnerability class, not a theoretical one). Use a <code>?</code> placeholder and pass the value separately: <code>cursor.execute("SELECT * FROM tests WHERE name = ?", (name,))</code> — the database handles it safely no matter what the value contains.',
+          examples:[
+            {label:'Simple', code:'import sqlite3\nconn = sqlite3.connect(":memory:")\ncursor = conn.cursor()\ncursor.execute("CREATE TABLE tests (name TEXT, status TEXT)")\ncursor.execute("INSERT INTO tests VALUES (\'test_login\', \'pass\')")\nconn.commit()\nname = "test_login"\ncursor.execute("SELECT * FROM tests WHERE name = ?", (name,))\nprint(cursor.fetchone())', result:"('test_login', 'pass')"},
+            {label:'In practice', kind:'real', code:'import sqlite3\nconn = sqlite3.connect(":memory:")\ncursor = conn.cursor()\ncursor.execute("CREATE TABLE tests (name TEXT, status TEXT)")\ncursor.execute("INSERT INTO tests VALUES (\'test_login\', \'pass\')")\nconn.commit()\nmalicious_input = "test_login\' OR \'1\'=\'1"\ncursor.execute("SELECT * FROM tests WHERE name = ?", (malicious_input,))\nprint(cursor.fetchall())', result:'[]'}
+          ]
+        },
+        {
+          text:'<code>WHERE</code> filters which rows a query touches — <code>SELECT * FROM tests WHERE status = \'fail\'</code> only returns the failing ones. The exact same clause works with <code>UPDATE</code> and <code>DELETE</code>: <code>UPDATE tests SET status = ? WHERE name = ?</code> changes only the matching row, everything else stays untouched.',
+          examples:[
+            {label:'Simple', code:'import sqlite3\nconn = sqlite3.connect(":memory:")\ncursor = conn.cursor()\ncursor.execute("CREATE TABLE tests (name TEXT, status TEXT)")\ncursor.execute("INSERT INTO tests VALUES (\'test_login\', \'fail\')")\ncursor.execute("INSERT INTO tests VALUES (\'test_logout\', \'pass\')")\nconn.commit()\ncursor.execute("SELECT * FROM tests WHERE status = \'fail\'")\nprint(cursor.fetchall())', result:"[('test_login', 'fail')]"},
+            {label:'In practice', kind:'real', code:'import sqlite3\nconn = sqlite3.connect(":memory:")\ncursor = conn.cursor()\ncursor.execute("CREATE TABLE tests (name TEXT, status TEXT)")\ncursor.execute("INSERT INTO tests VALUES (\'test_login\', \'fail\')")\nconn.commit()\ncursor.execute("UPDATE tests SET status = ? WHERE name = ?", ("pass", "test_login"))\nconn.commit()\ncursor.execute("SELECT * FROM tests")\nprint(cursor.fetchone())', result:"('test_login', 'pass')"}
+          ]
+        },
+        {
+          text:'A row comes back as a TUPLE, not a dict — <code>row[0]</code>, <code>row[1]</code> access columns by position, in the order they were selected, not by name. This is different from the dicts you have used everywhere since Module 5; keep the two straight.',
+          examples:[
+            {label:'Simple', code:'import sqlite3\nconn = sqlite3.connect(":memory:")\ncursor = conn.cursor()\ncursor.execute("CREATE TABLE tests (name TEXT, status TEXT)")\ncursor.execute("INSERT INTO tests VALUES (\'test_login\', \'pass\')")\nconn.commit()\ncursor.execute("SELECT * FROM tests")\nrow = cursor.fetchone()\nprint(row[0], row[1])', result:'test_login pass'},
+            {label:'In practice', kind:'real', code:'import sqlite3\nconn = sqlite3.connect(":memory:")\ncursor = conn.cursor()\ncursor.execute("CREATE TABLE tests (name TEXT, status TEXT)")\ncursor.execute("INSERT INTO tests VALUES (\'test_checkout\', \'pass\')")\nconn.commit()\ncursor.execute("SELECT name, status FROM tests")\nrow = cursor.fetchone()\nprint(f"{row[0]}: {row[1]}")', result:'test_checkout: pass'}
+          ]
+        }
       ],
       tasks:[
         {
