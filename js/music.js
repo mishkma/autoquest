@@ -119,11 +119,17 @@ window.Music = (function(){
   let schedulerId = null, stepIndex = 0, nextStepTime = 0;
   let volume = DEFAULT_VOLUME;
 
+  // A first-time visitor (nothing stored yet) starts MUTED (16 Sept 2026,
+  // user request: music auto-starting on the very first click anywhere on
+  // the page — see initMusicToggle() in app.js — was a jump-scare, not a
+  // pleasant surprise). Once someone explicitly unmutes via the music
+  // popup, that '1' is what's stored and respected on every later visit —
+  // this only changes the untouched, nothing-saved-yet default.
   function getStoredEnabled(){
     try{
       const v = localStorage.getItem(STORAGE_KEY);
-      return v === null ? true : v === '1';
-    }catch(e){ return true; }
+      return v === null ? false : v === '1';
+    }catch(e){ return false; }
   }
   function setStoredEnabled(on){
     try{ localStorage.setItem(STORAGE_KEY, on ? '1' : '0'); }catch(e){}
