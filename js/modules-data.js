@@ -2870,9 +2870,10 @@ print(cursor.rowcount)
       ],
       tasks:[
         {
-          id:'m16-t1', kind:'checklist', title:'Set up the folder structure',
-          goal:'Create a new project folder with THREE things inside it: a <code>pages/</code> folder, a <code>tests/</code> folder, and an empty <code>conftest.py</code> file at the top level (next to the two folders, not inside either). Confirm all three exist.',
-          hint:'This exact shape — <code>pages/</code>, <code>tests/</code>, <code>conftest.py</code> — is the smallest real version of what a production test framework looks like; everything else in this module fills these three pieces in.'
+          id:'m16-t1', kind:'implement', title:'Set up the folder structure',
+          goal:'Create a new project folder containing three things: a <code>pages/</code> folder, a <code>tests/</code> folder, and an empty <code>conftest.py</code> file at the top level (next to the two folders, not inside either). Then write a short Python script, run from inside that folder, that lists the names of everything directly inside it (not recursing into the subfolders), sorted alphabetically, and prints that list.',
+          hint:'This exact shape — <code>pages/</code>, <code>tests/</code>, <code>conftest.py</code> — is the smallest real version of what a production test framework looks like. The standard library module for working with paths and listing a folder\'s own contents is <code>pathlib</code>.',
+          expected:"['conftest.py', 'pages', 'tests']"
         },
         {
           id:'m16-t2', kind:'checklist', title:'A Page Object as its own file',
@@ -2890,9 +2891,10 @@ print(cursor.rowcount)
           hint:'The test function never launches or closes a browser itself — it just asks for <code>page</code> as a parameter and trusts <code>conftest.py</code> to have handled that, exactly like Module 9\'s fixtures.'
         },
         {
-          id:'m16-t5', kind:'checklist', title:'See setup and teardown run in order',
-          goal:'In a small separate file, write a fixture <code>def resource(): print("Setting up"); yield "ready"; print("Tearing down")</code> and a test that prints <code>f"Running test with {resource}"</code>. Run <code>pytest -v -s test_file.py</code> (the <code>-s</code> flag shows print output). Confirm the three lines appear in EXACTLY this order: <b>Setting up</b>, <b>Running test with ready</b>, <b>Tearing down</b>.',
-          hint:'This is the exact mechanism behind your <code>page</code> fixture in task 3 — the "launch browser" part runs before the test, the "close browser" part runs after, automatically, in that order, every time.'
+          id:'m16-t5', kind:'implement', title:'See setup and teardown run in order',
+          goal:'In a small separate file, write a pytest fixture named <code>resource</code> that, right before yielding the string <code>"ready"</code>, prints exactly <code>Setting up</code> — and right after the yield (once the test using it has finished), prints exactly <code>Tearing down</code>. Write a test function that takes <code>resource</code> as a parameter and prints <code>Running test with {value}</code> as an f-string, where <code>{value}</code> is whatever the fixture yielded. Run <code>pytest -v -s test_file.py</code> (the <code>-s</code> flag shows print output) and report the three printed lines in the exact order pytest actually prints them, one per line.',
+          hint:'A <code>yield</code>-based fixture splits into two halves around the <code>yield</code> keyword — pytest runs everything before it as setup, hands the test the yielded value, then always comes back afterward to run everything after it as teardown, whether the test passed or failed.',
+          expected:'Setting up\nRunning test with ready\nTearing down'
         },
         {
           id:'m16-t6', kind:'checklist', title:'requirements.txt',
@@ -2905,9 +2907,10 @@ print(cursor.rowcount)
           hint:'Nothing links these two test files together on purpose — pytest discovers every <code>test_*.py</code> file under the current folder automatically, regardless of what each one actually does inside.'
         },
         {
-          id:'m16-t8', kind:'checklist', title:'Share expensive setup with scope',
-          goal:'Change your <code>page</code> fixture (or a copy of it in a small test file) to <code>@pytest.fixture(scope="module")</code>. Write TWO test functions in the same file that both use it. Run <code>pytest -v -s</code> and confirm the setup print statement appears only ONCE for both tests, not twice.',
-          hint:'For something as slow as launching a real browser, sharing one instance across every test in a file (instead of relaunching per test) is a real, meaningful speed difference in a large suite.'
+          id:'m16-t8', kind:'implement', title:'Share expensive setup with scope',
+          goal:'Write a pytest fixture named <code>resource</code>, scoped so its setup/teardown code runs only ONCE for the whole file no matter how many tests use it (the default scope, "function", would instead run it once per test) — printing exactly <code>Setting up</code> right before yielding the string <code>"ready"</code>, and exactly <code>Tearing down</code> after the yield. Write TWO separate test functions in the same file, both taking <code>resource</code> as a parameter and asserting it equals <code>"ready"</code>. Run <code>pytest -v -s</code> and report exactly how many times the line <code>Setting up</code> appears in the output.',
+          hint:'For something as slow as launching a real browser, sharing one instance across every test in a file (instead of relaunching per test) is a real, meaningful speed difference in a large suite. The fixture decorator itself takes an optional argument controlling how often it re-runs.',
+          expected:'1'
         },
         {
           id:'m16-t9', kind:'checklist', title:'A .gitignore for the project',
@@ -2927,9 +2930,10 @@ print(cursor.rowcount)
           hint:'Check <code>git status</code> right before committing — <code>__pycache__/</code> or <code>.pytest_cache/</code> showing up as staged means <code>.gitignore</code> is missing or was created too late to take effect on already-tracked files.'
         },
         {
-          id:'m16-hw2', kind:'checklist', title:'Add a mocked unit test alongside the real ones',
-          goal:'Add <code>tests/test_cart_logic.py</code> containing a fast, mocked unit test in the style of Module 11 (no real network or browser involved at all). Run <code>pytest -v</code> from the project root again — confirm it runs alongside the API and UI tests from task 10, all in one command.',
-          hint:'This is the payoff of the whole module: fast mocked tests, real API tests, and full browser tests all live side by side, and a single <code>pytest</code> run does not care which kind each one is.'
+          id:'m16-hw2', kind:'implement', title:'Add a mocked unit test alongside the real ones',
+          goal:'Write a fast, fully mocked unit test (no real network or browser involved at all) for some small piece of cart or pricing logic — the kind of dependency you would normally have to fake, in the style of Module 11\'s mocking. Put it in its own file, with a single test function. Run <code>pytest -v</code> on just that file and report exactly how many tests pytest reports as passed.',
+          hint:'This is the payoff of the whole module: fast mocked tests, real API tests, and full browser tests are all still just <code>test_</code> functions full of asserts, and a single <code>pytest</code> run does not care which kind each one is — this task only needs the mocked one, in isolation.',
+          expected:'1'
         },
         {
           id:'m16-hw3', kind:'checklist', title:'Write a README',
