@@ -1882,11 +1882,11 @@
   // Background chiptune (10 Sept 2026, see js/music.js — declared outside
   // any IIFE on window.Music, same reason matchEn()/tr() are, so this
   // closure can call into it). Browsers block audio until a genuine user
-  // gesture, so Music.start() is never called on page load — it's wired
-  // to the FIRST click anywhere on the page (one-shot listener, capture
-  // phase so it fires before any other click handler might stop
-  // propagation) as well as directly to anything inside the music popup,
-  // which is itself already a qualifying gesture.
+  // gesture, so Music.start() is never called on page load — it only ever
+  // starts from a click on the music icon itself (see initMusicToggle()
+  // below), never from an arbitrary first click anywhere on the page (see
+  // that function's comment for why — 16 Sept 2026 fix for music
+  // ambushing a returning visitor from an unrelated click).
   //
   // The button itself just opens/closes a small corner-bracket popup
   // (same component family as the HUD detail cards above — user asked
@@ -1977,16 +1977,20 @@
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
         openMusicCard(btn);
+        // Previously music.start() was wired to the FIRST click ANYWHERE
+        // on the page (see git history) — so if a returning visitor had
+        // music enabled from a prior session, the chiptune would suddenly
+        // start from an unrelated click (NEW GAME, a Signal Color swatch,
+        // anything), with no obvious connection to what they just clicked.
+        // 16 Sept 2026, user request: only ever start it from a gesture on
+        // this music icon itself, never anything else on the page — so
+        // sound is never a surprise, it only ever follows from touching
+        // the music control.
+        if(window.Music && window.Music.isEnabled()) window.Music.start();
       });
     }
     document.addEventListener('click', () => closeMusicCard());
     document.addEventListener('keydown', (e) => { if(e.key === 'Escape') closeMusicCard(); });
-    if(window.Music && window.Music.isEnabled()){
-      document.addEventListener('click', function firstGesture(){
-        document.removeEventListener('click', firstGesture, true);
-        window.Music.start();
-      }, true);
-    }
     syncMusicButton();
   }
 
