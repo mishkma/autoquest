@@ -2546,13 +2546,55 @@ print(cursor.rowcount)
       id:'m14', num:14, phase:'Automation tooling', title:'Locators and Selenium',
       desc:'finding elements and automating the browser',
       theory:[
-        'Selenium drives a REAL browser — unlike Module 12\'s <code>requests</code> calls (talking straight to the server) or every module before it, this actually opens Chrome and clicks/types exactly like a person would. <code>pip install selenium</code>, then <code>from selenium import webdriver; driver = webdriver.Chrome()</code>, then <code>driver.get("https://automationexercise.com")</code> opens a real page. Every task below runs against that real, live site.',
-        'A locator finds an element: <code>driver.find_element(By.ID, "search_product")</code> — needs <code>from selenium.webdriver.common.by import By</code> first. <code>find_element</code> (singular) returns exactly ONE match and raises <code>NoSuchElementException</code> if there is none; <code>find_elements</code> (plural) always returns a LIST, empty (<code>[]</code>) if nothing matches — it never crashes, which makes it the safer choice for "does this exist at all" checks.',
-        'Reading vs acting, same split as everywhere else in this course: <code>.text</code> reads visible text, <code>.get_attribute("value")</code> reads an attribute (like what is currently typed into a field); <code>.click()</code> and <code>.send_keys("...")</code> actually act on the element, exactly like a real click or real typing.',
-        'THE single most important lesson in browser automation: a page takes TIME to load and react. Calling <code>find_element</code> the instant after <code>.get(...)</code> or <code>.click()</code> can fail simply because the element has not rendered yet — not because the locator is wrong. <code>WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.ID, "...")))</code> checks repeatedly for up to 10 seconds instead of guessing a fixed pause, needing <code>from selenium.webdriver.support.ui import WebDriverWait</code> and <code>from selenium.webdriver.support import expected_conditions as EC</code>.',
-        'Always <code>driver.quit()</code> when a script is done — a leftover browser process wastes resources, and piles up fast across a real test suite running many times in CI.',
-        'A real, extremely common blocker on this exact site: a cookie-consent overlay ("This site asks for consent to use your data") sits on top of the page on a fresh visit and physically intercepts clicks/typing meant for whatever is underneath it — including the login form used later in this module. The fix is not a mystery workaround, it is dismissing the overlay first, exactly like a real user would: <code>driver.find_element(By.CSS_SELECTOR, ".fc-cta-consent").click()</code> right after <code>driver.get(...)</code>, before interacting with anything else on the page. (Module 15 hits the exact same overlay on the exact same site — same fix, different library.)',
-        'This is the exact moment Module 7\'s <code>Page Object</code> preview stops being a preview: a class per page, an <code>__init__</code> storing the <code>driver</code>, methods wrapping the raw <code>find_element</code>/<code>click</code>/<code>send_keys</code> calls for that one page — so a test reads like <code>login_page.login(email, password)</code> instead of five raw Selenium lines repeated in every test that needs to log in.'
+        {
+          text:'Selenium drives a REAL browser — unlike Module 12\'s <code>requests</code> calls (talking straight to the server) or every module before it, this actually opens Chrome and clicks/types exactly like a person would. <code>pip install selenium</code>, then <code>from selenium import webdriver; driver = webdriver.Chrome()</code>, then <code>driver.get("https://automationexercise.com")</code> opens a real page. Every task below runs against that real, live site.',
+          examples:[
+            {label:'Simple', code:'tool = "selenium"\nprint(f"{tool} drives a real browser, unlike requests which only talks to the server")', result:'selenium drives a real browser, unlike requests which only talks to the server'},
+            {label:'In practice', kind:'real', code:'from selenium import webdriver\ndriver = webdriver.Chrome()\ndriver.get("https://automationexercise.com")\nprint(driver.title)', result:'Opens a real Chrome window, loads the real site, and prints its actual title — Automation Exercise. This needs a real installed Chrome browser, so it cannot run in this course sandbox — verify it yourself locally.'}
+          ]
+        },
+        {
+          text:'A locator finds an element: <code>driver.find_element(By.ID, "search_product")</code> — needs <code>from selenium.webdriver.common.by import By</code> first. <code>find_element</code> (singular) returns exactly ONE match and raises <code>NoSuchElementException</code> if there is none; <code>find_elements</code> (plural) always returns a LIST, empty (<code>[]</code>) if nothing matches — it never crashes, which makes it the safer choice for "does this exist at all" checks.',
+          examples:[
+            {label:'Simple', code:'def find_elements(items, name):\n    return [i for i in items if i == name]\n\nnav_items = ["Home", "Products", "Cart"]\nprint(find_elements(nav_items, "Signup"))', result:'[]'},
+            {label:'In practice', kind:'real', code:'driver.find_element(By.CSS_SELECTOR, ".logo")   # raises NoSuchElementException if missing\ndriver.find_elements(By.CSS_SELECTOR, ".logo")  # always a list, [] if none match', result:'The first line crashes with NoSuchElementException when nothing matches; the second always returns a list, empty when nothing matches — no crash either way.'}
+          ]
+        },
+        {
+          text:'Reading vs acting, same split as everywhere else in this course: <code>.text</code> reads visible text, <code>.get_attribute("value")</code> reads an attribute (like what is currently typed into a field); <code>.click()</code> and <code>.send_keys("...")</code> actually act on the element, exactly like a real click or real typing.',
+          examples:[
+            {label:'Simple', code:'element = {"text": "Login", "value": ""}\nprint(element["text"])\nelement["value"] = "typed text"\nprint(element["value"])', result:'Login\ntyped text'},
+            {label:'In practice', kind:'real', code:'email_field = driver.find_element(By.CSS_SELECTOR, \'input[data-qa="login-email"]\')\nprint(email_field.get_attribute("value"))\nemail_field.send_keys("test@example.com")\nprint(email_field.get_attribute("value"))', result:'Prints the field\'s current value (empty on a fresh page), types into it, then reads it again — now test@example.com.'}
+          ]
+        },
+        {
+          text:'THE single most important lesson in browser automation: a page takes TIME to load and react. Calling <code>find_element</code> the instant after <code>.get(...)</code> or <code>.click()</code> can fail simply because the element has not rendered yet — not because the locator is wrong. <code>WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.ID, "...")))</code> checks repeatedly for up to 10 seconds instead of guessing a fixed pause, needing <code>from selenium.webdriver.support.ui import WebDriverWait</code> and <code>from selenium.webdriver.support import expected_conditions as EC</code>.',
+          examples:[
+            {label:'Simple', code:'import time\ndef wait_for(condition, timeout=2, interval=0.1):\n    waited = 0\n    while waited < timeout:\n        if condition():\n            return True\n        time.sleep(interval)\n        waited += interval\n    return False\n\nattempts = [False, False, True]\ndef check():\n    return attempts.pop(0)\n\nprint(wait_for(check))', result:'True'},
+            {label:'In practice', kind:'real', code:'from selenium.webdriver.support.ui import WebDriverWait\nfrom selenium.webdriver.support import expected_conditions as EC\nelement = WebDriverWait(driver, 10).until(\n    EC.presence_of_element_located((By.ID, "search_product"))\n)', result:'Polls the real page for up to 10 seconds until the element appears, then returns it — or raises TimeoutException if it never shows up, instead of failing instantly like a bare find_element would.'}
+          ]
+        },
+        {
+          text:'Always <code>driver.quit()</code> when a script is done — a leftover browser process wastes resources, and piles up fast across a real test suite running many times in CI.',
+          examples:[
+            {label:'Simple', code:'class FakeDriver:\n    def __init__(self):\n        self.open = True\n    def quit(self):\n        self.open = False\n        print("driver closed")\n\ndriver = FakeDriver()\ntry:\n    1 / 0\nexcept ZeroDivisionError:\n    print("test crashed")\nfinally:\n    driver.quit()', result:'test crashed\ndriver closed'},
+            {label:'In practice', kind:'real', code:'driver = webdriver.Chrome()\ntry:\n    driver.get("https://automationexercise.com")\n    driver.find_element(By.ID, "does_not_exist")\nfinally:\n    driver.quit()', result:'find_element raises NoSuchElementException, but the finally block still runs — the real Chrome window closes instead of being left running as an orphaned process.'}
+          ]
+        },
+        {
+          text:'A real, extremely common blocker on this exact site: a cookie-consent overlay ("This site asks for consent to use your data") sits on top of the page on a fresh visit and physically intercepts clicks/typing meant for whatever is underneath it — including the login form used later in this module. The fix is not a mystery workaround, it is dismissing the overlay first, exactly like a real user would: <code>driver.find_element(By.CSS_SELECTOR, ".fc-cta-consent").click()</code> right after <code>driver.get(...)</code>, before interacting with anything else on the page. (Module 15 hits the exact same overlay on the exact same site — same fix, different library.)',
+          examples:[
+            {label:'Simple', code:'def click(element, overlay_dismissed):\n    if not overlay_dismissed:\n        raise Exception("element not interactable: covered by overlay")\n    return f"clicked {element}"\n\noverlay_dismissed = False\ntry:\n    click("login-button", overlay_dismissed)\nexcept Exception as e:\n    print(e)\n\noverlay_dismissed = True\nprint(click("login-button", overlay_dismissed))', result:'element not interactable: covered by overlay\nclicked login-button'},
+            {label:'In practice', kind:'real', code:'driver.get("https://automationexercise.com/login")\ndriver.find_element(By.CSS_SELECTOR, ".fc-cta-consent").click()\ndriver.find_element(By.CSS_SELECTOR, \'input[data-qa="login-email"]\').send_keys("test@example.com")', result:'Dismissing the real cookie-consent banner first is what makes the send_keys call below it succeed — skipping it raises a real ElementClickInterceptedException on this exact site.'}
+          ]
+        },
+        {
+          text:'This is the exact moment Module 7\'s <code>Page Object</code> preview stops being a preview: a class per page, an <code>__init__</code> storing the <code>driver</code>, methods wrapping the raw <code>find_element</code>/<code>click</code>/<code>send_keys</code> calls for that one page — so a test reads like <code>login_page.login(email, password)</code> instead of five raw Selenium lines repeated in every test that needs to log in.',
+          examples:[
+            {label:'Simple', code:'class FakeDriver:\n    def __init__(self):\n        self.fields = {}\n\nclass LoginPage:\n    def __init__(self, driver):\n        self.driver = driver\n    def login(self, email, password):\n        self.driver.fields["email"] = email\n        self.driver.fields["password"] = password\n        return "submitted"\n\ndriver = FakeDriver()\npage = LoginPage(driver)\nprint(page.login("alex@example.com", "secret123"))\nprint(driver.fields)', result:"submitted\n{'email': 'alex@example.com', 'password': 'secret123'}"},
+            {label:'In practice', kind:'real', code:'class LoginPage:\n    def __init__(self, driver):\n        self.driver = driver\n    def open(self):\n        self.driver.get("https://automationexercise.com/login")\n        self.driver.find_element(By.CSS_SELECTOR, ".fc-cta-consent").click()\n    def enter_email(self, email):\n        self.driver.find_element(By.CSS_SELECTOR, \'input[data-qa="login-email"]\').send_keys(email)\n\npage = LoginPage(driver)\npage.open()\npage.enter_email("alex@example.com")', result:'A test using this class never calls find_element/send_keys directly — it just calls page.open() and page.enter_email(...), reading like a description of user actions instead of raw Selenium calls.'}
+          ]
+        }
       ],
       tasks:[
         {
@@ -2628,13 +2670,55 @@ print(cursor.rowcount)
       id:'m15', num:15, phase:'Automation tooling', title:'Playwright',
       desc:'modern browser automation',
       theory:[
-        'Playwright is a newer alternative to Selenium — same core idea (drive a real browser), a different API, built more recently with automation specifically in mind. <code>pip install playwright</code>, then <code>python -m playwright install chromium</code> downloads an actual browser binary directly — no separate driver executable to match versions with, unlike Selenium\'s chromedriver.',
-        'Every action starts inside <code>with sync_playwright() as p:</code>, then <code>browser = p.chromium.launch()</code>, <code>page = browser.new_page()</code>, <code>page.goto(url)</code>. A <code>page.locator(selector)</code> represents an element (or a set of them) — <code>.click()</code>, <code>.fill("text")</code>, <code>.count()</code>, <code>.inner_text()</code>.',
-        'The biggest practical difference from Selenium: Playwright\'s actions AUTO-WAIT — <code>.click()</code> and <code>.fill()</code> already wait for the element to actually be ready (visible, not covered, not disabled) before acting, so Module 14\'s manual <code>WebDriverWait</code> is rarely needed for ordinary actions.',
-        '<code>expect(locator).to_have_text("...")</code> (needs <code>from playwright.sync_api import expect</code>) is Playwright\'s own assertion, built specifically for web pages — it keeps re-checking for a few seconds if the text is not there yet, instead of failing instantly like a plain Python <code>assert</code> would on a page that just has not finished updating.',
-        'A real, extremely common blocker: cookie-consent banners and similar overlays sitting on top of the page, physically intercepting clicks meant for something underneath. The fix is not a mystery workaround — it is dismissing the overlay first, exactly like a real user would, before continuing with the actual test.',
-        'One subtlety worth knowing: <code>.inner_text()</code> returns text as it visually RENDERS (including CSS effects like uppercase styling), while <code>expect(...).to_have_text(...)</code> compares against the actual text written in the page\'s HTML — the same heading can look different between the two.',
-        'So which one for a new project — after learning both? Most new browser-automation projects reach for Playwright first: auto-waiting removes a whole category of flaky tests, and its own assertions were built for the web instead of bolted onto general-purpose <code>assert</code>. Selenium still earns its place on an existing project already built on it, when a specific tool in your stack only integrates with Selenium\'s <code>WebDriver</code> protocol, or when a team needs a browser Playwright does not support. Knowing both, as this course just taught, matters more than picking a side — but if nothing else is pulling you one way, start with Playwright.'
+        {
+          text:'Playwright is a newer alternative to Selenium — same core idea (drive a real browser), a different API, built more recently with automation specifically in mind. <code>pip install playwright</code>, then <code>python -m playwright install chromium</code> downloads an actual browser binary directly — no separate driver executable to match versions with, unlike Selenium\'s chromedriver.',
+          examples:[
+            {label:'Simple', code:'libraries = {"selenium": "driver", "playwright": "page"}\nprint(libraries["playwright"])', result:'page'},
+            {label:'In practice', kind:'real', code:'from playwright.sync_api import sync_playwright\nwith sync_playwright() as p:\n    browser = p.chromium.launch()\n    page = browser.new_page()\n    page.goto("https://automationexercise.com")\n    print(page.title())', result:'Launches Playwright\'s own bundled Chromium, opens a real page, and prints its actual title — Automation Exercise. This needs a real browser (installed via <code>playwright install chromium</code>), so it cannot run in this course sandbox — verify it yourself locally.'}
+          ]
+        },
+        {
+          text:'Every action starts inside <code>with sync_playwright() as p:</code>, then <code>browser = p.chromium.launch()</code>, <code>page = browser.new_page()</code>, <code>page.goto(url)</code>. A <code>page.locator(selector)</code> represents an element (or a set of them) — <code>.click()</code>, <code>.fill("text")</code>, <code>.count()</code>, <code>.inner_text()</code>.',
+          examples:[
+            {label:'Simple', code:'class FakeLocator:\n    def __init__(self, matches):\n        self.matches = matches\n    def count(self):\n        return len(self.matches)\n\nproducts = FakeLocator([{"name": "Dress"}, {"name": "Top"}])\nprint(products.count())', result:'2'},
+            {label:'In practice', kind:'real', code:'page.goto("https://automationexercise.com/products")\npage.locator("#search_product").fill("Dress")\npage.locator("#submit_search").click()\nprint(page.locator(".product-image-wrapper").count())', result:'Fills the search box, clicks submit, then prints how many real product results came back from the live catalog — a positive number, not fabricated here since it depends on live site data.'}
+          ]
+        },
+        {
+          text:'The biggest practical difference from Selenium: Playwright\'s actions AUTO-WAIT — <code>.click()</code> and <code>.fill()</code> already wait for the element to actually be ready (visible, not covered, not disabled) before acting, so Module 14\'s manual <code>WebDriverWait</code> is rarely needed for ordinary actions.',
+          examples:[
+            {label:'Simple', code:'import time\ndef auto_wait_click(is_ready, timeout=2, interval=0.1):\n    waited = 0\n    while waited < timeout:\n        if is_ready():\n            return "clicked"\n        time.sleep(interval)\n        waited += interval\n    raise TimeoutError("element never became ready")\n\nstates = [False, False, True]\ndef check():\n    return states.pop(0)\n\nprint(auto_wait_click(check))', result:'clicked'},
+            {label:'In practice', kind:'real', code:'page.goto("https://automationexercise.com")\npage.click(\'a[href="/products"]\')  # already waits for it to be ready\nprint(page.url)', result:'No separate WebDriverWait call needed — click() itself waits for the link to be visible, enabled and not covered before acting, then page.url reflects the real navigation.'}
+          ]
+        },
+        {
+          text:'<code>expect(locator).to_have_text("...")</code> (needs <code>from playwright.sync_api import expect</code>) is Playwright\'s own assertion, built specifically for web pages — it keeps re-checking for a few seconds if the text is not there yet, instead of failing instantly like a plain Python <code>assert</code> would on a page that just has not finished updating.',
+          examples:[
+            {label:'Simple', code:'import time\ndef expect_text(get_text, expected, timeout=1, interval=0.1):\n    waited = 0\n    while waited < timeout:\n        if get_text() == expected:\n            return True\n        time.sleep(interval)\n        waited += interval\n    raise AssertionError(f"expected {expected!r}, got {get_text()!r}")\n\nvalues = iter(["", "Loading...", "Searched Products"])\ncurrent = {"v": ""}\ndef get_text():\n    current["v"] = next(values, current["v"])\n    return current["v"]\n\nprint(expect_text(get_text, "Searched Products"))', result:'True'},
+            {label:'In practice', kind:'real', code:'from playwright.sync_api import expect\nexpect(page.locator("h2.title.text-center")).to_have_text("Searched Products")', result:'Keeps re-checking the real heading for a few seconds if it has not updated yet, instead of failing instantly like a plain assert would on a page still mid-render.'}
+          ]
+        },
+        {
+          text:'A real, extremely common blocker: cookie-consent banners and similar overlays sitting on top of the page, physically intercepting clicks meant for something underneath. The fix is not a mystery workaround — it is dismissing the overlay first, exactly like a real user would, before continuing with the actual test.',
+          examples:[
+            {label:'Simple', code:'def click(selector, overlay_present):\n    if overlay_present:\n        raise Exception(f"{selector} intercepts pointer events")\n    return f"clicked {selector}"\n\noverlay_present = True\ntry:\n    click("a[href=\'/products\']", overlay_present)\nexcept Exception as e:\n    print(e)\n\noverlay_present = False\nprint(click("a[href=\'/products\']", overlay_present))', result:"a[href='/products'] intercepts pointer events\nclicked a[href='/products']"},
+            {label:'In practice', kind:'real', code:'page.goto("https://automationexercise.com")\npage.locator(".fc-cta-consent").click()\npage.click(\'a[href="/products"]\')', result:'Dismissing the real cookie-consent overlay first is what lets the second click reach the actual Products link underneath it.'}
+          ]
+        },
+        {
+          text:'One subtlety worth knowing: <code>.inner_text()</code> returns text as it visually RENDERS (including CSS effects like uppercase styling), while <code>expect(...).to_have_text(...)</code> compares against the actual text written in the page\'s HTML — the same heading can look different between the two.',
+          examples:[
+            {label:'Simple', code:'heading_html = "Searched Products"\ndef inner_text(html):\n    return html.upper()\n\nprint(inner_text(heading_html))\nprint(heading_html)', result:'SEARCHED PRODUCTS\nSearched Products'},
+            {label:'In practice', kind:'real', code:'print(page.locator("h2.title.text-center").inner_text())        # SEARCHED PRODUCTS\nexpect(page.locator("h2.title.text-center")).to_have_text("Searched Products")  # mixed case, passes', result:'Both check the same real heading — inner_text() shows the visually rendered capitals (CSS text-transform), while to_have_text compares against the mixed-case text actually written in the HTML.'}
+          ]
+        },
+        {
+          text:'So which one for a new project — after learning both? Most new browser-automation projects reach for Playwright first: auto-waiting removes a whole category of flaky tests, and its own assertions were built for the web instead of bolted onto general-purpose <code>assert</code>. Selenium still earns its place on an existing project already built on it, when a specific tool in your stack only integrates with Selenium\'s <code>WebDriver</code> protocol, or when a team needs a browser Playwright does not support. Knowing both, as this course just taught, matters more than picking a side — but if nothing else is pulling you one way, start with Playwright.',
+          examples:[
+            {label:'Simple', code:'def choose_tool(existing_project_uses_selenium):\n    if existing_project_uses_selenium:\n        return "selenium"\n    return "playwright"\n\nprint(choose_tool(False))', result:'playwright'},
+            {label:'In practice', kind:'real', code:'# New project, no existing tooling constraint:\n#   pip install playwright && python -m playwright install chromium\n# Existing large Selenium suite already in CI:\n#   keep using Selenium unless there is a real reason to migrate', result:'A brand-new project defaults to Playwright for its auto-waiting and built-in assertions; an existing Selenium codebase usually keeps using Selenium rather than rewriting a working suite.'}
+          ]
+        }
       ],
       tasks:[
         {
@@ -2710,13 +2794,55 @@ print(cursor.rowcount)
       id:'m16', num:16, phase:'Automation tooling', title:'Test framework architecture',
       desc:'building a maintainable autotest project',
       theory:[
-        'Every module so far lived in one file. That works for a handful of tests, but a real project accumulates dozens or hundreds — a flat pile of scripts becomes unmanageable fast. A framework is just an organizing SHAPE: a <code>pages/</code> folder for Page Objects (Module 7, 14, 15), a <code>tests/</code> folder for the actual <code>test_*.py</code> files, and a <code>conftest.py</code> for shared setup — nothing conceptually new, just the pieces you already know, arranged so each test file stays short.',
-        '<code>conftest.py</code> is a special pytest filename: a fixture defined there is automatically available to every test in that folder (and subfolders) just by naming it as a parameter — no <code>import</code> needed, unlike everything else in Python. This is how a real project shares one browser setup, one API base URL, one database connection across many test files without repeating the setup code in each one.',
-        'A fixture using <code>yield</code> instead of <code>return</code> splits into two halves: everything BEFORE <code>yield</code> is setup, the yielded value is what the test receives, everything AFTER <code>yield</code> is teardown — and pytest guarantees the teardown half runs once the test finishes, pass OR fail. This replaces manually opening and closing a browser (Module 14/15) or a DB connection (Module 13) in every single test.',
-        '<code>@pytest.fixture(scope="module")</code> (default scope is per-test, called "function") changes how OFTEN the setup/teardown runs — <code>scope="module"</code> runs setup ONCE for every test in that file, not once per test, which matters a lot for something as slow as launching a real browser.',
-        '<code>requirements.txt</code> lists every package the project needs (<code>pytest</code>, <code>playwright</code>, <code>requests</code>, ...), so <code>pip install -r requirements.txt</code> reproduces the exact same setup on any machine — this is how the AutoQuest repository itself would hand its dependencies to someone else picking it up.',
-        'A real framework mixes different KINDS of tests side by side in the same run — a fast unit test with a mock (Module 11), a real API check (Module 12), a full browser flow through a Page Object (Module 14/15) — because every one of them is still just a <code>test_</code> function full of <code>assert</code>s. One <code>pytest -v</code> command runs all of them together, regardless of what each one actually does underneath.',
-        'Two honest notes on where this framework is deliberately minimal, not "done": first, every task in this module builds the Playwright fixture from Module 15 by hand (<code>with sync_playwright()...</code>) to make the setup/teardown mechanics visible — a real project would more likely install the <code>pytest-playwright</code> plugin instead, which hands you a ready-made <code>page</code> fixture with no bootstrap code at all, plus CLI flags for video/tracing on failure; worth knowing it exists once the manual version here makes sense. Second, this framework prints straight to the console the same way every module before it has — a real project usually reaches for Python\'s <code>logging</code> module instead once it grows past a handful of tests, because logging carries a severity level and a timestamp and can be redirected to a file or a CI log service, while <code>print()</code> cannot be turned off selectively or filtered by importance.'
+        {
+          text:'Every module so far lived in one file. That works for a handful of tests, but a real project accumulates dozens or hundreds — a flat pile of scripts becomes unmanageable fast. A framework is just an organizing SHAPE: a <code>pages/</code> folder for Page Objects (Module 7, 14, 15), a <code>tests/</code> folder for the actual <code>test_*.py</code> files, and a <code>conftest.py</code> for shared setup — nothing conceptually new, just the pieces you already know, arranged so each test file stays short.',
+          examples:[
+            {label:'Simple', code:'project_structure = {"pages": [], "tests": [], "conftest.py": None}\nprint(list(project_structure.keys()))', result:"['pages', 'tests', 'conftest.py']"},
+            {label:'In practice', kind:'real', code:'from pathlib import Path\nfor folder in ("pages", "tests"):\n    Path(folder).mkdir(exist_ok=True)\nPath("conftest.py").touch()\nprint(sorted(p.name for p in Path(".").iterdir()))', result:"['conftest.py', 'pages', 'tests']"}
+          ]
+        },
+        {
+          text:'<code>conftest.py</code> is a special pytest filename: a fixture defined there is automatically available to every test in that folder (and subfolders) just by naming it as a parameter — no <code>import</code> needed, unlike everything else in Python. This is how a real project shares one browser setup, one API base URL, one database connection across many test files without repeating the setup code in each one.',
+          examples:[
+            {label:'Simple', code:'import inspect\n\ndef test_needs_ready_thing(ready_thing):\n    print(f"got {ready_thing}")\n\ndef run_test_with_injected_fixture(test_fn, fixtures):\n    params = inspect.signature(test_fn).parameters\n    args = {name: fixtures[name] for name in params}\n    test_fn(**args)\n\nfixtures = {"ready_thing": "database connection"}\nrun_test_with_injected_fixture(test_needs_ready_thing, fixtures)', result:'got database connection'},
+            {label:'In practice', kind:'real', code:'# conftest.py\nimport pytest\n\n@pytest.fixture\ndef resource():\n    print("Setting up")\n    yield "ready"\n    print("Tearing down")\n\n# test_demo.py — no import of resource, just names it as a parameter\ndef test_uses_resource(resource):\n    print(f"Running test with {resource}")\n    assert resource == "ready"', result:'pytest -v -s prints, in order: Setting up / Running test with ready / 1 passed / Tearing down — the fixture is found purely by pytest recognizing the conftest.py filename, no import anywhere.'}
+          ]
+        },
+        {
+          text:'A fixture using <code>yield</code> instead of <code>return</code> splits into two halves: everything BEFORE <code>yield</code> is setup, the yielded value is what the test receives, everything AFTER <code>yield</code> is teardown — and pytest guarantees the teardown half runs once the test finishes, pass OR fail. This replaces manually opening and closing a browser (Module 14/15) or a DB connection (Module 13) in every single test.',
+          examples:[
+            {label:'Simple', code:'def resource_manager():\n    print("Setting up")\n    yield "ready"\n    print("Tearing down")\n\ngen = resource_manager()\nvalue = next(gen)\nprint(f"using {value}")\nnext(gen, None)', result:'Setting up\nusing ready\nTearing down'},
+            {label:'In practice', kind:'real', code:'@pytest.fixture\ndef browser():\n    print("Setting up")\n    yield "fake_browser"\n    print("Tearing down")\n\ndef test_that_fails(browser):\n    print(f"Running test with {browser}")\n    assert False', result:'pytest -v -s still prints Tearing down even though the test FAILED on the assert — the teardown half of a yield fixture runs no matter how the test ends.'}
+          ]
+        },
+        {
+          text:'<code>@pytest.fixture(scope="module")</code> (default scope is per-test, called "function") changes how OFTEN the setup/teardown runs — <code>scope="module"</code> runs setup ONCE for every test in that file, not once per test, which matters a lot for something as slow as launching a real browser.',
+          examples:[
+            {label:'Simple', code:'calls = {"setup": 0}\ndef get_shared_resource():\n    if calls["setup"] == 0:\n        print("Setting up")\n    calls["setup"] += 1\n    return "ready"\n\nprint(get_shared_resource())\nprint(get_shared_resource())', result:'Setting up\nready\nready'},
+            {label:'In practice', kind:'real', code:'@pytest.fixture(scope="module")\ndef resource():\n    print("Setting up")\n    yield "ready"\n    print("Tearing down")\n\ndef test_one(resource):\n    assert resource == "ready"\n\ndef test_two(resource):\n    assert resource == "ready"', result:'pytest -v -s prints Setting up only ONCE for both test_one and test_two, then Tearing down once at the end — one shared browser launch for the whole file instead of two.'}
+          ]
+        },
+        {
+          text:'<code>requirements.txt</code> lists every package the project needs (<code>pytest</code>, <code>playwright</code>, <code>requests</code>, ...), so <code>pip install -r requirements.txt</code> reproduces the exact same setup on any machine — this is how the AutoQuest repository itself would hand its dependencies to someone else picking it up.',
+          examples:[
+            {label:'Simple', code:'requirements = ["pytest", "playwright", "requests"]\nwith open("requirements.txt", "w") as f:\n    f.write("\\n".join(requirements))\nwith open("requirements.txt") as f:\n    print(f.read().splitlines())', result:"['pytest', 'playwright', 'requests']"},
+            {label:'In practice', kind:'real', code:'# requirements.txt:\n# pytest\n# playwright\n# requests\n#\n# then, in a fresh venv:\n# pip install -r requirements.txt', result:'Installs the exact same three packages on any machine that runs this command — the whole point of pinning them in one file instead of remembering to pip install each one by hand.'}
+          ]
+        },
+        {
+          text:'A real framework mixes different KINDS of tests side by side in the same run — a fast unit test with a mock (Module 11), a real API check (Module 12), a full browser flow through a Page Object (Module 14/15) — because every one of them is still just a <code>test_</code> function full of <code>assert</code>s. One <code>pytest -v</code> command runs all of them together, regardless of what each one actually does underneath.',
+          examples:[
+            {label:'Simple', code:'def run_all(tests):\n    results = []\n    for name, fn in tests.items():\n        try:\n            fn()\n            results.append((name, "passed"))\n        except AssertionError:\n            results.append((name, "failed"))\n    return results\n\ndef test_mock_cart():\n    assert 2 + 2 == 4\n\ndef test_real_api():\n    assert 200 == 200\n\nprint(run_all({"test_mock_cart": test_mock_cart, "test_real_api": test_real_api}))', result:"[('test_mock_cart', 'passed'), ('test_real_api', 'passed')]"},
+            {label:'In practice', kind:'real', code:'# tests/test_cart_logic.py   -> fast mocked unit test (Module 11)\n# tests/test_api.py          -> real API call (Module 12)\n# tests/test_search.py       -> full Playwright browser flow (Module 15)\n#\n# pytest -v', result:'One command runs all three kinds of tests together — pytest does not care that one is instant and mocked while another opens a real browser, it only cares that each is a test_ function full of asserts.'}
+          ]
+        },
+        {
+          text:'Two honest notes on where this framework is deliberately minimal, not "done": first, every task in this module builds the Playwright fixture from Module 15 by hand (<code>with sync_playwright()...</code>) to make the setup/teardown mechanics visible — a real project would more likely install the <code>pytest-playwright</code> plugin instead, which hands you a ready-made <code>page</code> fixture with no bootstrap code at all, plus CLI flags for video/tracing on failure; worth knowing it exists once the manual version here makes sense. Second, this framework prints straight to the console the same way every module before it has — a real project usually reaches for Python\'s <code>logging</code> module instead once it grows past a handful of tests, because logging carries a severity level and a timestamp and can be redirected to a file or a CI log service, while <code>print()</code> cannot be turned off selectively or filtered by importance.',
+          examples:[
+            {label:'Simple', code:'import logging\nlogging.basicConfig(level=logging.INFO, format="%(levelname)s:%(message)s")\nlogging.info("Search test passed")', result:'INFO:Search test passed'},
+            {label:'In practice', kind:'real', code:'# This module builds the fixture by hand:\n#   with sync_playwright() as p: ...\n#\n# A real project would likely install pytest-playwright instead,\n# which hands you a ready-made "page" fixture with zero bootstrap code.', result:'Same end result (a working page fixture) with far less boilerplate — worth knowing it exists once the manual version here makes sense.'}
+          ]
+        }
       ],
       tasks:[
         {
