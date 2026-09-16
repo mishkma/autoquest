@@ -1538,14 +1538,16 @@ print(f"{x=}")
       ],
       tasks:[
         {
-          id:'m7-t1', kind:'checklist', title:'Your first class',
-          goal:'In a new file, write <code>class Product:</code> with <code>__init__(self, name, price)</code> that stores both as attributes. Create <code>mouse = Product("Mouse", 25)</code> and print <code>f"{mouse.name}: ${mouse.price}"</code>. Run it — confirm you see <b>Mouse: $25</b>. Mark this done once you do.',
-          hint:'<code>def __init__(self, name, price): self.name = name; self.price = price</code> — each on its own line, indented inside the class. Then access with <code>mouse.name</code>, not just <code>name</code>.'
+          id:'m7-t1', kind:'implement', title:'Your first class',
+          goal:'Design a class that represents a product with a name and a price. Create one for a mouse priced at 25, and print a single line in the exact form <code>&lt;name&gt;: $&lt;price&gt;</code> (for example, <code>Mouse: $25</code>).',
+          hint:'A constructor runs automatically the moment you create an object, and can store whatever values you pass in as attributes on that specific object — build your printed line from those stored attributes rather than from separate loose variables.',
+          expected:'Mouse: $25'
         },
         {
-          id:'m7-t2', kind:'checklist', title:'Add a method',
-          goal:'Add a method <code>price_with_tax(self)</code> to <code>Product</code> that returns <code>self.price * 1.2</code>. Print <code>mouse.price_with_tax()</code> for a product priced at 25 — confirm you see <b>30.0</b>.',
-          hint:'A method is defined exactly like a function, just indented inside the class, with <code>self</code> as its first parameter — even though you never pass it yourself when calling <code>mouse.price_with_tax()</code>.'
+          id:'m7-t2', kind:'implement', title:'Add a method',
+          goal:'Give your product class a way to report its price with 20% tax added, and print that value for a product priced at 25.',
+          hint:'A method is just a function that lives inside the class and can read the object\'s own attributes through <code>self</code> — it does not need any extra parameters if everything it needs is already stored on the object.',
+          expected:'30.0'
         },
         {
           id:'m7-t3', kind:'predict', offline:true, title:'Predict: separate objects, separate state',
@@ -1570,35 +1572,28 @@ print(b.count)
           expected: '2\n1'
         },
         {
-          id:'m7-t4', kind:'checklist', title:'Read a real TypeError',
-          goal:'Run this exact code (copy it as-is) and read the real traceback it produces — it complains about the number of arguments to <code>greet</code>. Figure out what is missing from the method definition, fix it, and run again until you see <b>Hello, Alex!</b>',
-          hint:'Every method needs <code>self</code> as its first parameter, even ones that do not use any other input. The traceback\'s "positional arguments" wording is real Python\'s way of describing that mismatch.',
-          starter:
-`class Greeter:
-    def __init__(self, name):
-        self.name = name
-
-    def greet():
-        return f"Hello, {self.name}!"
-
-g = Greeter("Alex")
-print(g.greet())
-`
+          id:'m7-t4', kind:'implement', title:'Read a real TypeError',
+          goal:'Run this exact code as written (copy it exactly, do not change it yet):<pre>class Greeter:\n    def __init__(self, name):\n        self.name = name\n\n    def greet():\n        return f"Hello, {self.name}!"\n\ng = Greeter("Alex")\nprint(g.greet())</pre>Read the real traceback it produces — it complains about the number of arguments <code>greet</code> was given. Figure out what is missing from the method definition, fix ONLY that, and run again until it works. Type what your corrected program printed.',
+          hint:'Every method defined inside a class needs a specific first parameter representing the object itself, even a method that takes no other input — the traceback\'s "positional arguments" wording is real Python\'s way of describing that exact mismatch.',
+          expected:'Hello, Alex!'
         },
         {
-          id:'m7-t5', kind:'checklist', title:'A tiny Page Object',
-          goal:'Write <code>class LoginPage:</code> with <code>__init__(self, base_url)</code> storing <code>base_url</code>, and a method <code>login_url(self)</code> returning <code>f"{self.base_url}/login"</code>. Create <code>page = LoginPage("https://automationexercise.com")</code> and print <code>page.login_url()</code> — confirm you see <b>https://automationexercise.com/login</b>.',
-          hint:'This is the actual shape of a Page Object: an attribute for the URL, a method for a specific action on that page. Selenium/Playwright modules later reuse exactly this pattern with real browser commands inside the methods.'
+          id:'m7-t5', kind:'implement', title:'A tiny Page Object',
+          goal:'Design a small class that represents a login page: it should remember the site\'s base URL, and be able to produce the full URL of the login page (the base URL plus <code>/login</code>). Build one for <code>https://automationexercise.com</code> and print its login URL.',
+          hint:'This is the real shape of a Page Object: something that remembers where a page lives, and can hand you a specific URL built from that — you will reuse exactly this pattern once you reach the Selenium/Playwright modules.',
+          expected:'https://automationexercise.com/login'
         },
         {
-          id:'m7-t6', kind:'checklist', title:'Cart as a class',
-          goal:'Write <code>class Cart:</code> with <code>__init__(self)</code> setting <code>self.items = []</code>, a method <code>add_item(self, name, price)</code> that appends <code>{"name": name, "price": price}</code> to <code>self.items</code>, and a method <code>total(self)</code> that loops over <code>self.items</code> and returns the sum of the prices. Add two items priced 25 and 45, print <code>cart.total()</code> — confirm you see <b>70</b>.',
-          hint:'Same accumulator pattern from Module 3 (a running total, a loop, <code>total += item["price"]</code>) — just living inside a method now instead of a standalone script.'
+          id:'m7-t6', kind:'implement', title:'Cart as a class',
+          goal:'Design a class that represents a shopping cart: it should start empty, support adding an item with a name and a price, and be able to report the total price of everything added so far. Add two items priced 25 and 45, and print the total.',
+          hint:'This needs the same running-total pattern from Module 3 (a loop and a variable that accumulates) — it just lives inside a method now, working over data the object itself is holding.',
+          expected:'70'
         },
         {
-          id:'m7-t7', kind:'checklist', title:'Eligible for free shipping?',
-          goal:'Add a method <code>free_shipping_eligible(self)</code> to <code>Cart</code> that returns <code>True</code> if <code>self.total()</code> is 100 or more, otherwise <code>False</code>. Add items priced 60 and 45, print <code>cart.free_shipping_eligible()</code> — confirm you see <b>True</b>.',
-          hint:'Inside <code>free_shipping_eligible</code>, call <code>self.total()</code> the same way you would call any other method — no need to redo the summing loop, reuse what <code>total()</code> already does.'
+          id:'m7-t7', kind:'implement', title:'Eligible for free shipping?',
+          goal:'Add a way for your cart to report whether it qualifies for free shipping — true once the total reaches 100 or more, false otherwise. Add items priced 60 and 45, and print the result.',
+          hint:'This new method can call the total-computing method you already have through <code>self</code>, the same way you would call any other method — no need to redo the summing loop.',
+          expected:'True'
         },
         {
           id:'m7-t8', kind:'predict', offline:true, title:'Predict: a method calling another method',
@@ -1629,21 +1624,24 @@ print(cart.summary())
           expected: 'Cart total: 90'
         },
         {
-          id:'m7-t9', kind:'checklist', title:'Two independent carts',
-          goal:'Create two separate <code>Cart</code> instances, add different items to each (make sure the totals differ), and print both totals to CONFIRM they are independent — changing one cart\'s items must never affect the other\'s total.',
-          hint:'If both totals come out the same or one affects the other, you probably created only one <code>Cart</code> and reused it, or copied a reference instead of calling <code>Cart()</code> twice.'
+          id:'m7-t9', kind:'implement', title:'Two independent carts',
+          goal:'Create two separate objects from your cart class. In the first, add items priced 20 and 30. In the second, add items priced 15 and 40. Print the first cart\'s total, then the second cart\'s total, each on its own line — this should demonstrate that adding items to one cart never changes the other\'s total.',
+          hint:'If the two totals come out identical to each other in a way that does not match adding 20+30 and 15+40 separately, you likely created only one cart object and reused it, or copied a reference instead of building the class a second time.',
+          expected:'50\n55'
         },
         {
-          id:'m7-t10', kind:'checklist', boss:true, title:'Test suite report as a class',
-          goal:'Write <code>class TestSuiteReport:</code> with <code>__init__(self, results)</code> storing the list, and a method <code>summary(self)</code> that loops over <code>self.results</code>, counts <code>"pass"</code> vs anything else, and returns EXACTLY two lines: <b>Passed: N</b> and <b>Failed: N</b> (as one string, joined with <code>\\n</code>). Test it with <code>["pass", "fail", "pass", "pass", "fail"]</code> — confirm you see <b>Passed: 3</b> then <b>Failed: 2</b>.',
-          hint:'This is the exact counting pattern from the Module 3 checkpoint (loop + if/else + two counters) — now packaged as a method that owns its own data via <code>self.results</code>, instead of a script with loose variables.'
+          id:'m7-t10', kind:'implement', boss:true, title:'Test suite report as a class',
+          goal:'Design a class that represents a test suite report: given a list of result strings, it should be able to produce a summary counting how many are <code>"pass"</code> versus anything else, formatted as exactly two lines: <code>Passed: N</code> then <code>Failed: N</code> (joined with a newline). Use it on <code>["pass", "fail", "pass", "pass", "fail"]</code> and print the summary.',
+          hint:'This is the exact counting pattern from the Module 3 checkpoint (a loop with an if/else and two counters) — now packaged inside a method that owns its own data instead of a script with loose variables.',
+          expected:'Passed: 3\nFailed: 2'
         }
       ],
       homework:[
         {
-          id:'m7-hw1', kind:'checklist', title:'Refactor a function into a class',
-          goal:'Write <code>class PriceValidator:</code> with a method <code>is_valid(self, price)</code> that returns <code>True</code> if <code>price &gt; 0</code>, otherwise <code>False</code> (the same logic as <code>is_valid_price</code> from the Module 5 checkpoint, now as a method). Print the result for 25 and for -5 — confirm <b>True</b> then <b>False</b>.',
-          hint:'Notice this class has no <code>__init__</code> at all — not every class needs one if there is no state to set up on creation.'
+          id:'m7-hw1', kind:'implement', title:'Refactor a function into a class',
+          goal:'Design a class with a way to check whether a price is valid — valid meaning strictly greater than 0 (the same rule as <code>is_valid_price</code> from the Module 5 checkpoint, now living on a class). Print the result for 25, then for -5.',
+          hint:'Not every class needs a constructor — if there is no state to set up when an object is created, you can skip <code>__init__</code> entirely.',
+          expected:'True\nFalse'
         },
         {
           id:'m7-hw2', kind:'predict', offline:true, title:'Predict: __init__ runs immediately',
@@ -1660,9 +1658,10 @@ print("Ready")
           expected: 'Logger started\nReady'
         },
         {
-          id:'m7-hw3', kind:'checklist', title:'A page that knows its own state',
-          goal:'Add a method <code>is_secure(self)</code> to your <code>LoginPage</code> class from earlier, returning <code>self.base_url.startswith("https")</code>. Then, using <code>if page.is_secure():</code>, print <code>"Secure:", page.login_url()</code> in the True branch and <code>"Insecure:", page.login_url()</code> in the False branch. Confirm the output for <code>"https://automationexercise.com"</code> is <b>Secure: https://automationexercise.com/login</b>.',
-          hint:'<code>.startswith("https")</code> is a real Python string method — it checks whether the string begins with that exact text, returning True or False directly, just like the comparisons you have used all along.'
+          id:'m7-hw3', kind:'implement', title:'A page that knows its own state',
+          goal:'Add a way for your login page class to report whether its base URL is secure (starts with <code>https</code>). Using that check, print a single line in the form <code>Secure: &lt;login-url&gt;</code> if it is secure, or <code>Insecure: &lt;login-url&gt;</code> if it is not — for a page built with <code>https://automationexercise.com</code>.',
+          hint:'Python strings have a real <code>.startswith(text)</code> method that checks the very beginning of a string and returns True or False directly, the same way a comparison would.',
+          expected:'Secure: https://automationexercise.com/login'
         }
       ]
     },
@@ -1715,29 +1714,34 @@ print("Ready")
       ],
       tasks:[
         {
-          id:'m8-t1', kind:'checklist', title:'A dict becomes JSON text',
-          goal:'Run <code>import json</code>, then <code>json.dumps({"name": "Mouse", "price": 25, "in_stock": True})</code>, print the result. Confirm you see <b>{"name": "Mouse", "price": 25, "in_stock": true}</b> — note the lowercase <code>true</code>, even though you wrote <code>True</code> in Python.',
-          hint:'<code>json.dumps(...)</code> returns a string — store it in a variable and <code>print()</code> that variable to see it.'
+          id:'m8-t1', kind:'implement', title:'A dict becomes JSON text',
+          goal:'Turn a dictionary representing a product — name <code>"Mouse"</code>, price 25, in stock True — into JSON text using the <code>json</code> module, and print it.',
+          hint:'<code>json.dumps(...)</code> returns a string, it does not print anything by itself — you still need to pass what it returns to <code>print()</code> yourself. Watch what happens to Python\'s <code>True</code> once it becomes JSON.',
+          expected:'{"name": "Mouse", "price": 25, "in_stock": true}'
         },
         {
-          id:'m8-t2', kind:'checklist', title:'Parse JSON text back into Python',
-          goal:'Given the text <code>raw = \'{"status": "pass", "duration": 12}\'</code>, use <code>json.loads(raw)</code> to turn it into a real Python dict, then print <code>data["status"]</code> and <code>data["duration"]</code>. Confirm you see <b>pass</b> then <b>12</b>.',
-          hint:'Once parsed with <code>json.loads</code>, <code>data</code> behaves exactly like any dict you built by hand in Module 5 — same square-bracket access.'
+          id:'m8-t2', kind:'implement', title:'Parse JSON text back into Python',
+          goal:'Given the raw text <code>{"status": "pass", "duration": 12}</code> (a string, not a dict), parse it into a real Python dict using the <code>json</code> module, then print the status value, then the duration value, each on its own line.',
+          hint:'Once parsed, the result behaves exactly like any dict you built by hand in Module 5 — same square-bracket access you have used since then.',
+          expected:'pass\n12'
         },
         {
-          id:'m8-t3', kind:'checklist', title:'A random test data value',
-          goal:'Run <code>import random</code>, then print <code>random.randint(1, 6)</code>. Run the whole file 3-4 times — confirm the number changes each time and always lands between 1 and 6.',
-          hint:'There is no fixed expected output here on purpose — random data is random. What you are confirming is the RANGE, not one specific number.'
+          id:'m8-t3', kind:'implement', title:'A random test data value',
+          goal:'Generate a "random" test data value in a repeatable way: seed Python\'s <code>random</code> module with the seed value 1, then generate a random whole number between 1 and 6 (inclusive of both ends), and print it.',
+          hint:'<code>random.seed(n)</code> makes every "random" call that follows in that run produce the exact same sequence every time — useful here so the output is checkable, though never appropriate for real production randomness.',
+          expected:'2'
         },
         {
-          id:'m8-t4', kind:'checklist', title:'Pick a random item',
-          goal:'Given <code>names = ["Alice", "Bob", "Charlie", "Dana"]</code>, print <code>random.choice(names)</code>. Run it a few times — confirm you get a different name from the list on different runs.',
-          hint:'<code>random.choice(a_list)</code> works on any list — same idea as <code>random.randint</code>, just picking an existing item instead of a number in a range.'
+          id:'m8-t4', kind:'implement', title:'Pick a random item',
+          goal:'Seed Python\'s <code>random</code> module with the seed value 2, then pick one random item from the list <code>["chrome", "firefox", "webkit"]</code>, and print it.',
+          hint:'The function for picking an existing item out of a list works the same way as the one for picking a number in a range — just on a collection instead of two endpoints.',
+          expected:'chrome'
         },
         {
-          id:'m8-t5', kind:'checklist', title:'The current timestamp',
-          goal:'Run <code>from datetime import datetime</code>, then <code>now = datetime.now()</code>, then print <code>now.year</code>. Confirm it prints the current year.',
-          hint:'<code>datetime.now()</code> returns an object with several pieces available separately — <code>.year</code>, <code>.month</code>, <code>.day</code>, and more — not just one combined timestamp.'
+          id:'m8-t5', kind:'implement', title:'A specific timestamp',
+          goal:'Create a <code>datetime</code> object for September 16, 2026 (any time of day), and print its year.',
+          hint:'A <code>datetime</code> object holds several pieces you can read off separately, like the year, month and day — you do not need to build or parse any text to get just one of them.',
+          expected:'2026'
         },
         {
           id:'m8-t6', kind:'predict', offline:true, title:'Predict: a generator does not run until pulled',
@@ -1758,9 +1762,10 @@ print(first)
           expected: 'created\nstarting\n3'
         },
         {
-          id:'m8-t7', kind:'checklist', title:'Loop over a generator',
-          goal:'Write the <code>countdown()</code> generator from the previous task (three <code>yield</code> statements: 3, 2, 1), then loop over it with <code>for n in countdown(): print(n)</code>. Confirm you see <b>3</b>, <b>2</b>, <b>1</b> on separate lines.',
-          hint:'A <code>for</code> loop over a generator pulls values out of it automatically, one at a time, exactly like it does over a list — you never call <code>next()</code> yourself when using <code>for</code>.'
+          id:'m8-t7', kind:'implement', title:'Loop over a generator',
+          goal:'Write a generator function that counts down and yields 3, then 2, then 1. Loop over a call to it and print each value it yields, one per line.',
+          hint:'A <code>for</code> loop over a generator pulls values out of it automatically, one at a time, exactly like it does over a list — you never call <code>next()</code> yourself when using <code>for</code>.',
+          expected:'3\n2\n1'
         },
         {
           id:'m8-t8', kind:'predict', offline:true, title:'Predict: a generator only works once',
@@ -1780,21 +1785,24 @@ for n in gen:
           expected: '1\n2'
         },
         {
-          id:'m8-t9', kind:'checklist', title:'A random test case as JSON',
-          goal:'Build a dict <code>{"id": random.randint(1000, 9999), "name": "test_login", "status": "pass"}</code>, then print it through <code>json.dumps(...)</code>. Confirm the printed text is valid JSON containing all three keys, with a different <code>id</code> each time you run it.',
-          hint:'You need both <code>import json</code> and <code>import random</code> at the top of the file — combining two standard library modules in one script is completely normal.'
+          id:'m8-t9', kind:'implement', title:'A random test case as JSON',
+          goal:'Seed the <code>random</code> module with the seed value 42, then build a dict representing a test case: an id from a random whole number between 1000 and 9999, a name <code>"test_login"</code>, and a status <code>"pass"</code> — in that order. Convert it to JSON text and print it.',
+          hint:'You need both the <code>json</code> and <code>random</code> modules imported at the top of the file — combining two standard library modules in one script is completely normal.',
+          expected:'{"id": 2824, "name": "test_login", "status": "pass"}'
         },
         {
-          id:'m8-t10', kind:'checklist', boss:true, title:'Test results from a generator',
-          goal:'Write a generator <code>test_results()</code> that <code>yield</code>s three dicts, in order: <code>{"name": "test_login", "status": "pass"}</code>, <code>{"name": "test_logout", "status": "fail"}</code>, <code>{"name": "test_search", "status": "pass"}</code>. Loop over <code>test_results()</code>, count <code>"pass"</code> vs anything else, and print EXACTLY two lines: <b>Passed: 2</b> and <b>Failed: 1</b>.',
-          hint:'This is the same counting pattern as the Module 3 checkpoint and the Module 7 boss task — the only new part is that the data comes one dict at a time out of a generator instead of already sitting in a list.'
+          id:'m8-t10', kind:'implement', boss:true, title:'Test results from a generator',
+          goal:'Write a generator that yields three test-result dicts, in order: <code>{"name": "test_login", "status": "pass"}</code>, <code>{"name": "test_logout", "status": "fail"}</code>, <code>{"name": "test_search", "status": "pass"}</code>. Loop over it, count how many have status <code>"pass"</code> versus anything else, and print EXACTLY two lines: <code>Passed: N</code> then <code>Failed: N</code>.',
+          hint:'This is the same counting pattern as the Module 3 checkpoint and the Module 7 boss task — the only new part is that the data comes one dict at a time out of a generator instead of already sitting in a list.',
+          expected:'Passed: 2\nFailed: 1'
         }
       ],
       homework:[
         {
-          id:'m8-hw1', kind:'checklist', title:'A deliberate pause',
-          goal:'Run <code>import time</code>, then <code>print("Starting")</code>, then <code>time.sleep(1)</code>, then <code>print("Done")</code>. Confirm there is roughly a one-second pause between the two lines printing.',
-          hint:'<code>time.sleep(seconds)</code> is a REAL pause — nothing else runs during it. It is the blunt tool; once you reach Selenium/Playwright, you will use smarter waits that pause only as long as actually needed, not a fixed guess.'
+          id:'m8-hw1', kind:'implement', title:'A deliberate pause',
+          goal:'Print <code>Starting</code>, pause execution for about one second using the <code>time</code> module, then print <code>Done</code>. Confirm there is a visible pause between the two lines, then type what your program printed.',
+          hint:'<code>time.sleep(seconds)</code> is a REAL pause — nothing else runs during it. It is the blunt tool; once you reach Selenium/Playwright, you will use smarter waits that pause only as long as actually needed, not a fixed guess.',
+          expected:'Starting\nDone'
         },
         {
           id:'m8-hw2', kind:'predict', offline:true, title:'Predict: next() resumes exactly where it left off',
@@ -1814,9 +1822,10 @@ print(next(gen))
           expected: 'step A\nA\nstep B\nB'
         },
         {
-          id:'m8-hw3', kind:'checklist', title:'Sum prices from a JSON API response',
-          goal:'Given <code>response = \'[{"name": "Mouse", "price": 25}, {"name": "Keyboard", "price": 45}]\'</code> (a string, exactly as it would arrive from a real API), use <code>json.loads(response)</code> to parse it, loop over the result, sum up the prices, and print the total. Confirm you see <b>70</b>.',
-          hint:'Once parsed, this is EXACTLY the "list of dicts" shape from Module 5 — the summing loop is identical to what you already know, the only new step is the <code>json.loads</code> at the start.'
+          id:'m8-hw3', kind:'implement', title:'Sum prices from a JSON API response',
+          goal:'Given the raw text <code>[{"name": "Mouse", "price": 25}, {"name": "Keyboard", "price": 45}]</code> (a string, exactly as it might arrive from a real API), parse it with the <code>json</code> module, sum up the prices, and print the total.',
+          hint:'Once parsed, this is EXACTLY the "list of dicts" shape from Module 5 — the summing loop is identical to what you already know, the only new step is parsing the JSON text at the start.',
+          expected:'70'
         }
       ]
     },
@@ -1863,19 +1872,22 @@ print(next(gen))
       ],
       tasks:[
         {
-          id:'m9-t1', kind:'checklist', title:'Install pytest',
-          goal:'Run <code>pip install pytest</code>, then confirm it worked with <code>pytest --version</code> — it should print a version number. Mark this done once you see it.',
-          hint:'If <code>pip</code> is not found, try <code>python -m pip install pytest</code> instead — same result, more explicit about which Python it installs into.'
+          id:'m9-t1', kind:'implement', title:'Install pytest',
+          goal:'Install pytest into the Python environment you set up in Module 6, then confirm the install actually worked using pytest\'s own command for reporting its version. If it printed a version number with no error, type back exactly: <code>pytest is installed</code>',
+          hint:'Most command-line tools support a flag that reports their own version instead of doing their normal job — check pytest\'s <code>--help</code> output or its docs for the name of that flag.',
+          expected:'pytest is installed'
         },
         {
-          id:'m9-t2', kind:'checklist', title:'Your first passing test',
-          goal:'Create a file <code>test_basic.py</code> with a function <code>test_addition()</code> that does <code>assert 2 + 2 == 4</code>. Run <code>pytest test_basic.py</code> in a terminal in that folder. Confirm the summary line says <b>1 passed</b>.',
-          hint:'The file name and the function name both matter — pytest only discovers functions starting with <code>test_</code> inside files starting with <code>test_</code>.'
+          id:'m9-t2', kind:'implement', title:'Your first passing test',
+          goal:'Write a pytest test file containing one test function that asserts <code>2 + 2 == 4</code>, and run it with pytest in a terminal in that folder. If pytest reports it passed, type back exactly: <code>1 passed</code>',
+          hint:'Both the file name and the function name matter — pytest only discovers functions starting with <code>test_</code> inside files whose own name also starts with <code>test_</code>.',
+          expected:'1 passed'
         },
         {
-          id:'m9-t3', kind:'checklist', title:'Read a real failure on purpose',
-          goal:'In a new file <code>test_fail.py</code>, write <code>def test_wrong(): assert 2 + 2 == 5</code>. Run <code>pytest test_fail.py</code> and read the output — find the line showing what was actually compared. Confirm you can point to where it says <b>1 failed</b> and the line showing the wrong assertion.',
-          hint:'You are not fixing anything here — this task is purely about reading a real failure calmly, so the next one you see for real does not feel like an emergency.'
+          id:'m9-t3', kind:'implement', title:'Read a real failure on purpose',
+          goal:'In a new test file, write a test function that asserts <code>2 + 2 == 5</code> (yes, deliberately false), and run it with pytest. Read the real failure output — find the line that shows the actual comparison pytest evaluated, and type it back exactly as it is printed there.',
+          hint:'You are not fixing anything here — this task is purely about reading a real failure calmly, so the next one you see for real does not feel like an emergency. Pytest\'s failure output shows the actual evaluated value on the left of the comparison, not just what you literally typed.',
+          expected:'assert (2 + 2) == 5'
         },
         {
           id:'m9-t4', kind:'predict', offline:true, title:'Predict: a passing assert does nothing',
@@ -1889,14 +1901,16 @@ print("passed")
           expected: 'passed'
         },
         {
-          id:'m9-t5', kind:'checklist', title:'Test a real Cart class',
-          goal:'In <code>test_cart.py</code>, write the <code>Cart</code> class from Module 7 (<code>__init__</code>, <code>add_item</code>, <code>total</code>), then a function <code>test_cart_total()</code> that creates a cart, adds items priced 25 and 45, and asserts the total equals 70. Run <code>pytest test_cart.py</code> — confirm <b>1 passed</b>.',
-          hint:'The class and the test function can live in the same file for now — splitting them into separate files comes later, once the reason for it (reuse across many test files) actually matters.'
+          id:'m9-t5', kind:'implement', title:'Test a real Cart class',
+          goal:'In a pytest test file, write the cart class from Module 7 (constructor, adding an item, and computing the total), then a test function that creates a cart, adds items priced 25 and 45, and asserts the total equals 70. Run it with pytest. If it passes, type back exactly: <code>1 passed</code>',
+          hint:'The class and the test function can live in the same file for now — splitting them into separate files comes later, once the reason for it (reuse across many test files) actually matters.',
+          expected:'1 passed'
         },
         {
-          id:'m9-t6', kind:'checklist', title:'A fixture for the cart',
-          goal:'Rewrite the previous file using a fixture: <code>@pytest.fixture def cart(): ...</code> that builds and returns a <code>Cart</code> with the same two items, then TWO test functions — <code>test_cart_total(cart)</code> asserting the total, and <code>test_cart_has_two_items(cart)</code> asserting <code>len(cart.items) == 2</code>. Run pytest — confirm <b>2 passed</b>.',
-          hint:'Both test functions take <code>cart</code> as a parameter with that exact name — pytest matches it to the fixture function by name automatically, you never call the fixture yourself.'
+          id:'m9-t6', kind:'implement', title:'A fixture for the cart',
+          goal:'Rewrite the previous file using a pytest fixture that builds and returns a cart with the same two items, then write TWO test functions using that fixture — one asserting the total, the other asserting the cart holds exactly two items. Run pytest. If both pass, type back exactly: <code>2 passed</code>',
+          hint:'A fixture is a function decorated with <code>@pytest.fixture</code> — any test function that names it as a parameter automatically receives what it returns, you never call the fixture function yourself.',
+          expected:'2 passed'
         },
         {
           id:'m9-t7', kind:'predict', offline:true, title:'Predict: assert on parsed JSON',
@@ -1911,54 +1925,42 @@ print("ok")
           expected: 'ok'
         },
         {
-          id:'m9-t8', kind:'checklist', title:'Parametrize one test over multiple cases',
-          goal:'Write <code>@pytest.mark.parametrize("price,expected", [(100, True), (50, False)])</code> above <code>def test_free_shipping(price, expected): assert (price >= 100) == expected</code>. Run pytest with <code>-v</code> (<code>pytest test_file.py -v</code>) — confirm you see TWO separate test results, both passing, one per row of data.',
-          hint:'<code>-v</code> (verbose) makes pytest print one line per individual case instead of just a summary count — you should see the price value show up in each test\'s name.'
+          id:'m9-t8', kind:'implement', title:'Parametrize one test over multiple cases',
+          goal:'Write a single parametrized test function that checks free-shipping eligibility (true once a price reaches 100 or more) for two price cases: 100 (should be eligible) and 50 (should not be). Run it with pytest\'s verbose flag. If both cases pass, type back exactly: <code>2 passed</code>',
+          hint:'<code>@pytest.mark.parametrize</code> lets one test function run once per row of data you give it, instead of writing nearly identical test functions by hand for each case.',
+          expected:'2 passed'
         },
         {
-          id:'m9-t9', kind:'checklist', title:'A failing test finds a real bug',
-          goal:'Run the <code>Cart</code> class and <code>test_cart_total</code> test below EXACTLY as given — it fails. Read the failure output to see what value <code>total()</code> actually produced, find the bug in the CLASS (not the test), fix it, and re-run until you see <b>1 passed</b>.',
-          hint:'The failure output shows something like <code>assert 71 == 70</code> — one extra unit came from somewhere in <code>total()</code> that has nothing to do with the items themselves.',
-          starter:
-`class Cart:
-    def __init__(self):
-        self.items = []
-    def add_item(self, name, price):
-        self.items.append({"name": name, "price": price})
-    def total(self):
-        total = 1
-        for item in self.items:
-            total += item["price"]
-        return total
-
-def test_cart_total():
-    cart = Cart()
-    cart.add_item("Mouse", 25)
-    cart.add_item("Keyboard", 45)
-    assert cart.total() == 70
-`
+          id:'m9-t9', kind:'implement', title:'A failing test finds a real bug',
+          goal:'Run this exact cart class and test below as given (do not change anything yet) — it fails:<pre>class Cart:\n    def __init__(self):\n        self.items = []\n    def add_item(self, name, price):\n        self.items.append({"name": name, "price": price})\n    def total(self):\n        total = 1\n        for item in self.items:\n            total += item["price"]\n        return total\n\ndef test_cart_total():\n    cart = Cart()\n    cart.add_item("Mouse", 25)\n    cart.add_item("Keyboard", 45)\n    assert cart.total() == 70</pre>Read the failure output to see what value <code>total()</code> actually produced, find the bug in the CLASS (not the test), fix ONLY that, and re-run until it passes. Type back exactly: <code>1 passed</code>',
+          hint:'The bug is not in the loop or in the items — look closely at what value the running total starts out as, before the loop has added anything at all.',
+          expected:'1 passed'
         },
         {
-          id:'m9-t10', kind:'checklist', boss:true, title:'A small real test suite',
-          goal:'In one file, bring together everything from this module: the <code>Cart</code> class (from Module 7, with <code>add_item</code>, <code>total</code>, <code>free_shipping_eligible</code>), a <code>@pytest.fixture</code> providing a pre-filled cart, and at least THREE test functions using that fixture — one checking the total, one checking the item count, one checking free-shipping eligibility. Run <code>pytest -v</code> — confirm all of them show <b>PASSED</b>.',
-          hint:'This is the exact shape a real test file for this class would take in a real project — nothing about the mechanics changes once the class gets more complex, only how many tests you write against it.'
+          id:'m9-t10', kind:'implement', boss:true, title:'A small real test suite',
+          goal:'In one file, bring together everything from this module: your cart class (add_item, total, free_shipping_eligible), a pytest fixture providing a pre-filled cart, and at least THREE test functions using that fixture — one checking the total, one checking the item count, one checking free-shipping eligibility. Run pytest. If all three pass, type back exactly: <code>3 passed</code>',
+          hint:'This is the exact shape a real test file for this class would take in a real project — nothing about the mechanics changes once the class gets more complex, only how many tests you write against it.',
+          expected:'3 passed'
         }
       ],
       homework:[
         {
-          id:'m9-hw1', kind:'checklist', title:'Run a subset of tests by name',
-          goal:'In a file with at least two differently-named test functions, run only one of them with <code>pytest test_file.py -k test_name_here</code> (replace with the real function name). Confirm the summary shows only 1 test ran, not all of them.',
-          hint:'<code>-k</code> matches by substring, not exact name — useful when you want to re-run just the one test you are currently fixing without waiting for the whole suite.'
+          id:'m9-hw1', kind:'implement', title:'Run a subset of tests by name',
+          goal:'In a file with at least two differently-named test functions, run only one of them using pytest\'s option for selecting tests by (partial) name. If exactly one test ran and it passed, type back exactly: <code>1 passed</code>',
+          hint:'The <code>-k</code> option matches by substring, not exact name — useful when you want to re-run just the one test you are currently fixing without waiting for the whole suite.',
+          expected:'1 passed'
         },
         {
-          id:'m9-hw2', kind:'checklist', title:'A custom assert message',
-          goal:'Write a test that deliberately fails, with a custom message: <code>assert 1 == 2, "one is never two"</code>. Run it and confirm your custom message <b>"one is never two"</b> shows up in the failure output, alongside pytest\'s own comparison details.',
-          hint:'The text after the comma only shows up when the assertion actually fails — it never appears on a passing test, so it costs nothing to add for the cases you expect might break.'
+          id:'m9-hw2', kind:'implement', title:'A custom assert message',
+          goal:'Write a test that deliberately fails: assert that <code>1</code> equals <code>2</code>, attaching the custom failure message <code>one is never two</code> to that assertion. Run it and type back the custom message text exactly as it appears in the failure output.',
+          hint:'A custom message goes after a comma following the comparison in an <code>assert</code> statement, and only shows up in the output when the assertion actually fails — never on a passing test.',
+          expected:'one is never two'
         },
         {
-          id:'m9-hw3', kind:'checklist', title:'Split the class from its test',
-          goal:'Create <code>cart.py</code> containing just the <code>Cart</code> class (no tests). In <code>test_cart.py</code>, add <code>from cart import Cart</code> at the top, then write your fixture and tests using that imported class instead of redefining it. Run pytest — confirm it still passes, now reading the class from a separate file.',
-          hint:'Both files need to be in the same folder for a plain <code>from cart import Cart</code> to find it — this is the smallest possible version of the project structure a real test suite uses.'
+          id:'m9-hw3', kind:'implement', title:'Split the class from its test',
+          goal:'Move your cart class into its own separate file (no tests in it). In your test file, import that class instead of redefining it there, and keep a fixture-based test asserting the cart total working through the import. Run pytest. If it still passes, type back exactly: <code>1 passed</code>',
+          hint:'Both files need to be in the same folder for a plain import by module name to find the other one — this is the smallest possible version of the project structure a real test suite uses.',
+          expected:'1 passed'
         }
       ]
     },
