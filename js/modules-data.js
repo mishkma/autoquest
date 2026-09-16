@@ -1493,12 +1493,48 @@ print(f"{x=}")
       id:'m7', num:7, phase:'Python basics', title:'OOP: classes and objects',
       desc:'classes, objects, attributes and methods — the foundation of Page Object and fixtures',
       theory:[
-        'This sandbox does not understand <code>class</code> at all — every task in this module runs in the real Python and VS Code you set up in Module 6. That also means real errors from here on: an actual Python traceback, not this site\'s friendly explanations. Reading those for real, right now while the stakes are low, is exactly the skill you will lean on later.',
-        'A <code>class</code> is a blueprint; an object (an "instance") is one concrete thing built from it. <code>def __init__(self, name, price):</code> is the constructor — it runs automatically the moment you create an object, and sets up its starting attributes: <code>self.name = name</code> stores the value on THIS particular object.',
-        '<code>self</code> is just "this specific object" — Python passes it automatically as the first argument to every method, you never pass it yourself when calling. <code>product.price_with_tax()</code> quietly becomes <code>Product.price_with_tax(product)</code> under the hood — <code>self</code> IS <code>product</code> inside that method.',
-        'Attributes (<code>self.name</code>, <code>self.price</code>) hold an object\'s data; methods (functions defined inside the class, with <code>self</code> as the first parameter) are what it can DO. Two objects from the same class have completely separate attributes — changing one never affects the other, even though they share the same blueprint.',
-        'This is the exact shape of a Page Object, the pattern you will use constantly once you get to Selenium/Playwright: a class per page, attributes for things like the base URL, methods for actions you can take on that page (<code>login()</code>, <code>search(query)</code>) — instead of copy-pasting raw browser commands into every test.',
-        'A method can call another method on the same object through <code>self</code> — <code>self.total()</code> inside another method of the same class. This is how you build small pieces that combine, exactly like functions did in Module 4, except now they carry shared state (the object\'s attributes) between them automatically.'
+        {
+          text:'This sandbox does not understand <code>class</code> at all — every task in this module runs in the real Python and VS Code you set up in Module 6. That also means real errors from here on: an actual Python traceback, not this site\'s friendly explanations. Reading those for real, right now while the stakes are low, is exactly the skill you will lean on later.',
+          examples:[
+            {label:'Simple', code:'class Empty:\n    pass\n\ne = Empty()\nprint(type(e).__name__)', result:'Empty'},
+            {label:'In practice', kind:'real', code:'status, code = "fail", 500\nprint(f"{status} {code}")', result:'fail 500'}
+          ]
+        },
+        {
+          text:'A <code>class</code> is a blueprint; an object (an "instance") is one concrete thing built from it. <code>def __init__(self, name, price):</code> is the constructor — it runs automatically the moment you create an object, and sets up its starting attributes: <code>self.name = name</code> stores the value on THIS particular object.',
+          examples:[
+            {label:'Simple', code:'class Dog:\n    def __init__(self, name):\n        self.name = name\n\nd = Dog("Rex")\nprint(d.name)', result:'Rex'},
+            {label:'In practice', kind:'real', code:'class Product:\n    def __init__(self, name, price):\n        self.name = name\n        self.price = price\n\nmouse = Product("Mouse", 25)\nprint(mouse.name, mouse.price)', result:'Mouse 25'}
+          ]
+        },
+        {
+          text:'<code>self</code> is just "this specific object" — Python passes it automatically as the first argument to every method, you never pass it yourself when calling. <code>product.price_with_tax()</code> quietly becomes <code>Product.price_with_tax(product)</code> under the hood — <code>self</code> IS <code>product</code> inside that method.',
+          examples:[
+            {label:'Simple', code:'class Box:\n    def show(self):\n        print("I am a box")\n\nb = Box()\nb.show()', result:'I am a box'},
+            {label:'In practice', kind:'real', code:'class Product:\n    def __init__(self, name, price):\n        self.name = name\n        self.price = price\n\n    def price_with_tax(self):\n        return self.price * 1.2\n\nmouse = Product("Mouse", 25)\nprint(mouse.price_with_tax())', result:'30.0'}
+          ]
+        },
+        {
+          text:'Attributes (<code>self.name</code>, <code>self.price</code>) hold an object\'s data; methods (functions defined inside the class, with <code>self</code> as the first parameter) are what it can DO. Two objects from the same class have completely separate attributes — changing one never affects the other, even though they share the same blueprint.',
+          examples:[
+            {label:'Simple', code:'class Counter:\n    def __init__(self):\n        self.count = 0\n\na = Counter()\nb = Counter()\na.count = 5\nprint(a.count, b.count)', result:'5 0'},
+            {label:'In practice', kind:'real', code:'class Product:\n    def __init__(self, name, price):\n        self.name = name\n        self.price = price\n\nmouse = Product("Mouse", 25)\nkeyboard = Product("Keyboard", 45)\nmouse.price = 20\nprint(mouse.price, keyboard.price)', result:'20 45'}
+          ]
+        },
+        {
+          text:'This is the exact shape of a Page Object, the pattern you will use constantly once you get to Selenium/Playwright: a class per page, attributes for things like the base URL, methods for actions you can take on that page (<code>login()</code>, <code>search(query)</code>) — instead of copy-pasting raw browser commands into every test.',
+          examples:[
+            {label:'Simple', code:'class HomePage:\n    def __init__(self, base_url):\n        self.base_url = base_url\n\n    def open_url(self):\n        return self.base_url\n\nhome = HomePage("https://example.com")\nprint(home.open_url())', result:'https://example.com'},
+            {label:'In practice', kind:'real', code:'class LoginPage:\n    def __init__(self, base_url):\n        self.base_url = base_url\n\n    def login_url(self):\n        return f"{self.base_url}/login"\n\n    def search(self, query):\n        return f"{self.base_url}/search?q={query}"\n\npage = LoginPage("https://automationexercise.com")\nprint(page.login_url())\nprint(page.search("mouse"))', result:'https://automationexercise.com/login\nhttps://automationexercise.com/search?q=mouse'}
+          ]
+        },
+        {
+          text:'A method can call another method on the same object through <code>self</code> — <code>self.total()</code> inside another method of the same class. This is how you build small pieces that combine, exactly like functions did in Module 4, except now they carry shared state (the object\'s attributes) between them automatically.',
+          examples:[
+            {label:'Simple', code:'class Greeter:\n    def name(self):\n        return "Alex"\n\n    def greet(self):\n        return f"Hello, {self.name()}!"\n\ng = Greeter()\nprint(g.greet())', result:'Hello, Alex!'},
+            {label:'In practice', kind:'real', code:'class Cart:\n    def __init__(self):\n        self.items = []\n\n    def add_item(self, name, price):\n        self.items.append({"name": name, "price": price})\n\n    def total(self):\n        total = 0\n        for item in self.items:\n            total += item["price"]\n        return total\n\n    def summary(self):\n        return f"Cart total: {self.total()}"\n\ncart = Cart()\ncart.add_item("Mouse", 25)\ncart.add_item("Webcam", 65)\nprint(cart.summary())', result:'Cart total: 90'}
+          ]
+        }
       ],
       tasks:[
         {
@@ -1634,12 +1670,48 @@ print("Ready")
       id:'m8', num:8, phase:'Python basics', title:'Standard library and generators',
       desc:'useful built-in modules, iterators and generators',
       theory:[
-        'The standard library is a set of modules that ship with Python itself — no install needed, just <code>import</code>. This is different from a package like <code>requests</code> (Module 11), which you install separately with <code>pip</code>. Everything in this module is real Python only, same as Modules 6-7 — this sandbox does not support <code>import</code> at all.',
-        '<code>json.dumps(obj)</code> turns a Python dict/list into a JSON text string; <code>json.loads(text)</code> turns JSON text back into Python objects. This is not a coincidence with Module 5\'s "list of dicts looks like JSON" note — this IS the conversion that happens automatically every time you call <code>.json()</code> on an API response later, just done by hand for now so you see it happen. One gotcha worth knowing now: Python\'s <code>True</code> becomes JSON\'s lowercase <code>true</code>.',
-        '<code>random.randint(a, b)</code> gives a random whole number between <code>a</code> and <code>b</code> (both included); <code>random.choice(a_list)</code> picks one random item from a list. Generating test data — random IDs, random valid inputs — is one of the most common real uses of this module in an automation project.',
-        '<code>datetime.now()</code> (from the <code>datetime</code> module) gives the current date and time. Automation code uses this constantly for things like timestamping a log line or giving a test-run report a unique name.',
-        'A <b>generator</b> is a function that uses <code>yield</code> instead of <code>return</code> — calling it does not run the function body at all, it just creates a paused generator object. The body only starts running (and only runs up to the next <code>yield</code>) when you pull a value out of it, either with <code>next(gen)</code> or by looping over it with <code>for</code>. This matters for automation when you are producing a lot of test data or reading a huge file — a generator produces one item at a time instead of building the whole thing in memory first.',
-        'A generator can only be gone through ONCE — once a <code>for</code> loop (or enough <code>next()</code> calls) has pulled every value out of it, looping over it again produces nothing at all. This trips people up constantly; better to know it now than debug it in a real test suite.'
+        {
+          text:'The standard library is a set of modules that ship with Python itself — no install needed, just <code>import</code>. This is different from a package like <code>requests</code> (Module 11), which you install separately with <code>pip</code>. Everything in this module is real Python only, same as Modules 6-7 — this sandbox does not support <code>import</code> at all.',
+          examples:[
+            {label:'Simple', code:'import math\nprint(math.sqrt(16))', result:'4.0'},
+            {label:'In practice', kind:'real', code:'import statistics\ndurations = [1.0, 2.0, 3.0]\nprint(statistics.mean(durations))', result:'2.0'}
+          ]
+        },
+        {
+          text:'<code>json.dumps(obj)</code> turns a Python dict/list into a JSON text string; <code>json.loads(text)</code> turns JSON text back into Python objects. This is not a coincidence with Module 5\'s "list of dicts looks like JSON" note — this IS the conversion that happens automatically every time you call <code>.json()</code> on an API response later, just done by hand for now so you see it happen. One gotcha worth knowing now: Python\'s <code>True</code> becomes JSON\'s lowercase <code>true</code>.',
+          examples:[
+            {label:'Simple', code:'import json\nprint(json.dumps({"ok": True}))', result:'{"ok": true}'},
+            {label:'In practice', kind:'real', code:'import json\nresponse = \'{"status": "pass", "duration": 12}\'\ndata = json.loads(response)\nprint(data["status"], data["duration"])', result:'pass 12'}
+          ]
+        },
+        {
+          text:'<code>random.randint(a, b)</code> gives a random whole number between <code>a</code> and <code>b</code> (both included); <code>random.choice(a_list)</code> picks one random item from a list. Generating test data — random IDs, random valid inputs — is one of the most common real uses of this module in an automation project.',
+          examples:[
+            {label:'Simple', code:'import random\nrandom.seed(1)\nprint(random.randint(1, 6))', result:'2'},
+            {label:'In practice', kind:'real', code:'import random\nrandom.seed(2)\nbrowsers = ["chrome", "firefox", "webkit"]\nprint(random.choice(browsers))', result:'chrome'}
+          ]
+        },
+        {
+          text:'<code>datetime.now()</code> (from the <code>datetime</code> module) gives the current date and time. Automation code uses this constantly for things like timestamping a log line or giving a test-run report a unique name.',
+          examples:[
+            {label:'Simple', code:'from datetime import datetime\nmoment = datetime(2026, 9, 16, 14, 30)\nprint(moment.year)', result:'2026'},
+            {label:'In practice', kind:'real', code:'from datetime import datetime\nmoment = datetime(2026, 9, 16, 14, 30)\nprint(f"test_run_{moment.strftime(\'%Y%m%d_%H%M\')}")', result:'test_run_20260916_1430'}
+          ]
+        },
+        {
+          text:'A <b>generator</b> is a function that uses <code>yield</code> instead of <code>return</code> — calling it does not run the function body at all, it just creates a paused generator object. The body only starts running (and only runs up to the next <code>yield</code>) when you pull a value out of it, either with <code>next(gen)</code> or by looping over it with <code>for</code>. This matters for automation when you are producing a lot of test data or reading a huge file — a generator produces one item at a time instead of building the whole thing in memory first.',
+          examples:[
+            {label:'Simple', code:'def numbers():\n    yield 1\n    yield 2\n\nfor n in numbers():\n    print(n)', result:'1\n2'},
+            {label:'In practice', kind:'real', code:'def test_case_ids():\n    for i in range(1, 4):\n        yield f"test_case_{i}"\n\nfor case_id in test_case_ids():\n    print(case_id)', result:'test_case_1\ntest_case_2\ntest_case_3'}
+          ]
+        },
+        {
+          text:'A generator can only be gone through ONCE — once a <code>for</code> loop (or enough <code>next()</code> calls) has pulled every value out of it, looping over it again produces nothing at all. This trips people up constantly; better to know it now than debug it in a real test suite.',
+          examples:[
+            {label:'Simple', code:'def numbers():\n    yield 1\n    yield 2\n\ngen = numbers()\nfor n in gen:\n    print(n)\nfor n in gen:\n    print(n)\nprint("done")', result:'1\n2\ndone'},
+            {label:'In practice', kind:'real', code:'def test_results():\n    yield "pass"\n    yield "fail"\n\nresults = test_results()\nfirst_pass_count = 0\nfor r in results:\n    if r == "pass":\n        first_pass_count += 1\nprint(first_pass_count)\n\nsecond_pass_count = 0\nfor r in results:\n    if r == "pass":\n        second_pass_count += 1\nprint(second_pass_count)', result:'1\n0'}
+          ]
+        }
       ],
       tasks:[
         {
@@ -1752,12 +1824,42 @@ print(next(gen))
       id:'m9', num:9, phase:'Automated tests in Python', title:'Pytest',
       desc:'running tests, assert, fixtures, parametrization',
       theory:[
-        'Pytest is a TEST RUNNER: a program that finds and executes your test functions and reports which passed and which failed. A test is just a function whose name starts with <code>test_</code>, living in a file whose name starts with <code>test_</code>. Running <code>pytest</code> in a terminal inside that folder finds every one of them automatically — no need to call them yourself.',
-        '<code>assert</code> is the real version of the ok/fail check this ENTIRE course has been simulating with its own <code>matchEn(...)</code> helper: <code>assert cart.total() == 70</code> does nothing if true, and raises an <code>AssertionError</code> if false — pytest catches that and reports the test as failed, showing you exactly what was compared.',
+        {
+          text:'Pytest is a TEST RUNNER: a program that finds and executes your test functions and reports which passed and which failed. A test is just a function whose name starts with <code>test_</code>, living in a file whose name starts with <code>test_</code>. Running <code>pytest</code> in a terminal inside that folder finds every one of them automatically — no need to call them yourself.',
+          examples:[
+            {label:'Simple', code:'# test_basic.py\ndef test_addition():\n    assert 2 + 2 == 4\n\n# terminal: pytest test_basic.py', result:'1 passed'},
+            {label:'In practice', kind:'real', code:'# test_home.py\ndef test_page_title():\n    title = "Automation Exercise"\n    assert title == "Automation Exercise"\n\n# terminal: pytest test_home.py', result:'1 passed'}
+          ]
+        },
+        {
+          text:'<code>assert</code> is the real version of the ok/fail check this ENTIRE course has been simulating with its own <code>matchEn(...)</code> helper: <code>assert cart.total() == 70</code> does nothing if true, and raises an <code>AssertionError</code> if false — pytest catches that and reports the test as failed, showing you exactly what was compared.',
+          examples:[
+            {label:'Simple', code:'count = 3\nassert count == 3\nprint("no error")', result:'no error'},
+            {label:'In practice', kind:'real', code:'status_code = 200\nassert status_code == 200, "Expected 200 OK"\nprint("Response check passed")', result:'Response check passed'}
+          ]
+        },
         'Install with <code>pip install pytest</code> — this is the first package from outside the standard library you have installed (Module 8 was all built-in; <code>requests</code> in Module 11 will be the same kind of install).',
-        'A <b>fixture</b> is a function decorated with <code>@pytest.fixture</code> that sets something up once and hands it to any test that asks for it by naming it as a parameter. If five tests all need a pre-filled <code>Cart</code>, a fixture builds it once per test run instead of five tests each repeating the same setup code.',
-        '<code>@pytest.mark.parametrize("price,expected", [(100, True), (50, False)])</code> runs the SAME test function once per row of data, instead of writing near-identical test functions for slightly different inputs. This is how a real suite covers many cases without copy-pasting a whole test each time.',
-        'Reading a pytest failure is a real skill, not scary noise: it shows you the exact assert line, and often the actual values on both sides — <code>assert 71 == 70</code> tells you plainly that your code produced 71 when the test expected 70. Get comfortable reading this now; it is what every red run looks like from here on.'
+        {
+          text:'A <b>fixture</b> is a function decorated with <code>@pytest.fixture</code> that sets something up once and hands it to any test that asks for it by naming it as a parameter. If five tests all need a pre-filled <code>Cart</code>, a fixture builds it once per test run instead of five tests each repeating the same setup code.',
+          examples:[
+            {label:'Simple', code:'import pytest\n\n@pytest.fixture\ndef user():\n    return {"name": "Anna"}\n\ndef test_user_name(user):\n    assert user["name"] == "Anna"\n\n# terminal: pytest', result:'1 passed'},
+            {label:'In practice', kind:'real', code:'import pytest\n\nclass Cart:\n    def __init__(self):\n        self.items = []\n    def add_item(self, name, price):\n        self.items.append({"name": name, "price": price})\n    def total(self):\n        return sum(item["price"] for item in self.items)\n\n@pytest.fixture\ndef cart():\n    c = Cart()\n    c.add_item("Mouse", 25)\n    c.add_item("Keyboard", 45)\n    return c\n\ndef test_cart_total(cart):\n    assert cart.total() == 70\n\ndef test_cart_has_two_items(cart):\n    assert len(cart.items) == 2\n\n# terminal: pytest', result:'2 passed'}
+          ]
+        },
+        {
+          text:'<code>@pytest.mark.parametrize("price,expected", [(100, True), (50, False)])</code> runs the SAME test function once per row of data, instead of writing near-identical test functions for slightly different inputs. This is how a real suite covers many cases without copy-pasting a whole test each time.',
+          examples:[
+            {label:'Simple', code:'import pytest\n\n@pytest.mark.parametrize("n,expected", [(2, 4), (3, 9)])\ndef test_square(n, expected):\n    assert n * n == expected\n\n# terminal: pytest', result:'2 passed'},
+            {label:'In practice', kind:'real', code:'import pytest\n\n@pytest.mark.parametrize("price,expected", [(100, True), (50, False)])\ndef test_free_shipping(price, expected):\n    assert (price >= 100) == expected\n\n# terminal: pytest', result:'2 passed'}
+          ]
+        },
+        {
+          text:'Reading a pytest failure is a real skill, not scary noise: it shows you the exact assert line, and often the actual values on both sides — <code>assert 71 == 70</code> tells you plainly that your code produced 71 when the test expected 70. Get comfortable reading this now; it is what every red run looks like from here on.',
+          examples:[
+            {label:'Simple', code:'def test_wrong():\n    assert 2 + 2 == 5\n\n# terminal: pytest', result:'assert (2 + 2) == 5\n1 failed'},
+            {label:'In practice', kind:'real', code:'def test_cart_total():\n    total = 71\n    assert total == 70\n\n# terminal: pytest', result:'assert 71 == 70\n1 failed'}
+          ]
+        }
       ],
       tasks:[
         {
