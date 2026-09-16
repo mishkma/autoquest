@@ -351,11 +351,25 @@ function msgTr(taskObj, m, msg){
 // Falls back per-item: an index with no RU entry (or a shorter RU array,
 // e.g. new English theory added after translating) renders in English
 // rather than crashing or leaving a gap.
+//
+// The RU override is translated TEXT only (a plain string) — it was written
+// before the {text, examples} format existed for that item, or simply never
+// needs its own examples (examples are code + real output, language-neutral).
+// If the English item carries examples, splice the RU string in as `text`
+// and keep the English `examples` array, instead of letting a plain RU
+// string silently replace (and hide) the whole object — this bit us once
+// already: RU theory pages had zero example cards.
 function theoryItem(m, index){
   const en = m.theory[index];
   if(getLang() === 'ru' && window.MODULES_RU){
     const ov = MODULES_RU[m.id];
-    if(ov && ov.theory && ov.theory[index] !== undefined) return ov.theory[index];
+    if(ov && ov.theory && ov.theory[index] !== undefined){
+      const ru = ov.theory[index];
+      if(typeof ru === 'string' && en && typeof en === 'object' && en.examples){
+        return { text: ru, examples: en.examples };
+      }
+      return ru;
+    }
   }
   return en;
 }
