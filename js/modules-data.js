@@ -2006,14 +2006,16 @@ print("ok")
       ],
       tasks:[
         {
-          id:'m10-t1', kind:'checklist', title:'Catch a real ZeroDivisionError',
-          goal:'Wrap <code>print(10 / 0)</code> in a <code>try</code>/<code>except ZeroDivisionError:</code> that prints <b>Cannot divide by zero</b> instead of crashing. Run it — confirm you see that message, not a traceback.',
-          hint:'<code>try:</code> then the risky line indented under it, then <code>except ZeroDivisionError:</code> at the same indent as <code>try</code>, with the fallback <code>print(...)</code> indented under that.'
+          id:'m10-t1', kind:'implement', title:'Catch a real ZeroDivisionError',
+          goal:'Trigger a real <code>ZeroDivisionError</code> (dividing any number by zero) inside a <code>try</code>/<code>except</code> that names that specific exception type. Instead of writing your own message, capture the exception object itself and print exactly what it says went wrong — confirm you see Python\'s own error text, not a traceback.',
+          hint:'The <code>as</code> keyword after <code>except</code> lets you capture the exception object under a name you choose — printing that object shows you its own built-in message text, no need to invent your own wording.',
+          expected: 'division by zero'
         },
         {
-          id:'m10-t2', kind:'checklist', title:'Catch a real ValueError',
-          goal:'Wrap <code>age = int("abc")</code> in a <code>try</code>/<code>except ValueError:</code> that prints <b>Invalid number</b> instead of crashing. Run it — confirm you see that message.',
-          hint:'<code>int("abc")</code> raises <code>ValueError</code> in real Python for the exact same reason your sandbox tasks warned about it back in Module 1 — text that is not a valid number cannot become one.'
+          id:'m10-t2', kind:'implement', title:'Catch a real ValueError',
+          goal:'Trigger a real <code>ValueError</code> (e.g. trying to convert a non-numeric string to a number) inside a <code>try</code>/<code>except</code> that names that specific exception type. Capture the exception object and print its own message instead of writing your own — confirm you see the real text Python raises for this exact kind of invalid conversion, not a traceback.',
+          hint:'Same idea as catching a <code>ZeroDivisionError</code> — only the exception type and the risky line change. The message is not something you write; it already lives on the exception object.',
+          expected: "invalid literal for int() with base 10: 'abc'"
         },
         {
           id:'m10-t3', kind:'predict', offline:true, title:'Predict: else runs only when nothing went wrong',
@@ -2030,15 +2032,10 @@ else:
           expected: 'No error, result is 5.0'
         },
         {
-          id:'m10-t4', kind:'checklist', title:'Wrong exception type still crashes',
-          goal:'Run the exact code below — it still crashes with a real <code>ValueError</code>, even though there IS a <code>try</code>/<code>except</code>. Read the traceback, figure out why the except block did not catch it, fix the exception type, and re-run until you see <b>Handled</b>.',
-          hint:'An <code>except</code> block only catches the EXACT exception type (or a parent of it) that it names — <code>except ZeroDivisionError:</code> does nothing at all for a <code>ValueError</code>, the crash just passes straight through it.',
-          starter:
-`try:
-    age = int("abc")
-except ZeroDivisionError:
-    print("Handled")
-`
+          id:'m10-t4', kind:'implement', title:'Wrong exception type still crashes',
+          goal:'Run the exact code below — it still crashes with a real <code>ValueError</code>, even though there IS a <code>try</code>/<code>except</code>.<br><pre>try:\n    age = int("abc")\nexcept ZeroDivisionError:\n    print("Handled")</pre>Read the traceback, figure out why the except block did not catch it, then fix ONLY the exception type it names, and re-run. Type below exactly what your fixed program prints.',
+          hint:'An <code>except</code> block only catches the EXACT exception type (or a parent of it) that it names — <code>except ZeroDivisionError:</code> does nothing at all for a <code>ValueError</code>, the crash just passes straight through it. Which exception type does <code>int("abc")</code> actually raise?',
+          expected: 'Handled'
         },
         {
           id:'m10-t5', kind:'predict', offline:true, title:'Predict: finally always runs',
@@ -2055,44 +2052,42 @@ finally:
           expected: 'Handled\nCleanup done'
         },
         {
-          id:'m10-t6', kind:'checklist', title:'A real retry loop',
-          goal:'Write a function <code>flaky_call()</code> that raises <code>ConnectionError("Network issue")</code> most of the time (e.g. <code>if random.random() &lt; 0.7: raise ConnectionError(...)</code>), otherwise returns <code>"success"</code>. Using a <code>while</code> loop and <code>try</code>/<code>except ConnectionError</code>, retry up to 5 times, printing <b>Retry N</b> on each failure and the result on success, then stopping either way. Run it a few times — confirm you sometimes see it succeed after a few retries, and sometimes exhaust all 5.',
-          hint:'This is the exact retry pattern from the Module 3 homework, with one addition: the thing that might fail is now wrapped in <code>try</code>/<code>except</code> instead of just being trusted to work.'
+          id:'m10-t6', kind:'implement', title:'A real retry loop',
+          goal:'Write a function that fails with a <code>ConnectionError</code> the first two times it is called, then succeeds and returns <code>"success"</code> on the third call — use some kind of counter that persists between calls (not randomness, since this needs a predictable result to check). Then write a loop that calls this function, catches the <code>ConnectionError</code>, retries up to 5 times, printing <code>Retry N</code> (N starting at 1) on each failure, and printing the successful result once it gets one, then stopping. Report the exact output, one item per line.',
+          hint:'You need something that remembers how many times the function has already been called across separate calls — a counter defined outside the function (or in an enclosing scope) that the function increments each time it runs.',
+          expected: 'Retry 1\nRetry 2\nsuccess'
         },
         {
-          id:'m10-t7', kind:'checklist', title:'Read your own raised error',
-          goal:'Run the code below EXACTLY as given — it deliberately crashes. Read the traceback and confirm you can find your own custom message, <b>"Age cannot be negative"</b>, inside it, right next to <code>ValueError</code>.',
-          hint:'<code>raise ValueError("...")</code> creates and immediately throws a brand new exception with your message — reading it back in the traceback is exactly how you would debug a real failure that came from your own validation code.',
-          starter:
-`def check_age(age):
-    if age < 0:
-        raise ValueError("Age cannot be negative")
-    return age
-
-check_age(-5)
-`
+          id:'m10-t7', kind:'implement', title:'Read your own raised error',
+          goal:'Run the code below EXACTLY as given — it deliberately crashes.<br><pre>def check_age(age):\n    if age < 0:\n        raise ValueError("Age cannot be negative")\n    return age\n\ncheck_age(-5)</pre>Read the traceback and find your own custom message inside it, right next to <code>ValueError</code>. Then, WITHOUT changing the message text itself, wrap the call in a <code>try</code>/<code>except ValueError</code> so it no longer crashes, capture the exception object, and print its message. Confirm it matches exactly what you already found in the traceback.',
+          hint:'<code>raise ValueError("...")</code> creates and immediately throws a brand new exception carrying that message — capturing it with <code>as</code> lets you read that same message back programmatically instead of only visually, in the traceback.',
+          expected: 'Age cannot be negative'
         },
         {
-          id:'m10-t8', kind:'checklist', title:'Handle a real IndexError',
-          goal:'Given <code>items = ["a", "b", "c"]</code>, wrap <code>print(items[5])</code> in a <code>try</code>/<code>except IndexError:</code> that prints <b>No item at that position</b> instead of crashing. Run it — confirm you see that message.',
-          hint:'Same idea as the <code>ZeroDivisionError</code> and <code>ValueError</code> tasks — only the exception type named after <code>except</code> changes, to match whatever the risky line can actually raise.'
+          id:'m10-t8', kind:'implement', title:'Handle a real IndexError',
+          goal:'Given <code>items = ["a", "b", "c"]</code>, deliberately trigger a real <code>IndexError</code> by accessing an index that does not exist, inside a <code>try</code>/<code>except</code> naming that specific exception type. Capture the exception object and print its own message instead of writing your own.',
+          hint:'Same pattern as the earlier <code>ZeroDivisionError</code>/<code>ValueError</code> tasks — only the exception type and risky line change; the message you print already lives on the exception object itself.',
+          expected: 'list index out of range'
         },
         {
-          id:'m10-t9', kind:'checklist', title:'Catch two exception types at once',
-          goal:'Write a function <code>parse(value)</code> that returns <code>int(value)</code>, but returns <code>None</code> if that raises EITHER a <code>ValueError</code> OR a <code>TypeError</code> — using one <code>except (ValueError, TypeError):</code> block, not two separate ones. Test it with <code>parse("42")</code>, <code>parse("abc")</code>, and <code>parse(None)</code>. Confirm you see <b>42</b>, then <b>None</b>, then <b>None</b>.',
-          hint:'Putting several exception types in parentheses after <code>except</code> catches any one of them with a single block — <code>int(None)</code> raises a <code>TypeError</code> (wrong type entirely), while <code>int("abc")</code> raises a <code>ValueError</code> (right type, invalid content).'
+          id:'m10-t9', kind:'implement', title:'Catch two exception types at once',
+          goal:'Write a function that tries to convert its single argument to an <code>int</code>, returning <code>None</code> instead of crashing if that raises EITHER a <code>ValueError</code> OR a <code>TypeError</code> — using ONE <code>except</code> block that names both types together, not two separate blocks. Call it with the string <code>"42"</code>, then the string <code>"abc"</code>, then the value <code>None</code>, printing each result on its own line.',
+          hint:'Several exception types can be listed together in parentheses after a single <code>except</code> — think about which of <code>"abc"</code> and <code>None</code> raises which of the two exception types when passed to <code>int(...)</code>.',
+          expected: '42\nNone\nNone'
         },
         {
-          id:'m10-t10', kind:'checklist', boss:true, title:'Safely parse a list of raw prices',
-          goal:'Write <code>safe_parse_price(raw)</code> that returns <code>int(raw)</code>, or <code>None</code> if that raises a <code>ValueError</code>. Given <code>raw_prices = ["25", "abc", "45", "", "60"]</code>, build a list of only the successfully parsed prices (skip the <code>None</code> ones), and print their sum. Confirm you see <b>130</b>.',
-          hint:'<code>price is not None</code> checks identity against the special value <code>None</code> — the conventional way to test for it in real Python, instead of <code>price != None</code>. An empty string <code>""</code> also fails <code>int(...)</code>, exactly like <code>"abc"</code> does.'
+          id:'m10-t10', kind:'implement', boss:true, title:'Safely parse a list of raw prices',
+          goal:'Given <code>raw_prices = ["25", "abc", "45", "", "60"]</code>, write code that attempts to convert each item to an <code>int</code>, silently skipping (not crashing on) any item that fails to convert, and prints the sum of only the ones that succeeded.',
+          hint:'This combines two earlier patterns: catching one specific exception per conversion attempt, and keeping a running total that only grows on a successful conversion — nothing more exotic than that. An empty string fails to convert exactly like non-numeric text does.',
+          expected: '130'
         }
       ],
       homework:[
         {
-          id:'m10-hw1', kind:'checklist', title:'Your own exception type',
-          goal:'Define <code>class InvalidPriceError(Exception): pass</code> — a custom exception. Write <code>validate_price(price)</code> that raises it with the message <code>"Price must be positive"</code> if <code>price &lt;= 0</code>. Catch it with <code>except InvalidPriceError as e:</code> and print <code>f"Rejected: {e}"</code>. Test with <code>validate_price(-10)</code> — confirm you see <b>Rejected: Price must be positive</b>.',
-          hint:'<code>class InvalidPriceError(Exception):</code> — the name in parentheses is the PARENT class: this creates a new exception TYPE that inherits everything <code>Exception</code> already knows how to do (like carrying a message and being catchable), the same class syntax from Module 7, just building on an existing class instead of starting from nothing. <code>pass</code> is Python\'s "do nothing" placeholder — it means "this class body is empty on purpose, nothing to add," and is needed here only because a class (like a function) cannot have a completely empty body. <code>as e</code> then lets you read the exception\'s message back with <code>str(e)</code> or, as here, directly inside an f-string.'
+          id:'m10-hw1', kind:'implement', title:'Your own exception type',
+          goal:'Define your own exception type that inherits from <code>Exception</code> (it needs no behavior of its own, just to exist as a new, distinct type). Write a function that raises it, with the message <code>"Price must be positive"</code>, whenever it is given a number that is zero or negative. Call that function with <code>-10</code>, catch your custom exception, and print <code>"Rejected: "</code> followed directly by the exception\'s own message.',
+          hint:'A class body cannot be completely empty — Python\'s dedicated "do nothing" placeholder statement is exactly what a custom exception needs when it adds no new behavior, only a new type. Capturing the exception with <code>as</code> lets you read its message back inside an f-string, same as any other caught exception.',
+          expected: 'Rejected: Price must be positive'
         },
         {
           id:'m10-hw2', kind:'predict', offline:true, title:'Predict: nested try/except',
@@ -2110,9 +2105,10 @@ except ZeroDivisionError:
           expected: 'Outer catch'
         },
         {
-          id:'m10-hw3', kind:'checklist', title:'try/except vs .get() for the same problem',
-          goal:'Given <code>settings = {"env": "staging"}</code>, wrap <code>print(settings["timeout"])</code> in a <code>try</code>/<code>except KeyError:</code> that prints <b>Using default timeout: 30</b> instead of crashing. Confirm you see that message — then think about how this compares to <code>settings.get("timeout", 30)</code> from Module 5.',
-          hint:'Both solve the exact same problem here. <code>.get(key, default)</code> is shorter and reads better for a single dict lookup; <code>try</code>/<code>except</code> is the more general tool that also works for things <code>.get</code> cannot help with at all, like the earlier <code>int(...)</code> or <code>items[5]</code> tasks.'
+          id:'m10-hw3', kind:'implement', title:'try/except vs .get() for the same problem',
+          goal:'Given <code>settings = {"env": "staging"}</code>, write code that tries to read the <code>"timeout"</code> key directly (not with <code>.get()</code>), and instead of crashing when that key does not exist, falls back to a default value of <code>30</code> — printed as exactly: <code>Using default timeout: 30</code>. Once it works, think about how this compares to <code>settings.get("timeout", 30)</code> from Module 5, solving the exact same problem a different way.',
+          hint:'Dictionaries raise a specific exception type when a key does not exist — the same one you have not needed to catch until now — name that one after <code>except</code>.',
+          expected: 'Using default timeout: 30'
         }
       ]
     },
@@ -2179,14 +2175,16 @@ except ZeroDivisionError:
       ],
       tasks:[
         {
-          id:'m11-t1', kind:'checklist', title:'A mock accepts anything',
-          goal:'Run <code>from unittest.mock import Mock</code>, create <code>fake_api = Mock()</code>, then call <code>fake_api.get_status()</code> — a method that was never defined anywhere. Confirm it does NOT crash, and print <b>Called without error</b> afterward.',
-          hint:'A plain <code>Mock()</code> auto-creates whatever attribute or method you ask for, on the spot — there is no such thing as an "undefined method" error on a Mock.'
+          id:'m11-t1', kind:'implement', title:'A mock accepts anything',
+          goal:'Create a plain <code>Mock()</code> with no configuration at all, then call a method on it that you never defined anywhere, e.g. <code>get_status()</code>. Confirm this does not crash, then print the type NAME of whatever that call returned (not the value itself — its type\'s name).',
+          hint:'A plain <code>Mock()</code> auto-creates a new object for any attribute or method you ask for — calling an undefined method still returns something, and <code>type(...).__name__</code> tells you what kind of something that is.',
+          expected: 'Mock'
         },
         {
-          id:'m11-t2', kind:'checklist', title:'Control what calling it returns',
-          goal:'Create <code>fake_api = Mock(return_value="200 OK")</code>, call it with <code>fake_api()</code>, and print the result. Confirm you see <b>200 OK</b>.',
-          hint:'<code>return_value</code> is set once, at creation — every call to <code>fake_api()</code> after that returns the exact same scripted value.'
+          id:'m11-t2', kind:'implement', title:'Control what calling it returns',
+          goal:'Create a <code>Mock</code> configured so that calling it directly returns the exact string <code>"200 OK"</code>, then call it and print what it returns.',
+          hint:'One of <code>Mock</code>\'s own constructor arguments scripts what happens when you call the mock like a function — it is set once, at creation, and every subsequent call returns that same value.',
+          expected: '200 OK'
         },
         {
           id:'m11-t3', kind:'predict', offline:true, title:'Predict: scripting one specific method',
@@ -2203,21 +2201,16 @@ print(user["name"])
           expected: 'Alex'
         },
         {
-          id:'m11-t4', kind:'checklist', title:'Assert a mock was called correctly',
-          goal:'Write a function <code>notify_user(email, message)</code> that calls <code>send_email(email, message)</code>, where <code>send_email = Mock()</code>. Call <code>notify_user("alex@example.com", "Order shipped")</code>, then <code>send_email.assert_called_with("alex@example.com", "Order shipped")</code>, then print <b>Assertion passed</b>. Confirm you see it (no crash means the assertion succeeded).',
-          hint:'<code>assert_called_with(...)</code> does not return <code>True</code>/<code>False</code> — it raises a real <code>AssertionError</code> if the call does not match, and does nothing at all (execution just continues) if it does.'
+          id:'m11-t4', kind:'implement', title:'Assert a mock was called correctly',
+          goal:'Write a function that takes an email and a message, and passes both straight through to a <code>Mock()</code> standing in for a real email-sending function. Call your function once with <code>"alex@example.com"</code> and <code>"Order shipped"</code>. Then, using the mock\'s own built-in assertion method (not by eyeballing anything you printed), verify it was actually called with exactly those two arguments — and if that check passes, print the mock\'s own <code>.call_args</code> to show exactly what got recorded.',
+          hint:'Every <code>Mock</code> automatically remembers its own call arguments — <code>.call_args</code>, printed AFTER the assertion, shows exactly what was recorded, in Python\'s own <code>call(...)</code> repr format.',
+          expected: "call('alex@example.com', 'Order shipped')"
         },
         {
-          id:'m11-t5', kind:'checklist', title:'Read a real mock assertion failure',
-          goal:'Run the code below EXACTLY as given — it deliberately calls <code>send_email</code> with the WRONG arguments, then asserts the expected ones. Read the resulting <code>AssertionError</code> and confirm you can find both the <b>Expected</b> and <b>Actual</b> call it shows you.',
-          hint:'Mock\'s own assertion failures are unusually readable on purpose — they print exactly what was expected next to exactly what actually happened, specifically so you do not have to guess.',
-          starter:
-`from unittest.mock import Mock
-
-send_email = Mock()
-send_email("wrong@example.com", "Oops")
-send_email.assert_called_with("alex@example.com", "Order shipped")
-`
+          id:'m11-t5', kind:'implement', title:'Read a real mock assertion failure',
+          goal:'Run the code below EXACTLY as given — it deliberately calls <code>send_email</code> with the WRONG arguments, then asserts the expected ones.<br><pre>from unittest.mock import Mock\n\nsend_email = Mock()\nsend_email("wrong@example.com", "Oops")\nsend_email.assert_called_with("alex@example.com", "Order shipped")</pre>Instead of letting the assertion line crash the whole script, wrap just that line in a <code>try</code>/<code>except AssertionError</code>, capture the exception object, and print it — so you can read Mock\'s own Expected/Actual message directly rather than as a traceback.',
+          hint:'This is the exact same <code>try</code>/<code>except</code> shape you already know from Module 10 — the only new thing here is what Mock\'s own error message happens to contain.',
+          expected: "expected call not found.\nExpected: mock('alex@example.com', 'Order shipped')\n  Actual: mock('wrong@example.com', 'Oops')"
         },
         {
           id:'m11-t6', kind:'predict', offline:true, title:'Predict: call_count',
@@ -2235,31 +2228,36 @@ print(retry.call_count)
           expected: '3'
         },
         {
-          id:'m11-t7', kind:'checklist', title:'Patch a real function temporarily',
-          goal:'Write <code>roll_dice()</code> that returns <code>random.randint(1, 6)</code>. Using <code>with patch("random.randint", return_value=4):</code>, call <code>roll_dice()</code> inside the <code>with</code> block and print the result. Confirm you see <b>4</b> every time you run it, not a random number.',
-          hint:'<code>patch(...)</code> replaces the real <code>random.randint</code> everywhere it is looked up by that name, for as long as the indented <code>with</code> block runs — <code>roll_dice</code> did not change at all, but what it calls did.'
+          id:'m11-t7', kind:'implement', title:'Patch a real function temporarily',
+          goal:'Write a function that returns a random integer between 1 and 6 using <code>random.randint</code>. Using <code>unittest.mock.patch</code> to temporarily replace <code>random.randint</code> with a fixed return value of <code>4</code>, call your function INSIDE that patched context and print what it returns. Confirm it is always <code>4</code> while patched, never an actually random number.',
+          hint:'<code>patch(...)</code> replaces the real function everywhere it is looked up by that name, only for the length of an indented <code>with</code> block — your function\'s own code does not change at all, only what it calls does.',
+          expected: '4'
         },
         {
-          id:'m11-t8', kind:'checklist', title:'A mock that raises instead of returning',
-          goal:'Create <code>flaky = Mock(side_effect=ConnectionError("Network down"))</code>. Call it inside a <code>try</code>/<code>except ConnectionError as e:</code> that prints <code>f"Caught: {e}"</code>. Confirm you see <b>Caught: Network down</b>.',
-          hint:'Setting <code>side_effect</code> to an exception INSTANCE (not just the class) makes every call to the mock raise that exact exception — this is the Module 10 pattern, now simulating a dependency that fails on purpose.'
+          id:'m11-t8', kind:'implement', title:'A mock that raises instead of returning',
+          goal:'Create a <code>Mock()</code> that raises a <code>ConnectionError</code> with the message <code>"Network down"</code> on EVERY call, not just once — using the mock feature that makes it raise instead of return. Call it inside a <code>try</code>/<code>except</code> for that specific exception type, capture the exception, and print <code>"Caught: "</code> followed directly by its message.',
+          hint:'A mock\'s <code>side_effect</code> is not only for varying return values — set it to an exception INSTANCE (not just the class) and every call to the mock raises that instead of returning anything.',
+          expected: 'Caught: Network down'
         },
         {
-          id:'m11-t9', kind:'checklist', title:'Mock a payment gateway',
-          goal:'Write <code>checkout(cart_total, payment_gateway)</code> that calls <code>payment_gateway.charge(cart_total)</code> and returns <b>"Order placed"</b>. Call it with <code>150</code> and a <code>fake_gateway = Mock()</code>, then assert <code>fake_gateway.charge.assert_called_with(150)</code>, then print the result. Confirm you see <b>Order placed</b> with no crash.',
-          hint:'The function under test never knows <code>payment_gateway</code> is fake — it just calls <code>.charge(...)</code> on whatever object it was given, exactly like it would on a real payment client.'
+          id:'m11-t9', kind:'implement', title:'Mock a payment gateway',
+          goal:'Write a function that takes a total and a payment-gateway object, calls <code>.charge(total)</code> on that gateway, and returns the literal string <code>"Order placed"</code>. Call it with <code>150</code> and a <code>Mock()</code> standing in for the real gateway. After calling, verify — using the mock\'s own assertion method — that <code>.charge</code> was actually called with <code>150</code>, then print the function\'s return value.',
+          hint:'The function under test never needs to know the gateway is fake — it just calls <code>.charge(...)</code> on whatever object it was handed, exactly as it would on a real payment client.',
+          expected: 'Order placed'
         },
         {
-          id:'m11-t10', kind:'checklist', boss:true, title:'Checkout with a mocked email service',
-          goal:'Write <code>checkout(cart, email_service)</code> that sums <code>item["price"]</code> for every item in <code>cart</code>, calls <code>email_service.send(f"Your total is {total}")</code>, and returns <code>total</code>. Given <code>cart = [{"name": "Mouse", "price": 25}, {"name": "Keyboard", "price": 45}]</code> and <code>fake_email = Mock()</code>, call <code>checkout(cart, fake_email)</code>, then assert <code>fake_email.send.assert_called_once_with("Your total is 70")</code>, then print the returned total. Confirm you see <b>70</b> with no crash.',
-          hint:'<code>assert_called_once_with(...)</code> checks two things at once: the exact arguments AND that it was called exactly one time — stricter than plain <code>assert_called_with</code>, which allows any number of calls as long as one of them matches.'
+          id:'m11-t10', kind:'implement', boss:true, title:'Checkout with a mocked email service',
+          goal:'Write a function that takes a cart (a list of dicts, each with a <code>"price"</code> key) and an email-service object. It should sum all the prices, call <code>.send(...)</code> on the email service with a message in the exact form <code>"Your total is &lt;total&gt;"</code>, and return the total. Test it with <code>cart = [{"name": "Mouse", "price": 25}, {"name": "Keyboard", "price": 45}]</code> and a <code>Mock()</code> standing in for the email service. After calling your function, verify — using the mock\'s own assertion method that also checks the call count — that <code>.send</code> was called exactly once with the correct message, then print the returned total.',
+          hint:'One assertion method combines "called with these exact arguments" AND "called exactly one time" — stricter than the plain version, which allows any number of matching calls.',
+          expected: '70'
         }
       ],
       homework:[
         {
-          id:'m11-hw1', kind:'checklist', title:'Assert something was NEVER called',
-          goal:'Write <code>maybe_notify(should_notify, email_service)</code> that calls <code>email_service.send("Hi")</code> only if <code>should_notify</code> is <code>True</code>. Call it with <code>False</code> and <code>send_email = Mock()</code>, then <code>send_email.assert_not_called()</code>, then print <b>Confirmed: email was never sent</b>. Confirm you see it with no crash.',
-          hint:'<code>assert_not_called()</code> is the mirror image of <code>assert_called_with(...)</code> — it fails if the mock was called even once, for any reason.'
+          id:'m11-hw1', kind:'implement', title:'Assert something was NEVER called',
+          goal:'Write a function that takes a boolean flag and an email-service <code>Mock</code>, and calls <code>.send("Hi")</code> on that mock ONLY when the flag is <code>True</code>. Call your function with <code>False</code>. Then, using the mock\'s own assertion method for "this was never called", confirm it really was not invoked — if that check passes, print the mock\'s own <code>.called</code> attribute.',
+          hint:'The mirror image of asserting a mock WAS called with specific arguments is a method asserting it was not called at all, for any reason — every mock also exposes a plain boolean attribute recording whether it was ever called.',
+          expected: 'False'
         },
         {
           id:'m11-hw2', kind:'predict', offline:true, title:'Predict: reset_mock() clears the call history',
@@ -2278,9 +2276,10 @@ print(counter.call_count)
           expected: '2\n0'
         },
         {
-          id:'m11-hw3', kind:'checklist', title:'Simulate fail-once-then-succeed',
-          goal:'Create <code>flaky_call = Mock(side_effect=[ConnectionError("Network down"), "success"])</code>. Using a <code>for attempt in range(2):</code> loop with <code>try</code>/<code>except ConnectionError:</code> (print <b>Retry</b> on failure, print the result and <code>break</code> on success), confirm the output is exactly <b>Retry</b> then <b>success</b>.',
-          hint:'When <code>side_effect</code> is a LIST instead of a single exception, each call consumes the NEXT item in order — the first call raises the exception, the second call returns the plain string, exactly like a real flaky dependency that recovers on retry.'
+          id:'m11-hw3', kind:'implement', title:'Simulate fail-once-then-succeed',
+          goal:'Create a <code>Mock()</code> whose <code>side_effect</code> is a LIST of two things, in order: a <code>ConnectionError</code> instance first, then the string <code>"success"</code> — meaning the first call to it raises, and the second call returns normally. Using a loop that tries up to 2 times, catch the exception on failure (printing <code>Retry</code>) and on success print the returned value and stop retrying. Report the exact output.',
+          hint:'When <code>side_effect</code> is a list rather than one fixed exception, each call consumes the NEXT item in order — nothing about the retry loop itself needs to change from earlier fixed-exception tasks.',
+          expected: 'Retry\nsuccess'
         }
       ]
     },
@@ -2326,71 +2325,84 @@ print(counter.call_count)
       ],
       tasks:[
         {
-          id:'m12-t1', kind:'checklist', title:'Your first real API call',
-          goal:'Run <code>pip install requests</code>, then <code>r = requests.get("https://automationexercise.com/api/productsList", timeout=10)</code> and print <code>r.status_code</code>. Confirm you see <b>200</b>.',
-          hint:'This is a real network call to a real, live site — if it fails, check your internet connection before assuming your code is wrong.'
+          id:'m12-t1', kind:'implement', title:'Your first real API call',
+          goal:'Make a real GET request (using the <code>requests</code> library — <code>pip install requests</code> first if needed) to <code>https://automationexercise.com/api/productsList</code>, with a sensible timeout, and print the HTTP status code you get back.',
+          hint:'This is a real network call to a real, live site — if it fails, check your internet connection before assuming your code is wrong. The status code lives as an attribute directly on the response object.',
+          expected: '200'
         },
         {
-          id:'m12-t2', kind:'checklist', title:'Parse the JSON body',
-          goal:'Using the same GET request, call <code>data = r.json()</code>, then print <code>data["responseCode"]</code>. Confirm you also see <b>200</b> here.',
-          hint:'<code>r.json()</code> gives you a regular Python dict — <code>data["responseCode"]</code> is just square-bracket access, exactly like every dict you have used since Module 5.'
+          id:'m12-t2', kind:'implement', title:'Parse the JSON body',
+          goal:'Using the same kind of request as the previous task, parse the response body as JSON, and print the API\'s OWN <code>responseCode</code> field from inside that JSON — not the HTTP status code from before.',
+          hint:'One method on a response object turns its raw body into a regular Python dict, the same way <code>json.loads(...)</code> did in Module 8 — from there it is just square-bracket access.',
+          expected: '200'
         },
         {
-          id:'m12-t3', kind:'checklist', title:'HTTP status vs API response code',
-          goal:'GET (not POST) <code>https://automationexercise.com/api/searchProduct</code> — this endpoint actually expects POST. Print BOTH <code>r.status_code</code> and <code>r.json()["responseCode"]</code>. Confirm the HTTP status is still <b>200</b>, while the API\'s own <code>responseCode</code> is <b>405</b> (wrong method) — two different numbers telling two different stories about the same response.',
-          hint:'If your test only checked <code>status_code == 200</code> here, it would say this broken request "passed" — this is exactly the gotcha described in the theory above, now happening for real.'
+          id:'m12-t3', kind:'implement', title:'HTTP status vs API response code',
+          goal:'Make a GET request (not POST) to <code>https://automationexercise.com/api/searchProduct</code> — this endpoint actually expects POST. Print both the HTTP status code and the API\'s own <code>responseCode</code> field from the JSON body, space separated on one line. Notice they tell two different stories about the same response.',
+          hint:'A wrong-method request like this one can still come back with HTTP 200 while the API\'s own code inside the JSON says something else entirely — this is the exact gotcha from the theory section, happening for real.',
+          expected: '200 405'
         },
         {
-          id:'m12-t4', kind:'checklist', title:'Search products with POST',
-          goal:'POST to <code>https://automationexercise.com/api/searchProduct</code> with <code>data={"search_product": "dress"}</code>. Parse the JSON, print <code>data["responseCode"]</code> and <code>len(data["products"])</code>. Confirm <code>responseCode</code> is <b>200</b> and you get a positive count of matching products.',
-          hint:'The count itself may not always be the exact same number — the live site\'s catalog is real data, not a fixture frozen in time. What matters is that it is a sensible positive number, not zero or an error.'
+          id:'m12-t4', kind:'implement', title:'Search products with POST',
+          goal:'POST to <code>https://automationexercise.com/api/searchProduct</code> with the search term <code>"dress"</code>. Parse the JSON response, and print two things on one line, space separated: the API\'s own <code>responseCode</code>, and whether the number of matching products is greater than zero — not the exact count itself, since the live catalog can change over time.',
+          hint:'<code>len(...)</code> on the products list gives you the count; comparing that to <code>0</code> gives you the boolean that should actually be printed here, not the raw number.',
+          expected: '200 True'
         },
         {
-          id:'m12-t5', kind:'checklist', title:'Count products by brand',
-          goal:'GET <code>productsList</code>, loop over <code>data["products"]</code>, and count how many have <code>product["brand"] == "Polo"</code>. Print the count.',
-          hint:'Same counting pattern as every module since M3 — a counter starting at 0, a loop, an <code>if</code> bumping it on a match. The data source is the only new part.'
+          id:'m12-t5', kind:'implement', title:'Count products by brand',
+          goal:'GET <code>productsList</code>, then count how many products have brand exactly equal to <code>"Polo"</code>, by looping through the list yourself (no built-in shortcut). Print the count.',
+          hint:'Same counting pattern as every module since M3 — a counter starting at 0, a loop, an <code>if</code> bumping it on a match. The data source is the only new part.',
+          expected: '6'
         },
         {
-          id:'m12-t6', kind:'checklist', title:'Print the first five product names',
-          goal:'GET <code>productsList</code>, then loop over <code>data["products"][:5]</code> (real Python slicing — the first five items) and print each <code>product["name"]</code>, one per line.',
-          hint:'<code>[:5]</code> is a slice with no start (defaults to the beginning) and a stop at index 5 — real Python only, exactly like the slicing you first saw back in Module 6.'
+          id:'m12-t6', kind:'implement', title:'Print the first five product names',
+          goal:'GET <code>productsList</code>, then use real Python slicing to take just the first five products from the list, and print each one\'s name, one per line, in the exact order they came back from the API.',
+          hint:'A slice with no start and a stop at 5 gives you "the first five items" without a manual counter or index check — real Python slicing, first introduced back in Module 6.',
+          expected: 'Blue Top\nMen Tshirt\nSleeveless Dress\nStylish Dress\nWinter Top'
         },
         {
-          id:'m12-t7', kind:'checklist', title:'A real API test with pytest',
-          goal:'Write a pytest test <code>test_products_list_ok()</code> that GETs <code>productsList</code> and asserts BOTH <code>r.status_code == 200</code> AND <code>r.json()["responseCode"] == 200</code> — checking the gotcha from task 3 on purpose. Run <code>pytest -v</code>. Confirm <b>1 passed</b>.',
-          hint:'This brings Module 9 (pytest) and this module together — an API test is still just a function starting with <code>test_</code>, full of <code>assert</code>s, run the exact same way.'
+          id:'m12-t7', kind:'implement', title:'A real API test with assertions',
+          goal:'Write a test-style check (a pytest test, or plain assertions — your choice) that GETs <code>productsList</code> and checks BOTH that the HTTP status is 200 AND that the API\'s own <code>responseCode</code> is 200 — checking the gotcha from task 3 on purpose. Once it runs with no <code>AssertionError</code>, print <code>All checks passed</code>.',
+          hint:'This brings Module 9 (pytest/assert-based testing) and this module together — two conditions checked in one test, the same assert-heavy style, regardless of whether you run it through pytest or just call the function directly.',
+          expected: 'All checks passed'
         },
         {
-          id:'m12-t8', kind:'checklist', title:'Catch a real Timeout',
-          goal:'Call <code>requests.get("https://automationexercise.com/api/productsList", timeout=0.001)</code> — a timeout far too short to succeed — inside a <code>try</code>/<code>except requests.exceptions.Timeout:</code> that prints <b>Timed out</b>. Run it a few times — confirm you consistently see that message, not a crash.',
-          hint:'<code>requests.exceptions.Timeout</code> is <code>requests</code>\' own exception type, but it is caught with the exact same <code>try</code>/<code>except</code> syntax from Module 10 — nothing about exception handling changes just because the risky operation is a network call.'
+          id:'m12-t8', kind:'implement', title:'Catch a real Timeout',
+          goal:'Deliberately trigger a real <code>Timeout</code> by making a GET request to <code>https://automationexercise.com/api/productsList</code> with a timeout set far too short to succeed (e.g. a few milliseconds). Catch that specific <code>requests</code> exception, and print exactly: <code>Timed out</code>',
+          hint:'<code>requests</code> raises its own <code>Timeout</code> exception type from <code>requests.exceptions</code>, but it is caught with the exact same <code>try</code>/<code>except</code> syntax from Module 10 — nothing about exception handling changes just because the risky operation is a network call.',
+          expected: 'Timed out'
         },
         {
-          id:'m12-t9', kind:'checklist', title:'Check a login attempt',
-          goal:'POST to <code>https://automationexercise.com/api/verifyLogin</code> with <code>data={"email": "nonexistent_test_email_xyz@example.com", "password": "wrongpass"}</code>. Print <code>r.json()["responseCode"]</code> and <code>r.json()["message"]</code>. Confirm the response code is <b>404</b> with a "User not found!" message — a real API telling you, correctly, that this login should fail.',
-          hint:'This is a safe, read-only check against a fake account — it does not create or change anything on the real site.'
+          id:'m12-t9', kind:'implement', title:'Check a login attempt',
+          goal:'POST to <code>https://automationexercise.com/api/verifyLogin</code> with a made-up email that does not exist on the site, and any password. Print the API\'s own <code>responseCode</code> and <code>message</code> fields from the JSON, space separated on one line.',
+          hint:'This is a safe, read-only check against a fake account — it does not create or change anything on the real site, it just confirms the API correctly rejects a login that should never succeed.',
+          expected: '404 User not found!'
         },
         {
-          id:'m12-t10', kind:'checklist', boss:true, title:'A reusable brand-counting function',
-          goal:'Write a function <code>count_products_by_brand(brand_name)</code> that GETs <code>productsList</code>, loops through the products, counts how many have that exact brand, and RETURNS the count (does not print inside the function). Call it for <code>"Polo"</code> and print the result, matching what you found by hand in task 5.',
-          hint:'This is the exact same logic as task 5, just wrapped in a function so it can be reused for any brand name — the kind of small reusable helper a real test suite accumulates over time instead of repeating inline everywhere.'
+          id:'m12-t10', kind:'implement', boss:true, title:'A reusable brand-counting function',
+          goal:'Write a function that takes a brand name as its parameter, GETs <code>productsList</code>, counts how many products have that exact brand, and RETURNS the count instead of printing inside the function. Call it for <code>"Polo"</code> and print the returned result.',
+          hint:'This is the exact same counting logic as an earlier task, just wrapped in a reusable function — the kind of small helper a real test suite accumulates over time instead of repeating inline everywhere.',
+          expected: '6'
         }
       ],
       homework:[
         {
-          id:'m12-hw1', kind:'checklist', title:'Mock the network for a fast, offline test',
-          goal:'Write <code>get_product_count()</code> that GETs <code>productsList</code> and returns <code>len(data["products"])</code>. In a pytest test, use <code>with patch("requests.get", return_value=fake_response):</code> where <code>fake_response</code> is a <code>Mock()</code> with <code>fake_response.json.return_value</code> set to a small fake products list, then assert the count matches. Run pytest — confirm it passes WITHOUT touching the real network.',
-          hint:'This is Module 11\'s <code>patch</code> applied to the exact function this module has been calling for real all along — a genuine choice a real project makes constantly: hit the real API in a few end-to-end tests, but mock it in the many fast unit tests that check your own logic.'
+          id:'m12-hw1', kind:'implement', title:'Mock the network for a fast, offline test',
+          goal:'Write a function that GETs <code>productsList</code> and returns how many products came back (the length of the list). Then write a test for it that patches <code>requests.get</code> so it returns a fake <code>Mock</code> response object instead of hitting the real network — give that fake response\'s <code>.json()</code> a made-up list of exactly 3 product dicts. Assert your function returns exactly 3. If that assertion holds, print the number your function returned.',
+          hint:'This is Module 11\'s <code>patch</code> applied to the exact function this module has been calling for real all along — the mock you patch <code>requests.get</code> with needs its OWN nested mock configured for what <code>.json()</code> should return.',
+          expected: '3'
         },
         {
-          id:'m12-hw2', kind:'checklist', title:'A missing required field',
-          goal:'POST to <code>verifyLogin</code> with ONLY <code>data={"email": "test@example.com"}</code> (no password). Print <code>r.json()["responseCode"]</code> and <code>r.json()["message"]</code>. Confirm you get <b>400</b> with a message about a missing parameter.',
-          hint:'A real API validating its own inputs and telling you clearly what is missing — worth testing on purpose, since "what happens when a required field is missing" is exactly the kind of case a thin happy-path-only test suite misses.'
+          id:'m12-hw2', kind:'implement', title:'A missing required field',
+          goal:'POST to <code>verifyLogin</code> with only an email field, no password at all. Print the API\'s own <code>responseCode</code> and <code>message</code> fields from the JSON, space separated on one line.',
+          hint:'A real API validating its own inputs and telling you clearly what is missing — worth testing on purpose, since "what happens when a required field is missing" is exactly the kind of case a thin happy-path-only test suite misses.',
+          expected: '400 Bad request, email or password parameter is missing in POST request.'
         },
         {
-          id:'m12-hw3', kind:'checklist', title:'Inspect real response headers (and catch a real mismatch)',
-          goal:'GET <code>productsList</code>, then print <code>r.headers["Content-Type"]</code>. On this real API it comes back as <code>text/html; charset=utf-8</code> — NOT anything mentioning json — even though <code>r.json()</code> parses the body without error. Print both <code>r.headers["Content-Type"]</code> and <code>type(r.json())</code> side by side and confirm you can see the mismatch for yourself: a header claiming HTML, a body that is actually valid JSON.',
-          hint:'<code>r.headers</code> behaves like a dict of metadata ABOUT the response, separate from <code>r.json()</code> which is the actual body content — and this is exactly why you cannot always trust one to describe the other. A real API lying about its own <code>Content-Type</code> is not rare; this is the same lesson as task 3\'s HTTP-status-vs-responseCode gotcha, one header lower: never assume the metadata matches the body, check the thing you actually care about directly.'
+          id:'m12-hw3', kind:'implement', title:'Inspect real response headers (and catch a real mismatch)',
+          goal:'GET <code>productsList</code>, then print the response\'s <code>Content-Type</code> header, followed by the Python type of what <code>r.json()</code> returns, space separated on one line. Look closely at whether the header\'s claimed content type actually matches what the body turned out to be.',
+          hint:'Response headers are metadata reported separately from the actual body content — nothing forces the two to agree with each other, and this is the same lesson as task 3\'s HTTP-status-vs-responseCode gotcha, one header lower: never assume metadata matches the body, check the thing you actually care about directly.',
+          expected: "text/html; charset=utf-8 <class 'dict'>"
         }
       ]
     },
@@ -2436,14 +2448,16 @@ print(counter.call_count)
       ],
       tasks:[
         {
-          id:'m13-t1', kind:'checklist', title:'Create, insert, select',
-          goal:'Connect with <code>conn = sqlite3.connect(":memory:")</code>, get <code>cursor = conn.cursor()</code>, run <code>CREATE TABLE tests (name TEXT, status TEXT)</code>, insert one row <code>(\'test_login\', \'pass\')</code>, commit, then <code>SELECT * FROM tests</code> and print <code>cursor.fetchone()</code>. Confirm you see <b>(\'test_login\', \'pass\')</b>.',
-          hint:'Four steps in order: create the table, insert a row, <code>conn.commit()</code>, then select — skipping the commit still lets you read it back later in the SAME connection, but it is good habit to commit right after writing.'
+          id:'m13-t1', kind:'implement', title:'Create, insert, select',
+          goal:'Using an in-memory SQLite database, create a table with two TEXT columns (<code>name</code> and <code>status</code>), insert one row with the values <code>\'test_login\'</code> and <code>\'pass\'</code>, commit it, then select everything back out and print the first row you get.',
+          hint:'Four steps in order: create the table, insert the row, commit, then select — the method that gets you back exactly one row gives it to you as a tuple.',
+          expected: "('test_login', 'pass')"
         },
         {
-          id:'m13-t2', kind:'checklist', title:'Count all rows',
-          goal:'Create the same table, insert THREE rows (any names/statuses), commit, then run <code>SELECT COUNT(*) FROM tests</code> and print <code>cursor.fetchone()[0]</code>. Confirm you see <b>3</b>.',
-          hint:'<code>COUNT(*)</code> returns one row with one column — the count itself — so <code>fetchone()</code> gives you a one-item tuple, and <code>[0]</code> pulls the number out of it.'
+          id:'m13-t2', kind:'implement', title:'Count all rows',
+          goal:'Using the same kind of in-memory database and table as before, insert three rows (any names/statuses you like), commit, then run a query that counts all rows in the table, and print that count.',
+          hint:'SQL has a built-in aggregate for this — <code>COUNT(*)</code> — which comes back as a single-row, single-column result you still need to fetch and unwrap.',
+          expected: '3'
         },
         {
           id:'m13-t3', kind:'predict', offline:true, title:'Predict: fetchall returns a list of tuples',
@@ -2465,14 +2479,16 @@ print(rows[0])
           expected: "2\n('a', 'pass')"
         },
         {
-          id:'m13-t4', kind:'checklist', title:'Filter with WHERE',
-          goal:'Insert three tests, two of them with <code>status = \'fail\'</code>. Run <code>SELECT name FROM tests WHERE status = \'fail\'</code> and loop over <code>cursor.fetchall()</code>, printing <code>row[0]</code> for each. Confirm you see exactly the two failing test names, nothing else.',
-          hint:'Selecting only <code>name</code> (not <code>*</code>) means each row is a one-item tuple — <code>row[0]</code> is the name, there is no <code>row[1]</code> to accidentally use here.'
+          id:'m13-t4', kind:'implement', title:'Filter with WHERE',
+          goal:'Insert exactly these three rows: <code>(\'test_login\', \'pass\')</code>, <code>(\'test_logout\', \'fail\')</code>, <code>(\'test_search\', \'fail\')</code>. Then write a query that selects only the names of rows with <code>status = \'fail\'</code>, and print each matching name on its own line, in the order they come back.',
+          hint:'Selecting only the <code>name</code> column (not <code>*</code>) means each row comes back as a one-item tuple — there is no second position to accidentally use here.',
+          expected: 'test_logout\ntest_search'
         },
         {
-          id:'m13-t5', kind:'checklist', title:'A safe parameterized query',
-          goal:'Insert one row using <code>cursor.execute("INSERT INTO tests VALUES (?, ?)", (name, status))</code> with variables, not a hand-built string. Then select it back with <code>cursor.execute("SELECT * FROM tests WHERE name = ?", (name,))</code> and print the result. Confirm it matches what you inserted.',
-          hint:'The second argument to <code>execute(...)</code> is always a TUPLE, even with one value — <code>(name,)</code> needs that trailing comma, or Python reads it as parentheses around a single value instead of a tuple.'
+          id:'m13-t5', kind:'implement', title:'A safe parameterized query',
+          goal:'Using variables (not values hard-coded directly into the SQL string), insert one row with <code>name = \'test_checkout\'</code> and <code>status = \'pass\'</code> via a parameterized query with <code>?</code> placeholders — never build the SQL by concatenating those variables into the string. Then select that exact row back out, also using a parameterized <code>WHERE</code> clause, and print what you get.',
+          hint:'The second argument to <code>execute(...)</code> is always a TUPLE, even with one value — a single-item tuple needs a trailing comma, or Python reads it as parentheses around a plain value instead.',
+          expected: "('test_checkout', 'pass')"
         },
         {
           id:'m13-t6', kind:'predict', offline:true, title:'Predict: a row is a tuple, not a dict',
@@ -2493,31 +2509,36 @@ print(row[1])
           expected: 'test_login\npass'
         },
         {
-          id:'m13-t7', kind:'checklist', title:'Update a row and verify it',
-          goal:'Insert <code>(\'test_login\', \'fail\')</code>. Run <code>UPDATE tests SET status = ? WHERE name = ?</code> with <code>("pass", "test_login")</code>, commit, then select the status back for <code>\'test_login\'</code> and print it. Confirm you see <b>pass</b> — the change actually happened.',
-          hint:'Never trust that an <code>UPDATE</code> worked just because it did not crash — selecting the row again afterward is the only real proof, exactly like checking a UI after clicking a button.'
+          id:'m13-t7', kind:'implement', title:'Update a row and verify it',
+          goal:'Insert a row with <code>name = \'test_login\'</code> and <code>status = \'fail\'</code>. Then update that row\'s status to <code>\'pass\'</code> (matching by name), commit, and select the status back out for <code>\'test_login\'</code> to prove the change actually took effect — print just that status value.',
+          hint:'Never trust that an <code>UPDATE</code> worked just because it did not crash — selecting the row again afterward is the only real proof, exactly like checking a UI after clicking a button.',
+          expected: 'pass'
         },
         {
-          id:'m13-t8', kind:'checklist', title:'Delete and verify the count dropped',
-          goal:'Insert two rows, one <code>\'pass\'</code> and one <code>\'fail\'</code>. Run <code>DELETE FROM tests WHERE status = \'fail\'</code>, commit, then <code>SELECT COUNT(*) FROM tests</code> and print the count. Confirm you see <b>1</b>.',
-          hint:'<code>DELETE FROM tests WHERE ...</code> removes only the matching rows — leaving off the <code>WHERE</code> entirely would delete everything, so always double check it is there before running a real delete.'
+          id:'m13-t8', kind:'implement', title:'Delete and verify the count dropped',
+          goal:'Insert two rows, one with <code>status = \'pass\'</code> and one with <code>status = \'fail\'</code> (any names). Delete only the failing row (with an appropriate <code>WHERE</code> clause, not deleting everything), commit, then count all remaining rows and print the count.',
+          hint:'<code>DELETE FROM ... WHERE ...</code> removes only the matching rows — leaving off the <code>WHERE</code> entirely would delete everything, so always double check it is there before running a real delete.',
+          expected: '1'
         },
         {
-          id:'m13-t9', kind:'checklist', title:'Insert a list of results in a loop',
-          goal:'Given <code>results = [{"name": "test_login", "status": "pass"}, {"name": "test_logout", "status": "fail"}, {"name": "test_search", "status": "pass"}]</code>, loop over it and insert each one with a parameterized <code>INSERT</code>. Commit, then print <code>SELECT COUNT(*)</code>. Confirm you see <b>3</b>.',
-          hint:'This is the exact list-of-dicts shape from Module 5 and the JSON responses from Module 12 — only the destination changed, from a printed report to rows in a real table.'
+          id:'m13-t9', kind:'implement', title:'Insert a list of results in a loop',
+          goal:'Given <code>results = [{"name": "test_login", "status": "pass"}, {"name": "test_logout", "status": "fail"}, {"name": "test_search", "status": "pass"}]</code>, loop over it and insert each one into your table using a parameterized <code>INSERT</code> (not string concatenation). Commit, then count all rows and print the count.',
+          hint:'This is the exact list-of-dicts shape from Module 5 and the JSON responses from Module 12 — only the destination changed, from a printed report to rows in a real table.',
+          expected: '3'
         },
         {
-          id:'m13-t10', kind:'checklist', boss:true, title:'A reusable pass-count function',
-          goal:'Write <code>count_passed_tests(conn)</code> that takes an open connection, runs <code>SELECT COUNT(*) FROM tests WHERE status = \'pass\'</code> on it, and returns the count. Set up a table with a mix of pass/fail rows, then call the function and print the result.',
-          hint:'The function takes the CONNECTION as a parameter and creates its own cursor from it — this is how a real test suite shares one database connection across many small helper functions instead of reconnecting every time.'
+          id:'m13-t10', kind:'implement', boss:true, title:'A reusable pass-count function',
+          goal:'Write a function that takes an open sqlite3 connection as its only parameter, creates its own cursor from it, counts how many rows in the table have <code>status = \'pass\'</code>, and RETURNS that count (does not print inside the function). Set up a table with exactly these rows: <code>(\'t1\', \'pass\')</code>, <code>(\'t2\', \'fail\')</code>, <code>(\'t3\', \'pass\')</code>, <code>(\'t4\', \'pass\')</code>. Call your function with the connection and print the returned result.',
+          hint:'The function takes the CONNECTION as a parameter and creates its own cursor from it — this is how a real test suite shares one database connection across many small helper functions instead of reconnecting every time.',
+          expected: '3'
         }
       ],
       homework:[
         {
-          id:'m13-hw1', kind:'checklist', title:'See a real SQL injection',
-          goal:'Create a <code>users</code> table with one row, <code>(\'admin\', \'secret123\')</code>. Set <code>malicious_input = "\' OR \'1\'=\'1"</code>. Build an UNSAFE query with string concatenation: <code>"SELECT * FROM users WHERE username = \'" + malicious_input + "\'"</code>, run it, and print the result — confirm it WRONGLY returns the admin row, despite never actually matching that username. Then run the SAME lookup safely with a <code>?</code> placeholder instead, and confirm it correctly returns nothing.',
-          hint:'The malicious string turns the WHERE clause into something that is always true, regardless of username — this is the actual mechanism behind real SQL injection attacks, not just a warning label.'
+          id:'m13-hw1', kind:'implement', title:'See a real SQL injection',
+          goal:'Create a <code>users</code> table with one row: <code>(\'admin\', \'secret123\')</code>. Set <code>malicious_input = "\' OR \'1\'=\'1"</code>. First, build an UNSAFE query by concatenating that string directly into the SQL text (rather than using a placeholder), run it, and print the result — it should WRONGLY return the admin row despite the input never actually matching that username. Then run the exact same lookup safely, using a <code>?</code> placeholder instead of concatenation, and print that result too — it should correctly return nothing. Print both results, one per line.',
+          hint:'The malicious string turns the WHERE clause into something that is always true, regardless of username — this is the actual mechanism behind real SQL injection attacks, not just a warning label.',
+          expected: "[('admin', 'secret123')]\n[]"
         },
         {
           id:'m13-hw2', kind:'predict', offline:true, title:'Predict: rowcount after an UPDATE',
@@ -2538,9 +2559,10 @@ print(cursor.rowcount)
           expected: '2'
         },
         {
-          id:'m13-hw3', kind:'checklist', title:'with conn does not close the connection',
-          goal:'Run <code>with conn:</code> around one insert, letting it auto-commit. AFTER that block ends, try running another query on the SAME <code>conn</code> — confirm it still works. <code>with conn:</code> manages commit/rollback for the block, nothing more; the connection itself stays open until you explicitly call <code>conn.close()</code>.',
-          hint:'This trips people up constantly — <code>with</code> on a database connection in Python does NOT mean "close it when done," unlike a file opened with <code>with open(...)</code>. Two different libraries, two different meanings for the same keyword.'
+          id:'m13-hw3', kind:'implement', title:'with conn does not close the connection',
+          goal:'Create a table and, using <code>with conn:</code> (not a plain execute+commit) around a single INSERT of your choice, let it auto-commit. AFTER that <code>with</code> block has finished, run one more query on that SAME connection object — count all rows — and print the count, to prove the connection is still open and usable, not implicitly closed by the <code>with</code> block ending.',
+          hint:'This trips people up constantly — <code>with</code> on a database connection in Python does NOT mean "close it when done," unlike a file opened with <code>with open(...)</code>. Two different libraries, two different meanings for the same keyword.',
+          expected: '1'
         }
       ]
     },
