@@ -1081,6 +1081,31 @@
         <div class="result" id="res-${t.id}"></div>
       </div>`;
     }
+    if(t.kind === 'implement'){
+      // Unlike 'predict', there is no t.code to show — the whole point is that
+      // the student designs and writes the solution themselves in real Python
+      // (this module runs outside the browser sandbox), then reports back what
+      // their own program actually printed. We only ever compare that against
+      // a hidden, known-correct t.expected — never execute anything here.
+      return `
+      <div class="card task predict ${done?'done':''}" id="task-${t.id}">
+        ${TASK_CORNERS}
+        <div class="task-head">
+          <span class="task-num">${tr('taskNumOf', {label, i: i+1, total})}</span>
+          ${badge}
+        </div>
+        <div class="task-title">${title}</div>
+        <div class="task-goal">${goal}</div>
+        <label class="field-label">${tr('implementQuestion')}</label>
+        <textarea class="editor" id="guess-${t.id}" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off" placeholder="${tr('implementPlaceholder')}"></textarea>
+        <div class="rowbtns" style="margin-top:12px;">
+          <button class="btn primary" data-check="${t.id}">${tr('implementCheck')}</button>
+          <button class="btn" data-hint="${t.id}">${tr('hintBtn')}</button>
+        </div>
+        <div class="hint-box" id="hint-${t.id}"><b>${tr('hintPrefix')}</b> ${hint || ''}</div>
+        <div class="result" id="res-${t.id}"></div>
+      </div>`;
+    }
     return `
       <div class="card task ${done?'done':''}" id="task-${t.id}">
         ${TASK_CORNERS}
@@ -1141,7 +1166,7 @@
       });
       return;
     }
-    if(t.kind === 'predict'){
+    if(t.kind === 'predict' || t.kind === 'implement'){
       const guessEl = room.querySelector(`#guess-${t.id}`);
       guessEl.addEventListener('keydown', onEditorTab);
       room.querySelector(`[data-check="${t.id}"]`).addEventListener('click', () => runPredictCheck(t, m));
@@ -1704,10 +1729,12 @@
     const resEl = document.getElementById(`res-${t.id}`);
     let actual;
 
-    if(t.offline){
-      // Real-Python-only feature: this sandbox cannot run the code, so there is
-      // nothing to execute — the expected output is simply the known-correct
-      // behavior of real CPython, provided by the task itself.
+    if(t.kind === 'implement' || t.offline){
+      // Real-Python-only feature, or a task where the student wrote their own
+      // solution from scratch: this sandbox cannot run the code either way, so
+      // there is nothing to execute here — the expected output is simply the
+      // known-correct answer, provided by the task itself (never shown until
+      // the student has already typed their own attempt).
       actual = t.expected.trim();
     } else {
       const r = runPython(t.code);
@@ -1723,12 +1750,16 @@
     const isMatch = guess === actual;
     resEl.className = 'result show ' + (isMatch ? 'ok' : 'err');
     if(isMatch){
-      resEl.innerHTML = `${tr('predictExactTitle')}${tr('predictExactBody')}`;
+      resEl.innerHTML = t.kind === 'implement'
+        ? `${tr('implementExactTitle')}${tr('implementExactBody')}`
+        : `${tr('predictExactTitle')}${tr('predictExactBody')}`;
       markDone(t.id);
       document.getElementById(`task-${t.id}`).classList.add('done');
       renderStats();
       if(m) updateRoomProgress(m);
       if(t.boss && m){ refreshBossHeader(t, m); showVictory(t, m); }
+    } else if(t.kind === 'implement'){
+      resEl.innerHTML = `${tr('implementWrongTitle')}${tr('implementWrongBody', {actual: escapeHtml(actual).replace(/\n/g,'<br>')})}`;
     } else {
       resEl.innerHTML = `${tr('predictWrongTitle')}${tr('predictWrongBody', {actual: escapeHtml(actual).replace(/\n/g,'<br>')})}`;
     }
