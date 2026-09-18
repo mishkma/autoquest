@@ -1534,6 +1534,13 @@ print(f"{x=}")
             {label:'Simple', code:'class Greeter:\n    def name(self):\n        return "Alex"\n\n    def greet(self):\n        return f"Hello, {self.name()}!"\n\ng = Greeter()\nprint(g.greet())', result:'Hello, Alex!'},
             {label:'In practice', kind:'real', code:'class Cart:\n    def __init__(self):\n        self.items = []\n\n    def add_item(self, name, price):\n        self.items.append({"name": name, "price": price})\n\n    def total(self):\n        total = 0\n        for item in self.items:\n            total += item["price"]\n        return total\n\n    def summary(self):\n        return f"Cart total: {self.total()}"\n\ncart = Cart()\ncart.add_item("Mouse", 25)\ncart.add_item("Webcam", 65)\nprint(cart.summary())', result:'Cart total: 90'}
           ]
+        },
+        {
+          text:'A class can build on another with <code>class Child(Parent):</code> — the child automatically gets every attribute and method the parent already defines, with no copy-pasting; you only add whatever is new or different for the child. This is exactly how a real Page Object project avoids repeating the same <code>__init__(self, base_url)</code> and browser setup in every single page class: one shared <code>BasePage</code> holds it once, and every specific page (<code>LoginPage</code>, <code>ProductsPage</code>, ...) inherits it and adds only its own methods.',
+          examples:[
+            {label:'Simple', code:'class Animal:\n    def __init__(self, name):\n        self.name = name\n\n    def speak(self):\n        return f"{self.name} makes a sound"\n\nclass Dog(Animal):\n    pass\n\nd = Dog("Rex")\nprint(d.speak())', result:'Rex makes a sound'},
+            {label:'In practice', kind:'real', code:'class BasePage:\n    def __init__(self, base_url):\n        self.base_url = base_url\n\n    def open(self):\n        return self.base_url\n\nclass LoginPage(BasePage):\n    def login_url(self):\n        return f"{self.base_url}/login"\n\npage = LoginPage("https://automationexercise.com")\nprint(page.open())\nprint(page.login_url())', result:'https://automationexercise.com\nhttps://automationexercise.com/login'}
+          ]
         }
       ],
       tasks:[
@@ -1662,6 +1669,12 @@ print("Ready")
           goal:'Add a way for your login page class to report whether its base URL is secure (starts with <code>https</code>). Using that check, print a single line in the form <code>Secure: &lt;login-url&gt;</code> if it is secure, or <code>Insecure: &lt;login-url&gt;</code> if it is not — for a page built with <code>https://automationexercise.com</code>.',
           hint:'Python strings have a real <code>.startswith(text)</code> method that checks the very beginning of a string and returns True or False directly, the same way a comparison would.',
           expected:'Secure: https://automationexercise.com/login'
+        },
+        {
+          id:'m7-hw4', kind:'implement', title:'A page that inherits another page',
+          goal:'Design a <code>BasePage</code> class that stores a base URL and can report it through an <code>open()</code> method (the shape from this module\'s theory). Then create a <code>ProductsPage</code> class that inherits from <code>BasePage</code> and adds a <code>search_url(self, term)</code> method returning the base URL, followed by <code>/products?search=</code>, followed by the given term. Build a <code>ProductsPage</code> for <code>https://automationexercise.com</code>, print its <code>open()</code> result, then print <code>search_url("dress")</code>.',
+          hint:'<code>class ProductsPage(BasePage):</code> means <code>ProductsPage</code> already has everything <code>BasePage</code> defines, including its <code>__init__</code> and <code>open()</code> — you do not need to rewrite either. Only add the one method that is new: <code>search_url</code>.',
+          expected:'https://automationexercise.com\nhttps://automationexercise.com/products?search=dress'
         }
       ]
     },
