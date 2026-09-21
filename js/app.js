@@ -1774,6 +1774,15 @@
     goToInner('path', 'back');
   });
 
+  const toTopBtn = document.getElementById('to-top');
+  window.addEventListener('scroll', () => {
+    toTopBtn.classList.toggle('show', window.scrollY > 400);
+  }, {passive:true});
+  toTopBtn.addEventListener('click', () => {
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    window.scrollTo({top:0, behavior: reduce ? 'instant' : 'smooth'});
+  });
+
   /* ---------------- language switch ---------------- */
   // Static chrome (title screen, path hero, victory labels, topbar HUD
   // labels) is just [data-i18n]/[data-i18n-title] text swapped in place.

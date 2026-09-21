@@ -971,6 +971,23 @@
   #view-module.arcade .backbtn{ color: var(--a-dim); }
   #view-module.arcade .backbtn:hover{ color:#e8e8ec; }
 
+  /* Floating "back to top" — shown only after scrolling down, and never on the title screen (button sits right after #site-wrap). */
+  .to-top{
+    position:fixed; right:24px; bottom:24px; z-index:40;
+    width:44px; height:44px; padding:0; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    font-size:22px; line-height:1;
+    background:var(--a-bg0); color:var(--a-accent);
+    border:2px solid var(--a-accent); border-radius:0;
+    box-shadow:0 0 12px var(--a-glow);
+    opacity:0; visibility:hidden; transform:translateY(8px);
+    transition:opacity .2s, transform .2s, visibility .2s, background .15s, color .15s;
+  }
+  .to-top.show{ opacity:1; visibility:visible; transform:none; }
+  .to-top:hover{ background:var(--a-accent); color:var(--a-bg0); }
+  #site-wrap[hidden] ~ .to-top{ display:none; }
+  @media (max-width:600px){ .to-top{ right:14px; bottom:14px; } }
+
   #view-module.arcade .card{ background: var(--a-bg1); border-color: var(--a-edge); box-shadow:none; }
   /* Task cards read as plain recolored light-UI cards next to the more
      "chromed" arcade pieces around them (boss header, editor HUD, topbar) —

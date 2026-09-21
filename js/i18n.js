@@ -109,6 +109,7 @@ var I18N = {
     nextModule: 'Next module → {title}',
     lastModule: '🏁 This is the last unlocked module — head back to the path',
     backToPath: '← Whole path',
+    toTopTitle: 'Back to top',
     // run / check feedback
     outputLabel: 'Output', errorLabel: 'Error',
     emptyOutput: '(empty — the code printed nothing)',
@@ -225,6 +226,7 @@ var I18N = {
     nextModule: 'Следующий модуль → {title}',
     lastModule: '🏁 Это последний открытый модуль — вернитесь на карту пути',
     backToPath: '← Весь путь',
+    toTopTitle: 'Наверх',
     outputLabel: 'Вывод', errorLabel: 'Ошибка',
     emptyOutput: '(пусто — код ничего не напечатал)',
     codeDidNotRun: '<b>Код не выполнился</b>',
