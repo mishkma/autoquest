@@ -1697,17 +1697,17 @@ print("Ready")
           ]
         },
         {
-          text:'<code>random.randint(a, b)</code> gives a random whole number between <code>a</code> and <code>b</code> (both included); <code>random.choice(a_list)</code> picks one random item from a list. Generating test data — random IDs, random valid inputs — is one of the most common real uses of this module in an automation project.',
+          text:'<code>random.randint(a, b)</code> gives a random whole number between <code>a</code> and <code>b</code> (both included); <code>random.choice(a_list)</code> picks one random item from a list. Generating test data — random IDs, random valid inputs — is one of the most common real uses of this module in an automation project. <code>random.seed(n)</code> is the "replay button": it does not pick a value, it picks WHICH fixed chain of pseudo-random numbers the following calls will walk through. The same seed always gives the same chain (seed 1 always gives 2, then 5, for <code>randint(1, 6)</code>), a different seed gives a different chain, and there is no logic linking the seed number to the result. A real test picks a fresh seed, prints it to the log, and when a run fails on unlucky data you put that logged number back into <code>random.seed()</code> to replay exactly the same data. The fixed seeds in this module\'s examples and tasks exist only so the printed answer can be checked.',
           examples:[
-            {label:'Simple', code:'import random\nrandom.seed(1)\nprint(random.randint(1, 6))', result:'2'},
-            {label:'In practice', kind:'real', code:'import random\nrandom.seed(2)\nbrowsers = ["chrome", "firefox", "webkit"]\nprint(random.choice(browsers))', result:'chrome'}
+            {label:'Simple', code:'import random\nrandom.seed(1)\nprint(random.randint(1, 6))\nprint(random.randint(1, 6))', result:'2\n5'},
+            {label:'In practice', kind:'real', code:'import random\n\nrandom.seed(4821)  # a real run picks a fresh seed and prints it to the log\nquantity = random.randint(1, 10)\npayment = random.choice(["card", "paypal", "cash"])\nprint(f"quantity={quantity}, payment={payment}")', result:'quantity=8, payment=paypal — running it again with seed 4821 gives exactly the same data, which is what makes a failed run replayable.'}
           ]
         },
         {
-          text:'<code>datetime.now()</code> (from the <code>datetime</code> module) gives the current date and time. Automation code uses this constantly for things like timestamping a log line or giving a test-run report a unique name.',
+          text:'<code>datetime.now()</code> (from the <code>datetime</code> module) gives the current date and time — it is different on every run, so nothing needs editing the next day. Automation code uses this constantly for things like timestamping a log line or giving a test-run report a unique name. <code>datetime(2026, 9, 16, 14, 30)</code> instead builds one SPECIFIC moment from year, month, day, hour and minute — useful when you need a known, fixed date, and the reason this module\'s simple example and tasks use it (a fixed date gives a checkable answer). <code>.strftime(template)</code> turns any moment into text: <code>%Y</code> year, <code>%m</code> month, <code>%d</code> day, <code>%H</code> hour, <code>%M</code> minute.',
           examples:[
             {label:'Simple', code:'from datetime import datetime\nmoment = datetime(2026, 9, 16, 14, 30)\nprint(moment.year)', result:'2026'},
-            {label:'In practice', kind:'real', code:'from datetime import datetime\nmoment = datetime(2026, 9, 16, 14, 30)\nprint(f"test_run_{moment.strftime(\'%Y%m%d_%H%M\')}")', result:'test_run_20260916_1430'}
+            {label:'In practice', kind:'real', code:'from datetime import datetime\nmoment = datetime.now()\nprint(f"test_run_{moment.strftime(\'%Y%m%d_%H%M\')}")', result:'test_run_20260921_1030 — the name changes on every run (this is the run at 21 Sep 2026, 10:30), so a new report never overwrites the previous one.'}
           ]
         },
         {
